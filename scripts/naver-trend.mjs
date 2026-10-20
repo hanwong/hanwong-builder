@@ -9,8 +9,8 @@ const env = Object.fromEntries(
   fs.readFileSync(".env.local", "utf8").split("\n").filter((l) => l.includes("=") && !l.startsWith("#"))
     .map((l) => { const i = l.indexOf("="); return [l.slice(0, i).trim(), l.slice(i + 1).trim()]; }),
 );
-const id = env.NAVER_API_KEY_ID, secret = env.NAVER_API_KEY;
-if (!id || !secret) { console.error(".env.local 에 NAVER_API_KEY_ID 와 NAVER_API_KEY 가 필요해요."); process.exit(1); }
+const id = env.NAVER_API_KEY_ID || env.NAVER_CLIENT_ID, secret = env.NAVER_API_KEY || env.NAVER_CLIENT_SECRET;
+if (!id || !secret) { console.error(".env.local 에 NAVER_CLIENT_ID 와 NAVER_CLIENT_SECRET 이 필요해요."); process.exit(1); }
 
 const keywords = process.argv.slice(2).filter((k) => k !== ANCHOR);
 if (!keywords.length) { console.error("키워드를 하나 이상 주세요."); process.exit(1); }
@@ -19,7 +19,7 @@ if (!keywords.length) { console.error("키워드를 하나 이상 주세요."); 
 const now = new Date();
 const end = new Date(now.getFullYear(), now.getMonth(), 0);
 const start = new Date(end.getFullYear() - 1, end.getMonth() + 1, 1);
-const fmt = (d) => d.toISOString().slice(0, 10);
+const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 async function query(groupKeywords) {
   const body = {
