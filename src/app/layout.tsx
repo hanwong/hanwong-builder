@@ -11,9 +11,9 @@ const pretendard = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "내일런복 — 내 옷장에서, 내일 입고 뛸 옷을 골라 드려요",
+  title: "Windner — 10일치 러닝 복장, 미리 정해 드려요",
   description:
-    "러닝복은 많은데 매번 뭘 입을지 고민되는 러너를 위해. 등록해 둔 내 러닝복 중에서 날씨 · 거리 · 시간대에 맞는 조합을 전날 밤 챙겨 드려요.",
+    "정해진 요일에 뛰는 루틴 러너를 위해. 옷 등록 없이, 시간별 날씨에 맞는 러닝 의류를 실제 제품으로 보여 드려요. 내 러닝 스케줄에 저장해 두면 전날 밤 고민이 끝나요.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
