@@ -1,6 +1,7 @@
-// 네이버 데이터랩 검색어트렌드 API로 키워드 상대 검색량을 잰다.
-// 사용: node scripts/naver-trend.mjs "키워드1" "키워드2" ...   (.env.local 의 NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 사용)
+// 네이버 데이터랩 검색어트렌드 API(NAVER API HUB)로 키워드 상대 검색량을 잰다.
+// 사용: node scripts/naver-trend.mjs "키워드1" "키워드2" ...   (.env.local 의 NAVER_API_KEY_ID / NAVER_API_KEY 사용)
 // 기준 키워드(ANCHOR)를 매 묶음에 끼워 넣어, 묶음이 달라도 값을 비교할 수 있게 ANCHOR = 50 으로 맞춘다.
+// 2026-07-31 부터 신규 키는 네이버 개발자센터가 아니라 NAVER API HUB(네이버 클라우드 플랫폼)에서 받는다.
 import fs from "node:fs";
 
 const ANCHOR = process.env.ANCHOR || "마라톤 대회";
@@ -8,8 +9,8 @@ const env = Object.fromEntries(
   fs.readFileSync(".env.local", "utf8").split("\n").filter((l) => l.includes("=") && !l.startsWith("#"))
     .map((l) => { const i = l.indexOf("="); return [l.slice(0, i).trim(), l.slice(i + 1).trim()]; }),
 );
-const id = env.NAVER_CLIENT_ID, secret = env.NAVER_CLIENT_SECRET;
-if (!id || !secret) { console.error(".env.local 에 NAVER_CLIENT_ID 와 NAVER_CLIENT_SECRET 이 필요해요."); process.exit(1); }
+const id = env.NAVER_API_KEY_ID, secret = env.NAVER_API_KEY;
+if (!id || !secret) { console.error(".env.local 에 NAVER_API_KEY_ID 와 NAVER_API_KEY 가 필요해요."); process.exit(1); }
 
 const keywords = process.argv.slice(2).filter((k) => k !== ANCHOR);
 if (!keywords.length) { console.error("키워드를 하나 이상 주세요."); process.exit(1); }
@@ -25,9 +26,9 @@ async function query(groupKeywords) {
     startDate: fmt(start), endDate: fmt(end), timeUnit: "month",
     keywordGroups: groupKeywords.map((k) => ({ groupName: k, keywords: [k] })),
   };
-  const r = await fetch("https://openapi.naver.com/v1/datalab/search", {
+  const r = await fetch("https://naverapihub.apigw.ntruss.com/search-trend/v1/search", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Naver-Client-Id": id, "X-Naver-Client-Secret": secret },
+    headers: { "Content-Type": "application/json", "X-NCP-APIGW-API-KEY-ID": id, "X-NCP-APIGW-API-KEY": secret },
     body: JSON.stringify(body),
   });
   if (!r.ok) throw new Error(`API ${r.status}: ${(await r.text()).slice(0, 200)}`);
