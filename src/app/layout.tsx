@@ -11,9 +11,9 @@ const pretendard = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Windner — 10일치 러닝 복장, 미리 정해 드려요",
+  title: "롤링스탯 — 오늘 배운 주짓수, 말하면 스킬트리에 쌓여요",
   description:
-    "정해진 요일에 뛰는 루틴 러너를 위해. 옷 등록 없이, 시간별 날씨에 맞는 러닝 의류를 실제 제품으로 보여 드려요. 내 러닝 스케줄에 저장해 두면 전날 밤 고민이 끝나요.",
+    "기술 이름을 몰라도 돼요. 수업에서 배운 걸 말하면 롤링스탯이 이름과 세팅 과정을 찾아 스킬트리에 꽂아 줘요. 스파링에서 막힌 것도 모아서, 내가 어디가 비었는지 보여 줘요.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
