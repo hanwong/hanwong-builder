@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { LogOut, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,10 @@ export default function AppHome() {
   return (
     <div className="flex flex-col gap-5">
       <header className="flex items-center justify-between">
-        <h1 className="text-[22px] font-bold tracking-tight">Re:Re:롤</h1>
+        <h1 className="flex items-center gap-2 text-[22px] font-bold tracking-tight">
+          <Image src="/logo.png" alt="" width={28} height={28} className="rounded-lg" />
+          Re:Re:롤
+        </h1>
         <form action="/auth/signout" method="post">
           <Button variant="ghost" size="sm" type="submit" className="rounded-full text-muted-foreground">
             <LogOut data-icon="inline-start" aria-hidden />

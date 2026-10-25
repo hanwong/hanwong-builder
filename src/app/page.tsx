@@ -1,3 +1,5 @@
+import Image from "next/image";
+import Link from "next/link";
 import { StartButton } from "@/components/start-button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -118,6 +120,7 @@ export default function Home() {
       <section className="mx-auto max-w-5xl px-6 py-20 md:py-32">
         <div className="reveal space-y-6">
           <div className="flex flex-wrap items-center gap-3">
+            <Image src="/logo.png" alt="" width={32} height={32} className="rounded-lg" priority />
             <span className="text-lg font-bold tracking-tight">Re:Re:롤</span>
             <Badge variant="outline">지금 검증 중인 아이디어예요</Badge>
           </div>
@@ -289,6 +292,15 @@ export default function Home() {
             <span className="font-semibold text-foreground">Re:Re:롤</span> © 2026
           </p>
           <p>Built with Claude Code · AI 프로덕트 빌더 클럽 3기</p>
+          <p>
+            <Link href="/privacy" className="underline-offset-4 hover:underline">
+              개인정보처리방침
+            </Link>
+            {" · "}
+            <Link href="/terms" className="underline-offset-4 hover:underline">
+              서비스 약관
+            </Link>
+          </p>
         </div>
       </footer>
     </main>

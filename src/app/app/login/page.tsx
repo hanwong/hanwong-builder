@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { GoogleLoginButton } from "@/components/app/google-login-button";
@@ -13,6 +14,7 @@ export default function LoginPage() {
       <Card className="rounded-2xl ring-border">
         <CardContent className="flex flex-col gap-5 py-4">
           <div className="flex flex-col gap-1.5">
+            <Image src="/logo.png" alt="" width={48} height={48} className="rounded-xl" priority />
             <span className="text-[22px] font-bold tracking-tight">Re:Re:롤</span>
             <p className="text-[15px] leading-relaxed text-muted-foreground">
               오늘 배운 주짓수, 잊지 않게. 기록과 복습 카드는 본인만 볼 수 있어요.
@@ -22,7 +24,14 @@ export default function LoginPage() {
             <GoogleLoginButton />
           </Suspense>
           <p className="text-[13px] font-medium text-muted-foreground">
-            Google 계정의 이메일만 받아요. 비밀번호는 저장하지 않아요.
+            Google 계정의 이메일만 받아요. 비밀번호는 저장하지 않아요.{" "}
+            <Link href="/privacy" className="underline underline-offset-4">
+              개인정보처리방침
+            </Link>
+            {" · "}
+            <Link href="/terms" className="underline underline-offset-4">
+              서비스 약관
+            </Link>
           </p>
         </CardContent>
       </Card>
