@@ -7,10 +7,10 @@ export function StartButton({ className }: { className?: string }) {
   return (
     <Button
       size="lg"
-      className={className}
+      className={"rounded-full " + (className ?? "")}
       onClick={() => toast("곧 열려요. 조금만 기다려 주세요!")}
     >
-      &gt; 곧 열려요
+      곧 열려요
     </Button>
   );
 }

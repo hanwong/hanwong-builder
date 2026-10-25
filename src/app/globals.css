@@ -49,72 +49,72 @@
 }
 
 :root {
-  --background: #08090A;
-  --foreground: #C9F7C9;
-  --card: #0E1110;
-  --card-foreground: #C9F7C9;
-  --popover: #0E1110;
-  --popover-foreground: #C9F7C9;
-  --primary: #6EE86E;
-  --primary-foreground: #052005;
-  --secondary: #121614;
-  --secondary-foreground: #C9F7C9;
-  --muted: #121614;
-  --muted-foreground: #7FA87F;
-  --accent: #133013;
-  --accent-foreground: #9BF59B;
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: #1E2A1E;
-  --input: #1E2A1E;
-  --ring: #6EE86E;
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: #FAF9F4;
+  --foreground: #16160F;
+  --card: #FFFFFF;
+  --card-foreground: #16160F;
+  --popover: #FFFFFF;
+  --popover-foreground: #16160F;
+  --primary: #16160F;
+  --primary-foreground: #FAF9F4;
+  --secondary: #F0EFE6;
+  --secondary-foreground: #16160F;
+  --muted: #F0EFE6;
+  --muted-foreground: #6B6A5E;
+  --accent: #DDF542;
+  --accent-foreground: #16160F;
+  --destructive: #C8441C;
+  --border: #E4E2D6;
+  --input: #E4E2D6;
+  --ring: #B9D21E;
+  --chart-1: #DDF542;
+  --chart-2: #B9D21E;
+  --chart-3: #8A9C1A;
+  --chart-4: #4F5A14;
+  --chart-5: #16160F;
+  --radius: 1rem;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #16160F;
+  --sidebar-primary: #16160F;
+  --sidebar-primary-foreground: #FAF9F4;
+  --sidebar-accent: #F0EFE6;
+  --sidebar-accent-foreground: #16160F;
+  --sidebar-border: #E4E2D6;
+  --sidebar-ring: #B9D21E;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #141410;
+  --foreground: #F3F1E6;
+  --card: #1D1D17;
+  --card-foreground: #F3F1E6;
+  --popover: #1D1D17;
+  --popover-foreground: #F3F1E6;
+  --primary: #F3F1E6;
+  --primary-foreground: #141410;
+  --secondary: #26261F;
+  --secondary-foreground: #F3F1E6;
+  --muted: #26261F;
+  --muted-foreground: #A2A08F;
+  --accent: #C9E22E;
+  --accent-foreground: #141410;
+  --destructive: #E8603A;
+  --border: #30302A;
+  --input: #30302A;
+  --ring: #C9E22E;
+  --chart-1: #C9E22E;
+  --chart-2: #A3B824;
+  --chart-3: #7A8A1C;
+  --chart-4: #4F5A14;
+  --chart-5: #F3F1E6;
+  --sidebar: #1D1D17;
+  --sidebar-foreground: #F3F1E6;
+  --sidebar-primary: #F3F1E6;
+  --sidebar-primary-foreground: #141410;
+  --sidebar-accent: #26261F;
+  --sidebar-accent-foreground: #F3F1E6;
+  --sidebar-border: #30302A;
+  --sidebar-ring: #C9E22E;
 }
 
 @layer base {
@@ -129,21 +129,6 @@
     @apply font-sans;
   }
 }
-@keyframes cursor-blink {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
-}
-
-.terminal-cursor {
-  display: inline-block;
-  width: 0.55em;
-  height: 0.9em;
-  margin-left: 0.15em;
-  vertical-align: -0.05em;
-  background: var(--primary);
-  animation: cursor-blink 1.1s steps(1) infinite;
-}
-
 @keyframes rise-in {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: none; }
@@ -156,5 +141,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .terminal-cursor, .reveal { animation: none; }
+  .reveal { animation: none; }
+}
+
+/* 기술 이름 강조 — 라임 형광 밑줄 (DESIGN.md 3) */
+.mark-lime {
+  background-image: linear-gradient(transparent 58%, var(--accent) 58%, var(--accent) 92%, transparent 92%);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0 0.08em;
 }

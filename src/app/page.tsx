@@ -38,7 +38,6 @@ const exampleSkills = [
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <h2 className="text-2xl font-bold tracking-tight md:text-4xl">
-      <span className="text-primary">&gt; </span>
       {children}
     </h2>
   );
@@ -118,9 +117,7 @@ export default function Home() {
             <Badge variant="outline">지금 검증 중인 아이디어예요</Badge>
           </div>
           <h1 className="text-4xl leading-tight font-extrabold tracking-tight md:text-6xl">
-            <span className="text-primary">&gt; </span>
             오늘 배운 주짓수, 잊지 않게 해줄게요
-            <span className="terminal-cursor" aria-hidden />
           </h1>
           <p className="max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
             기술 이름을 몰라도 돼요. 수업에서 배운 걸 말하면 롤링스탯이 이름과 세팅 과정을 찾아
