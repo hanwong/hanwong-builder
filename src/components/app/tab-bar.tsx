@@ -15,6 +15,7 @@ const tabs = [
 
 export function TabBar() {
   const pathname = usePathname();
+  if (pathname === "/app/login") return null; // 로그인 화면은 탭 없이 카드 하나만
   return (
     <nav
       aria-label="주요 메뉴"
