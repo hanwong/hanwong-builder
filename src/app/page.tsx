@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 const pains = [
   "배운 기술의 이름과 순서를 다음 주면 잊어요",
   "스파링에서 막힌 게 쌓이지 않아요",
-  "일지 앱은 빈 칸만 주고, 결제 안 하면 해 볼 게 없어요",
+  "일지 앱은 빈 칸만 주고, 체험이 끝나면 기록에도 제한이 걸려요",
 ];
 
 const steps = [
