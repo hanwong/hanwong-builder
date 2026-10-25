@@ -26,3 +26,5 @@
 
 ## D-13 (2026-10-26) 세팅 과정 초안은 어떻게 만드나(Claude 키 없음) → **스크립트 대신 Claude 가 이 대화에서 직접 40개를 써서 `data/techniques.json` 에 넣는다.** 화이트 벨트 눈높이 · 한 줄에 동작 하나 · 4줄. 초안이므로 `draft: true`(앱에서 숨김) 유지, 검수는 T-01c 에서 본인이 / 본인 승인. 키 발급(T-00)은 매칭 기능(T-06) 때 필요 / 영향: T-01b 완료, T-00 은 T-06 전으로 미룸
 
+## D-14 (2026-10-26) 기술 라이브러리의 바탕 자료와 쓰는 방식 → **공개 자료 2개를 "무엇을 넣을지 · 어느 디테일이 중요한지" 확인하는 데만 쓰고, 세팅 과정 문장은 전부 우리 말로 새로 쓴다.** ① BJJ Commons(ctrl-malacan/bjj-commons, CC BY-SA 4.0) — 포지션별 기술 설명, 원문은 `data/reference/bjj-commons/` 에 보관 ② BJJGraph(diogoseca/bjjgraph, PolyForm Noncommercial) — 기술 이름 · 기(gi) 기준 시도 빈도로 흔한 기술 선별, 이름 목록만 보관. daveyarwood/bjj-graph 는 호신술 커리큘럼이라 제외. 결과: 포지션 9개(터틀 추가) · 기술 87개, 전부 `draft: true`(검수 전). 기술마다 `source` 에 참고 위치 표기 / 본인 지시("우리만의 라이브러리"). 문장을 옮기지 않으므로 CC BY-SA 공유 의무 · 비상업 제한을 피하고, 출처는 그래도 적는다 / 영향: T-01a/b 결과 확장, DB positions 9, T-01c 검수 범위 87개(M1 최소 20개는 그대로)
+

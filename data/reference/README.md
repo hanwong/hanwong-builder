@@ -5,11 +5,14 @@
 |---|---|---|---|
 | **BJJ Commons** — github.com/ctrl-malacan/bjj-commons | 포지션 10장(클로즈드 가드 · 하프 아래/위 · 오픈 가드 · 사이드 · 마운트 · 백 · 프론트 헤드락 · 터틀 · 기초) + 서브미션 모음 + 체인 12개. **기술마다 세팅 과정이 문장으로 자세히** 적혀 있음(영어, 노기 중심, 약 21만 자). 초보자용으로 쓰였고 2026-08 까지 갱신 | **CC BY-SA 4.0** — 출처 표기 + **같은 조건으로 공유** | ✓ 읽고 참고 · 번역 · 요약 가능. 단 여기서 **가져다 만든 세팅 과정은 우리도 CC BY-SA 로 공개**해야 함(아래 결정 필요). 이 폴더 `bjj-commons/` 에 원문 복사해 둠 |
 | **BJJGraph** — github.com/diogoseca/bjjgraph · bjjgraph.org | 포지션 82 · 전환 1,025 · 서브미션 66 의 이름 · 설명 · 확률. 사이트에서 무료로 봄 | **PolyForm Noncommercial** — 상업적 이용 금지 | △ **이름 대조 · 빠진 기술 찾기에만**. 설명 문장을 가져오면 안 됨(우리는 나중에 돈 받을 계획). 이름 목록만 `bjjgraph-names.txt` 에 |
-| **bjj-graph** — github.com/daveyarwood/bjj-graph | 포지션 23 · 기술 이름(그레이시 호신술 기반), 세팅 과정 없음 | EPL-2.0 | △ 이름 참고. 정리는 `../bjj-graph-reference.md` |
 | grapple-flows/bjj-data | 체급 · 룰별 허용 기술 · 벨트 요건 (기술 설명 없음) | MIT / CC BY 4.0 | ✗ 지금은 필요 없음 |
 | Wikipedia "List of Brazilian jiu-jitsu techniques" | 이름 목록 | CC BY-SA | △ 이름 참고 |
 
-## 어떻게 쓰면 되나 (제안)
+## 어떻게 썼나 (2026-10-26, D-14)
+- 두 자료로 "흔한 기술"을 골라 **포지션 9 · 기술 87개** 라이브러리를 만들었다(`data/techniques.json`). 세팅 과정은 전부 우리 말로 새로 썼고, 기술마다 `source` 에 참고 위치(예: "BJJ Commons §4.2 · BJJGraph")를 적었다.
+- daveyarwood/bjj-graph 는 호신술 커리큘럼이라 참고에서 뺐다.
+
+## 검수할 때 (제안)
 1. **이름 · 별칭 검수**: `bjjgraph-names.txt`(이름만) 와 BJJ Commons 제목을 보면서 우리 52개의 영문 이름이 맞는지, 빠진 흔한 기술이 있는지 본다.
 2. **세팅 과정 검수**: 우리 초안(Claude 가 쓴 4줄)과 BJJ Commons 의 해당 기술 단락을 나란히 읽고 틀린 순서 · 빠진 디테일을 고친다. 예: 시저 스윕 → `bjj-commons/positions/02-closed-guard.md` "The Scissor Sweep".
 3. **그대로 번역해서 넣을지**는 라이선스 결정이 필요하다(CC BY-SA 면 우리 기술 JSON 도 같은 라이선스로 공개). 참고만 하고 **본인 말로 다시 쓰면** 그 의무는 없다.
