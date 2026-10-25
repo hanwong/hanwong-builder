@@ -9,7 +9,7 @@
 | Wikipedia "List of Brazilian jiu-jitsu techniques" | 이름 목록 | CC BY-SA | △ 이름 참고 |
 
 ## 어떻게 썼나 (2026-10-26, D-14)
-- 두 자료로 "흔한 기술"을 골라 **포지션 9 · 기술 87개** 라이브러리를 만들었다(`data/techniques.json`). 세팅 과정은 전부 우리 말로 새로 썼고, 기술마다 `source` 에 참고 위치(예: "BJJ Commons §4.2 · BJJGraph")를 적었다.
+- 두 자료로 **포지션 19 · 기술 533개** 라이브러리를 만들었다(`data/techniques.json`, D-15). BJJGraph 주류 포지션의 기술 이름을 거의 다 넣고, 레그락 · 10th planet 계열 · 특수 라펠 가드는 뺐다. 세팅 과정은 전부 우리 말로 새로 썼고, 기술마다 `source` 에 참고 위치(예: "BJJ Commons §4.2 · BJJGraph")를 적었다.
 - daveyarwood/bjj-graph 는 호신술 커리큘럼이라 참고에서 뺐다.
 
 ## 검수할 때 (제안)
