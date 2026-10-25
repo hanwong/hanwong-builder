@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "what": "Re:Re:롤 기술 목록 원본. 여기만 고치고 `node scripts/techniques-to-sql.mjs > supabase/migrations/<새 파일>.sql` 로 DB 에 반영한다.",
+    "fields": "position = positions.slug · slug = 고유 영문 키(바꾸지 말 것) · aliases = 한국 체육관에서 부르는 다른 이름 · steps = 세팅 과정 3~5줄(T-01b 에서 AI 초안, T-01c 에서 검수) · draft = true 면 검수 전(앱에서 숨김)",
+    "order": "스탠딩 → 클로즈드 가드 → 오픈 가드 → 하프가드 → 패스 → 사이드 컨트롤 → 마운트 → 백 컨트롤. 화이트~블루 초반 수업에서 자주 듣는 것 위주",
+    "source": "본인 지식 · 일반적인 체육관 커리큘럼 (2026-10-26, T-01a). 세팅 과정 10개는 3단계 시드 초안"
+  },
+  "techniques": [
+    { "position": "standing", "slug": "breakfall", "name_ko": "낙법", "name_en": "Breakfall", "aliases": ["뒤낙법", "옆낙법", "우케미"], "steps": [], "draft": true, "sort": 1 },
+    { "position": "standing", "slug": "pulling-guard", "name_ko": "가드 풀링", "name_en": "Pulling Guard", "aliases": ["풀 가드", "가드 당기기"], "steps": [], "draft": true, "sort": 2 },
+    { "position": "standing", "slug": "double-leg-takedown", "name_ko": "더블 레그 테이크다운", "name_en": "Double Leg Takedown", "aliases": ["더블렉", "더블 레그"], "steps": [], "draft": true, "sort": 3 },
+    { "position": "standing", "slug": "single-leg-takedown", "name_ko": "싱글 레그 테이크다운", "name_en": "Single Leg Takedown", "aliases": ["싱글렉", "싱글 레그"], "steps": [], "draft": true, "sort": 4 },
+    { "position": "standing", "slug": "o-soto-gari", "name_ko": "오소토가리", "name_en": "O Soto Gari", "aliases": ["오소토", "밭다리 후리기"], "steps": [], "draft": true, "sort": 5 },
+    { "position": "standing", "slug": "seoi-nage", "name_ko": "세오이나게", "name_en": "Seoi Nage", "aliases": ["업어치기", "세오이"], "steps": [], "draft": true, "sort": 6 },
+
+    { "position": "closed-guard", "slug": "closed-guard-armbar", "name_ko": "클로즈드 가드 암바", "name_en": "Armbar from Closed Guard", "aliases": ["암바", "주짓수 암바"], "steps": ["상대 한쪽 팔을 몸 안쪽으로 당겨 컨트롤한다", "같은 쪽 발을 상대 골반에 밟고 엉덩이를 돌려 각도를 만든다", "반대 다리를 상대 등 위로 올리고 머리를 눌러 자세를 낮춘다", "다리를 교차하거나 모아 조이고 엉덩이를 들어 팔꿈치를 편다"], "draft": true, "sort": 1 },
+    { "position": "closed-guard", "slug": "triangle-choke", "name_ko": "트라이앵글 초크", "name_en": "Triangle Choke", "aliases": ["트라이앵글", "삼각 조르기"], "steps": ["상대 한 팔은 안에, 한 팔은 밖에 두게 만든다", "안쪽 팔 쪽 다리를 상대 목 뒤로 올리고 각도를 튼다", "그 발목을 반대 무릎 뒤에 걸어 삼각형을 만든다", "상대 머리를 당기며 다리를 조인다"], "draft": true, "sort": 2 },
+    { "position": "closed-guard", "slug": "scissor-sweep", "name_ko": "시저 스윕", "name_en": "Scissor Sweep", "aliases": ["가위 스윕"], "steps": ["깃과 소매를 잡고 상대 상체를 당긴다", "한 무릎을 상대 배 앞에 가로로 대고 반대 다리는 바닥 가까이 편다", "가로 다리는 밀고 아래 다리는 걸어 가위처럼 돌린다", "위로 올라와 마운트를 잡는다"], "draft": true, "sort": 3 },
+    { "position": "closed-guard", "slug": "hip-bump-sweep", "name_ko": "힙 범프 스윕", "name_en": "Hip Bump Sweep", "aliases": ["시트업 스윕", "힙범프"], "steps": [], "draft": true, "sort": 4 },
+    { "position": "closed-guard", "slug": "flower-sweep", "name_ko": "플라워 스윕", "name_en": "Flower Sweep", "aliases": ["펜듈럼 스윕", "플라워"], "steps": [], "draft": true, "sort": 5 },
+    { "position": "closed-guard", "slug": "cross-collar-choke-guard", "name_ko": "크로스 칼라 초크 (가드)", "name_en": "Cross Collar Choke from Closed Guard", "aliases": ["크로스 초크", "십자 조르기", "칼라 초크"], "steps": [], "draft": true, "sort": 6 },
+    { "position": "closed-guard", "slug": "kimura-guard", "name_ko": "기무라 (가드)", "name_en": "Kimura from Closed Guard", "aliases": ["키무라", "기무라 락"], "steps": [], "draft": true, "sort": 7 },
+    { "position": "closed-guard", "slug": "omoplata", "name_ko": "오모플라타", "name_en": "Omoplata", "aliases": ["오모플라따"], "steps": [], "draft": true, "sort": 8 },
+
+    { "position": "open-guard", "slug": "de-la-riva-guard", "name_ko": "데라히바 가드", "name_en": "De La Riva Guard", "aliases": ["DLR", "데라"], "steps": ["상대 한쪽 다리 바깥으로 내 다리를 감는다", "같은 쪽 발목(또는 바지 끝)을 잡는다", "반대 발은 상대 허벅지나 골반에 둔다", "반대 손으로 소매나 깃을 잡아 상체를 컨트롤한다"], "draft": true, "sort": 1 },
+    { "position": "open-guard", "slug": "spider-guard", "name_ko": "스파이더 가드", "name_en": "Spider Guard", "aliases": ["스파이더"], "steps": [], "draft": true, "sort": 2 },
+    { "position": "open-guard", "slug": "lasso-guard", "name_ko": "라쏘 가드", "name_en": "Lasso Guard", "aliases": ["라소 가드", "라쏘"], "steps": [], "draft": true, "sort": 3 },
+    { "position": "open-guard", "slug": "butterfly-guard", "name_ko": "버터플라이 가드", "name_en": "Butterfly Guard", "aliases": ["버터플라이", "나비 가드"], "steps": [], "draft": true, "sort": 4 },
+    { "position": "open-guard", "slug": "butterfly-sweep", "name_ko": "버터플라이 스윕", "name_en": "Butterfly Sweep", "aliases": ["훅 스윕"], "steps": [], "draft": true, "sort": 5 },
+    { "position": "open-guard", "slug": "tripod-sweep", "name_ko": "트라이포드 스윕", "name_en": "Tripod Sweep", "aliases": ["삼각대 스윕"], "steps": [], "draft": true, "sort": 6 },
+
+    { "position": "half-guard", "slug": "half-guard-underhook-sweep", "name_ko": "하프가드 언더훅 스윕", "name_en": "Half Guard Underhook Sweep", "aliases": ["언더훅 스윕", "올드 스쿨 스윕"], "steps": ["하프가드에서 언더훅을 잡고 옆으로 돌아 눕는다(무릎 방패 대신 밀착)", "머리를 상대 겨드랑이 아래로 넣어 자세를 낮춘다", "상대 발목을 잡거나 다리를 걸어 중심을 뺏는다", "앞으로 밀며 올라와 탑으로 간다"], "draft": true, "sort": 1 },
+    { "position": "half-guard", "slug": "knee-shield-half-guard", "name_ko": "니 쉴드 하프가드", "name_en": "Knee Shield Half Guard", "aliases": ["제트 가드", "Z 가드", "니실드"], "steps": [], "draft": true, "sort": 2 },
+    { "position": "half-guard", "slug": "half-guard-recovery", "name_ko": "하프가드에서 가드 회복", "name_en": "Half Guard to Full Guard Recovery", "aliases": ["가드 리커버리", "풀 가드 복귀"], "steps": [], "draft": true, "sort": 3 },
+    { "position": "half-guard", "slug": "deep-half-guard", "name_ko": "딥 하프가드", "name_en": "Deep Half Guard", "aliases": ["딥 하프"], "steps": [], "draft": true, "sort": 4 },
+    { "position": "half-guard", "slug": "half-guard-back-take", "name_ko": "하프가드 백 테이크", "name_en": "Back Take from Half Guard", "aliases": ["하프에서 백 잡기"], "steps": [], "draft": true, "sort": 5 },
+
+    { "position": "passing", "slug": "standing-guard-break", "name_ko": "스탠딩 가드 브레이크", "name_en": "Standing Closed Guard Break", "aliases": ["가드 열기", "가드 오픈"], "steps": [], "draft": true, "sort": 1 },
+    { "position": "passing", "slug": "knee-slice-pass", "name_ko": "니슬라이스 패스", "name_en": "Knee Slice Pass", "aliases": ["니컷", "니스루", "knee cut"], "steps": ["상대 다리 사이에서 한 무릎을 허벅지 위로 올린다", "같은 쪽 언더훅 또는 깃을 잡아 상체를 눌러 둔다", "무릎을 바닥으로 미끄러뜨리며 다리를 빼낸다", "가슴을 붙여 사이드 컨트롤로 자리 잡는다"], "draft": true, "sort": 2 },
+    { "position": "passing", "slug": "toreando-pass", "name_ko": "토레안도 패스", "name_en": "Toreando Pass", "aliases": ["불 패스", "토레아도"], "steps": ["상대 무릎 뒤 또는 바지 끝을 양손으로 잡는다", "다리를 한쪽으로 밀어 넘기며 반대쪽으로 돈다", "상대 엉덩이를 지나 가슴으로 누른다", "사이드 컨트롤로 자리 잡는다"], "draft": true, "sort": 3 },
+    { "position": "passing", "slug": "double-under-pass", "name_ko": "더블 언더 패스", "name_en": "Double Under Pass", "aliases": ["스택 패스", "더블언더"], "steps": [], "draft": true, "sort": 4 },
+    { "position": "passing", "slug": "over-under-pass", "name_ko": "오버 언더 패스", "name_en": "Over Under Pass", "aliases": ["오버언더"], "steps": [], "draft": true, "sort": 5 },
+    { "position": "passing", "slug": "leg-drag", "name_ko": "레그 드래그", "name_en": "Leg Drag Pass", "aliases": ["렉 드래그", "다리 끌기"], "steps": [], "draft": true, "sort": 6 },
+    { "position": "passing", "slug": "half-guard-pass", "name_ko": "하프가드 패스", "name_en": "Half Guard Pass (Cross Face & Underhook)", "aliases": ["하프 패스", "크로스페이스 패스"], "steps": [], "draft": true, "sort": 7 },
+
+    { "position": "side-control", "slug": "side-control-maintain", "name_ko": "사이드 컨트롤 유지", "name_en": "Side Control (Cross Face & Underhook)", "aliases": ["크로스페이스", "사이드 잡기"], "steps": [], "draft": true, "sort": 1 },
+    { "position": "side-control", "slug": "side-control-escape", "name_ko": "사이드 이스케이프", "name_en": "Side Control Escape (Hip Escape)", "aliases": ["힙 이스케이프", "쉬림프"], "steps": ["팔꿈치와 손으로 프레임을 만들어 상대 목과 골반에 댄다", "발로 밀며 엉덩이를 빼서 공간을 만든다", "가까운 무릎을 상대와 나 사이로 넣는다", "가드로 돌아오거나 돌아서 일어난다"], "draft": true, "sort": 2 },
+    { "position": "side-control", "slug": "side-to-mount", "name_ko": "사이드에서 마운트 가기", "name_en": "Side Control to Mount", "aliases": ["니 슬라이드 마운트", "마운트 전환"], "steps": [], "draft": true, "sort": 3 },
+    { "position": "side-control", "slug": "knee-on-belly", "name_ko": "니 온 밸리", "name_en": "Knee on Belly", "aliases": ["니온벨리", "무릎 누르기"], "steps": [], "draft": true, "sort": 4 },
+    { "position": "side-control", "slug": "americana-side", "name_ko": "아메리카나 (사이드)", "name_en": "Americana from Side Control", "aliases": ["키락", "아메리카나"], "steps": [], "draft": true, "sort": 5 },
+    { "position": "side-control", "slug": "kimura-side", "name_ko": "기무라 (사이드)", "name_en": "Kimura from Side Control", "aliases": ["사이드 키무라"], "steps": [], "draft": true, "sort": 6 },
+    { "position": "side-control", "slug": "arm-triangle", "name_ko": "암 트라이앵글", "name_en": "Arm Triangle (Kata Gatame)", "aliases": ["헤드 앤 암 초크", "가타가타메"], "steps": [], "draft": true, "sort": 7 },
+
+    { "position": "mount", "slug": "mount-maintain", "name_ko": "마운트 유지", "name_en": "Mount Maintenance (Grapevine)", "aliases": ["그레이프바인", "마운트 잡기"], "steps": [], "draft": true, "sort": 1 },
+    { "position": "mount", "slug": "mount-escape-upa", "name_ko": "마운트 이스케이프 (업파)", "name_en": "Mount Escape (Upa / Bridge and Roll)", "aliases": ["업파", "브릿지 앤 롤"], "steps": ["상대 한 팔과 같은 쪽 발을 묶는다(트랩)", "발을 엉덩이 가까이 당겨 세운다", "묶은 쪽으로 다리를 뻗으며 브릿지한다", "굴러 넘겨 가드 안에 자리 잡는다"], "draft": true, "sort": 2 },
+    { "position": "mount", "slug": "mount-escape-elbow", "name_ko": "마운트 이스케이프 (엘보)", "name_en": "Elbow Escape from Mount", "aliases": ["니 투 엘보", "쉬림프 이스케이프"], "steps": [], "draft": true, "sort": 3 },
+    { "position": "mount", "slug": "mount-armbar", "name_ko": "마운트 암바", "name_en": "Armbar from Mount", "aliases": ["마운트에서 암바"], "steps": [], "draft": true, "sort": 4 },
+    { "position": "mount", "slug": "mount-cross-collar-choke", "name_ko": "크로스 칼라 초크 (마운트)", "name_en": "Cross Collar Choke from Mount", "aliases": ["마운트 크로스 초크"], "steps": [], "draft": true, "sort": 5 },
+    { "position": "mount", "slug": "mount-americana", "name_ko": "아메리카나 (마운트)", "name_en": "Americana from Mount", "aliases": ["마운트 키락"], "steps": [], "draft": true, "sort": 6 },
+
+    { "position": "back-control", "slug": "back-control-maintain", "name_ko": "백 컨트롤 유지", "name_en": "Back Control (Seatbelt & Hooks)", "aliases": ["시트벨트", "훅 넣기", "백 잡기"], "steps": [], "draft": true, "sort": 1 },
+    { "position": "back-control", "slug": "rear-naked-choke", "name_ko": "리어 네이키드 초크", "name_en": "Rear Naked Choke", "aliases": ["RNC", "백 초크"], "steps": ["양 훅을 넣고 가슴을 상대 등에 붙인다", "한 팔을 상대 목 앞으로 넣어 팔꿈치가 턱 아래에 오게 한다", "그 손을 반대 팔 이두에 걸고 반대 손은 상대 뒤통수에 둔다", "가슴을 펴며 팔꿈치를 모아 조인다"], "draft": true, "sort": 2 },
+    { "position": "back-control", "slug": "bow-and-arrow-choke", "name_ko": "보우 앤 애로우 초크", "name_en": "Bow and Arrow Choke", "aliases": ["활 조르기", "보우앤애로우"], "steps": [], "draft": true, "sort": 3 },
+    { "position": "back-control", "slug": "back-escape", "name_ko": "백 이스케이프", "name_en": "Back Escape", "aliases": ["백 빠져나오기"], "steps": [], "draft": true, "sort": 4 },
+    { "position": "back-control", "slug": "turtle-back-take", "name_ko": "터틀에서 백 테이크", "name_en": "Back Take from Turtle", "aliases": ["터틀 백", "거북이에서 백"], "steps": [], "draft": true, "sort": 5 }
+  ]
+}
