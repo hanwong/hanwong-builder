@@ -119,12 +119,13 @@ export default function Home() {
           </div>
           <h1 className="text-4xl leading-tight font-extrabold tracking-tight md:text-6xl">
             <span className="text-primary">&gt; </span>
-            오늘 배운 주짓수, 말하면 스킬트리에 쌓여요
+            오늘 배운 주짓수, 잊지 않게 해줄게요
             <span className="terminal-cursor" aria-hidden />
           </h1>
           <p className="max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
             기술 이름을 몰라도 돼요. 수업에서 배운 걸 말하면 롤링스탯이 이름과 세팅 과정을 찾아
-            스킬트리에 꽂아 줘요. 스파링에서 막힌 것도 모아서, 내가 어디가 비었는지 보여 줘요.
+            스킬트리에 꽂고, 잊을 때쯤 복습 카드로 다시 물어봐요. 스파링에서 막힌 것도 모아서,
+            내가 어디가 비었는지 보여 줘요.
           </p>
           <StartButton className="h-11 px-5 text-base" />
         </div>
