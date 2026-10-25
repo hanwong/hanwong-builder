@@ -1,0 +1,1179 @@
+# diogoseca/bjjgraph 의 포지션 · 전환 · 서브미션 이름만 (PolyForm Noncommercial — 이름 대조용, 설명은 가져오지 않음)
+POSITIONS
+Anaconda Control
+Aoki Lock Control
+Armbar Control
+Ashi Garami
+Back Control
+Body Lock
+Buggy Choke
+Butterfly Guard
+Clamp Guard
+Clinch
+Closed Guard
+Collar Sleeve Guard
+Combat Base
+Crab Ride
+Cross Body Ride
+Crucifix
+Darce Control
+De La Riva Guard
+Dead Orchard Control
+Dogfight Position
+Double Jump
+Double Sleeve Guard
+Double Unders
+Estima Lock Control
+Feet on Hips Guard
+Front Headlock
+Gift Wrap
+Gogoplata Control
+Grasshopper Guard
+Guillotine Control
+Half Guard
+Harness
+Headquarters Position
+Hindulotine
+Inside Sankaku
+Inverted Guard
+Jailbreak
+K-Guard
+Kimura Trap
+Knee on Belly
+Kneebar Control
+Lapel Guard
+Lasso Guard
+Leg Drag Control
+Leg Entanglement
+Leg Hook
+Leg Knot
+Leg Weave
+Matrix
+Mount
+North-South
+Omoplata Control
+Open Guard
+Overhook Control
+Overhook Guard
+Piranha Guard
+Quarter Guard
+Reverse Mount
+Ringworm Guard
+Rodeo Ride
+Rubber Guard
+Russian Cowboy
+Seated Guard
+Shin-to-Shin Guard
+Shoulder of Justice
+Side Control
+Spider Guard
+Squid Guard
+Standing Guard
+Standing Position
+Standing Rear Clinch
+Straight Ankle Lock Control
+Toe Hold Control
+Triangle Control
+Triangle Escape Position
+Turtle
+Twister Control
+Vaporizer
+Williams Guard
+Worm Guard
+X-Guard
+Z-Guard
+
+TRANSITIONS
+100% Sweep
+3-4 Mount to S Mount
+3-4 Mount to Technical Mount
+50-50 Entry
+50-50 Entry from Standing
+50-50 Guard to Backside 50-50
+50-50 Guard to Inside Ashi
+50-50 Guard to Outside Ashi
+50-50 Guard to Single Leg X-Guard
+50-50 Pass
+Advance to Chill Dog
+Anaconda Choke
+Anaconda Control to Dead Orchard Control
+Anaconda Grip Break to Front Headlock
+Anaconda Setup
+Anaconda from Turtle
+Anaconda to Side Control
+Angle Change Escape
+Ankle Lock Escape to Standing
+Ankle Lock Finish
+Ankle Pick
+Ankle Pick Sweep
+Aoki Lock
+Aoki Lock to Back Control
+Aoki Lock to Crucifix
+Arm Drag
+Arm Drag Escape
+Arm Drag Sweep
+Arm Drag from Clinch
+Arm Drag from Clinch Bottom
+Arm Drag to Back
+Arm Extraction
+Arm Extraction and Pass
+Arm Extraction from Clamp Guard
+Arm Extraction to Turtle
+Arm Recovery from Crucifix
+Arm Recovery to Guard
+Arm Triangle Setup
+Arm Triangle Transition
+Arm Triangle from Front Headlock
+Arm Triangle from Top
+Arm in Guillotine Variation
+Armbar Defense
+Armbar Setup from Double Sleeve
+Armbar from Back Transition
+Armbar from Clamp Guard
+Armbar from New York
+Armbar from North-South
+Armbar from Reverse Mount
+Armbar on Free Arm
+Ashi Entry from Leg Entanglement
+Ashi Garami Escape
+Ashi Garami Maintenance
+Ashi Garami to Leg Entanglement
+Ashi Garami to Toe Hold Control
+Back Control Maintenance
+Back Control to Cross Body Ride
+Back Control to Crucifix
+Back Control to Reverse Half Guard
+Back Control to Seat Belt Control Back
+Back Door Escape
+Back Door Escape from Half Guard
+Back Step
+Back Step Pass
+Back Take
+Back Take from 50-50
+Back Take from Anaconda
+Back Take from Armbar
+Back Take from Ashi
+Back Take from Bottom
+Back Take from Kesa Gatame
+Back Take from Lockdown Defense
+Back Take from Top
+Back Turn from Technical Mount
+Backside 50-50 Entry from Ashi
+Backstep Around Worm Guard
+Backstep Pass from Reverse X-Guard
+Backstep from De La Riva
+Backstep from Deep Half
+Backstep from K-Guard
+Backstep from Leg Knot
+Backstep from Leg Weave
+Backstep from Reverse Half
+Backstep from Single Leg X
+Backstep from Worm Guard
+Balloon Sweep
+Baratoplata Setup
+Base Attack to Sweep
+Basic Butterfly Sweep
+Belly Down Armbar Transition
+Berimbolo Entry
+Body Lock Pass
+Body Lock Takedown
+Body Lock Takedown from Clinch
+Body Lock to Standing
+Body Triangle Escape to Half Guard
+Body Triangle Escape to Side Control
+Body Triangle Lock
+Body Triangle Squeeze
+Bodylock Pass from Seated
+Bolo Sweep
+Boot Defense from Toe Hold
+Boot Scoot Escape from Saddle
+Bow and Arrow Choke Setup
+Bow and Arrow Setup from Standing Back
+Break Clinch
+Break Overhook Guard
+Bridge Defense from Mounted Triangle
+Bridge Escape from 3-4 Mount
+Bridge Escape from Kesa Gatame
+Bridge Escape from Kuzure Kesa Gatame
+Bridge Escape from Modified Mount
+Bridge Escape from Mounted Crucifix
+Bridge Escape from S Mount
+Bridge Escape from Ushiro Kesa Gatame
+Bridge and Roll
+Bridge and Turn to Turtle
+Bridge from Kesa Gatame
+Bridge from Kuzure Kesa Gatame
+Bridge from Reverse Mount
+Bridge from Technical Mount
+Bridge from Ushiro Kesa Gatame
+Bridge to Mount from High Mount
+Buggy Choke from Bottom Side Control
+Buggy Choke to Front Headlock
+Buggy Choke to North-South
+Buggy Choke to Side Control
+Bull Pass from Collar Sleeve
+Bull Pass from Seated
+Butterfly Guard Pull
+Butterfly Guard to Butterfly Half Guard
+Butterfly Guard to Butterfly Hook Control
+Butterfly Guard to Half Butterfly
+Butterfly Guard to Williams Guard
+Butterfly Guard to X-Guard
+Butterfly Half Guard Sweep
+Butterfly Hook Recovery
+Butterfly Hook Sweep
+Butterfly Pass
+Butterfly Smash
+Butterfly Sweep
+Butterfly Sweep with Guillotine
+Carni to Gogoplata Setup
+Cartwheel Escape from Omoplata
+Cartwheel Pass
+Chair Sit to Back
+Clear leg and transition to X-Guard
+Clock Choke
+Closed Guard to Hindulotine
+Closed Guard to Omoplata
+Closed Guard to Overhook Guard
+Closed Guard to Triangle
+Collar Drag
+Collar Drag from Open Guard
+Collar Drag from Worm Guard
+Collar Sleeve Sweep
+Collar Sleeve to De La Riva
+Collar Sleeve to Spider Guard
+Combat Base to Headquarters
+Complete Leg Weave Pass
+Complete Pass from Flattened Half
+Complete Pass from Quarter
+Complete Triangle Escape
+Consolidate Mount
+Controlled Descent
+Counter Ashi Entry
+Counter Entangle from Cross Ashi
+Counter Entangle to 50-50 from Ashi
+Counter Entry to Opponent's Leg
+Counter Leg Attack
+Counter Leg Hook
+Counter Roll from Matrix
+Counter Roll to Top
+Counter Rotation from Toe Hold
+Counter Sweep
+Counter Sweep from Leg Entanglement
+Counter Sweep from Outside Ashi
+Counter Throw from Standing Rear Clinch
+Counter from Ankle Lock
+Counter from Estima Lock
+Counter heel hook
+Counter-entangle to 50-50 Guard
+Crab Ride Escape to Guard
+Crab Ride to Back
+Crackhead Control Entry
+Crackhead Control to Carni
+Crackhead Control to Mission Control
+Crackhead Control to New York
+Cross Ashi Transition
+Cross Ashi to 50-50
+Cross Body to Back Control
+Cross Body to Side Control
+Cross Face Pass from Flattened Half
+Crossface Pass
+Crossface from Dogfight
+Crossface from Old School
+Crossface to Combat Base
+Crucifix Choke Defense
+Crucifix Maintenance
+Crucifix Transition
+Crucifix from Turtle
+Crucifix to Mount
+Darce Control Maintenance
+Darce Setup
+Darce from Lockdown Counter
+Darce from Turtle
+Darce to Anaconda Switch
+De La Riva Sweep
+De La Riva to Grasshopper Guard
+De La Riva to Inverted Guard
+De La Riva to Lapel Guard
+De La Riva to X-Guard Transition
+Dead Orchard to Darce Switch
+Deashi Harai
+Deep Half Entry
+Deep Half Entry from Flattened
+Deep Half Sweep
+Deep Half to X-Guard
+Defend Old School Sweep
+Defend Vaporizer Sweep
+Defense from Standing Rear Clinch
+Defensive Roll
+Distance Creation to Reset
+Dogfight Position
+Dogfight Sweep
+Double Jump to Mount
+Double Jump to Side Control
+Double Leg Entry
+Double Leg Finish
+Double Leg Setup
+Double Sleeve Sweep
+Double Sleeve to De La Riva
+Double Sleeve to Lasso
+Double Sleeve to Spider
+Double Sleeve to Spider Guard
+Double Under Pass
+Double Underhook Pass
+Duck Under from Clinch
+Elbow Escape from 3-4 Mount
+Elbow Escape from Back
+Elbow Escape from Flattened Half
+Elbow Escape from Mount
+Elbow Escape to Guard
+Elbow Escape to Remove Hooks
+Electric Chair Entry from Deep Half
+Electric Chair Transition
+Elevation Sweep to Mount
+Elevator Sweep
+Escape Body Lock
+Escape Chill Dog
+Escape Dead Orchard Control
+Escape Double Jump
+Escape Kesa Gatame
+Escape Kuzure Kesa Gatame
+Escape Leg Hook
+Escape Matrix Position
+Escape Reverse Half Guard
+Escape Reverse Mount
+Escape Seat Belt Control
+Escape Shoulder of Justice
+Escape Technical Mount to Half Guard
+Escape Twister Side Control
+Escape Ushiro Kesa Gatame
+Escape Vaporizer
+Escape Z-Lock Half Guard
+Escape Zombie Control
+Escape from Crab Ride
+Escape from Cross Body Ride
+Escape from Dead Orchard
+Escape from Rodeo Ride
+Escape from Russian Cowboy
+Escape from Truck
+Escape from Vaporizer
+Estima Lock Counter Roll
+Estima Lock to Ashi Garami
+Estima Lock to Saddle
+Explosive Bridge to Guard Recovery
+Explosive Bridge to Turtle
+Explosive Forward Roll
+Extract leg and establish Single Leg X
+Extract legs and stand up
+Fallback to Inside Ashi-Garami
+Far Side Armbar from KOB
+Feet on Hips Sickle Sweep
+Feet on Hips Tripod Sweep
+Feet on Hips to De La Riva
+Fight to Inside Ashi from Saddle
+Finish Buggy Choke
+Finish from Hindulotine
+Fireman's Carry
+Float Passing
+Flower Sweep
+Follow to Back Control
+Foot Grab Sweep
+Forward Drive Sweep from Dogfight
+Forward Roll
+Forward Roll from Saddle
+Frame Escape from Darce
+Frame Escape from High Mount
+Frame Escape from Kuzure Kesa Gatame
+Frame Escape from Shoulder of Justice
+Frame and Distance Creation
+Frame and Escape Mounted Triangle
+Frame and Extract to Half Guard
+Frame and Posture from Anaconda
+Frame and Shrimp from Knee on Belly
+Frame and Shrimp from S Mount
+Frame and Shrimp to Guard
+Frame and Turn
+Frame from Shoulder of Justice
+Frame from Side Control
+Frame from Twister Side Control
+Frame from Ushiro Kesa Gatame
+Frame to Guard from Kesa Gatame
+Front Headlock to Anaconda
+Front Headlock to Back
+Front Headlock to Darce
+Front Headlock to Guillotine
+Ghost Escape from Side Control
+Gift Wrap
+Gift Wrap Arm Recovery
+Gift Wrap Control
+Gift Wrap Maintenance
+Gift Wrap Transition
+Gift Wrap from Back
+Gift Wrap to Back
+Gift Wrap to Technical Mount
+Gogoplata
+Gogoplata to Armbar
+Granby Roll to Guard
+Granby to Closed Guard
+Grasshopper Sweep
+Grip Break
+Grip Break and Face
+Grip Fight Escape from Rear Triangle
+Grip Strip from Buggy Choke
+Guard Opening Sequence
+Guard Pass from Chill Dog
+Guard Pass from Diamond Guard
+Guard Pass from Leg Entanglement
+Guard Pass from New York Control
+Guard Pass from Standing Guard
+Guard Pass from Williams Guard
+Guard Pull
+Guard Pull from Clinch
+Guard Recovery from Combat Base
+Guard Recovery from Double Sleeve Guard
+Guard Recovery from Double Unders
+Guard Recovery from Guillotine Control
+Guard Recovery from Hindulotine
+Guard Recovery from Inside Ashi-Garami
+Guard Recovery from Jailbreak
+Guard Recovery from Leg Entanglement
+Guard Recovery from Reverse Half Guard
+Guard Recovery from Spider Guard
+Guard Recovery from Squid Guard
+Guard Recovery from Triangle Control
+Guard Recovery from Zombie
+Guillotine Counter
+Guillotine Defense
+Guillotine Escape to Von Flue
+Guillotine Escape via Posture
+Guillotine Setup
+Guillotine from Turtle
+Half Butterfly Sweep
+Half Butterfly to Dogfight
+Half Guard Pass
+Half Guard Recovery
+Half Guard Whizzer Counter
+Half Guard to Back Take
+Half Guard to Double Jump
+Half Guard to Flattened Half Guard
+Half Guard to Jailbreak
+Half Guard to K-Guard
+Half Guard to Kimura Trap
+Half Guard to Leg Hook
+Half Guard to Leg Weave
+Half Guard to Old School
+Half Guard to Pocket Half Guard
+Half Guard to Quarter Guard
+Half Guard to Triangle Escape Position
+Half Guard to X-Guard
+Hand Control to Extract
+Hand Fight from Seat Belt Control
+Hand Fight to Turtle from Back
+Hand Fighting from Back
+Hand Fighting to Remove Collar Grip
+Harai Goshi
+Harness Escape to Half Guard
+Harness to Body Lock
+Head Extraction to Posture
+Headquarters Pass
+Heel Drag Escape
+Heel Grab Sweep
+Heel Hook Defense Escape
+Heel Strip from Ashi Garami
+High Crotch
+High Elbow Guillotine Variation
+High Guard to Rubber Guard
+High Mount Transition
+High Mount to S Mount
+Hindulotine to Anaconda Choke
+Hindulotine to Darce Choke
+Hip Bump Sweep
+Hip Escape from Back Control
+Hip Escape from Cross Body Ride
+Hip Escape from Crucifix
+Hip Escape from Front Headlock
+Hip Escape from Mounted Crucifix
+Hip Escape from Russian Cowboy
+Hip Escape from Side Control
+Hip Escape from Truck
+Hip Escape to Guard
+Hip Escape to Turtle
+Hip Rotation Defense
+Hip Rotation Escape from Electric Chair
+Hitchhiker Escape from Armbar
+Homer Simpson Sweep
+Honey Hole to Saddle
+Hook Leg and Take Back
+Hook Sweep
+Inside Ashi Entry
+Inside Ashi to Outside Ashi
+Inside Ashi-Garami to Cross Ashi
+Inside Ashi-Garami to Honey Hole
+Inside Ashi-Garami to Ushiro Ashi
+Inside Heel Hook from Ushiro
+Inside Position Recovery
+Inside Sankaku Heel Hook
+Inside Sankaku to Saddle
+Inversion Escape
+Inversion Escape from Leg Entanglement
+Inversion from Headquarters
+Inversion to Turtle
+Invert from Reverse Half Guard
+Inverted Lasso Sweep
+Inverted Lasso to Lasso Guard
+Inverted Triangle
+Ippon Seoi Nage
+Jailbreak to Back Take
+Jailbreak to Deep Half Entry
+Jailbreak to Turtle
+Japanese Necktie Setup
+John Wayne Sweep
+Jumping Guard
+K-Guard Sweep
+K-Guard to Single Leg X
+KOB to Mount
+KOB to Side Control
+Kesa Gatame to Kuzure Kesa Gatame
+Kesa Gatame to Mount
+Kesa Gatame to Side Control
+Kesa Gatame to Ushiro Kesa Gatame
+Kimura Counter via Roll
+Kimura Defense
+Kimura Defense Arm Extraction
+Kimura Sweep
+Kimura Switch
+Kimura Trap to Ushiro Kesa Gatame
+Kimura from Back
+Kimura from Crab Ride
+Kimura from Diamond Guard
+Kimura on Trapped Arm
+Kimura to Back Take
+Kiss of the Dragon
+Kiss of the Dragon from RDLR
+Knee Cut from Feet on Hips
+Knee Cut from Headquarters
+Knee Extraction
+Knee Pin from X-Guard
+Knee Shield Half Guard to Z-Guard
+Knee Shield Retention
+Knee Shield from Quarter Guard
+Knee Shield to Closed Guard
+Knee Slice Despite Lapel
+Knee Slice Pass
+Knee Slice from Butterfly Half
+Knee Slice from Closed Guard
+Knee Slice from DLR
+Knee Slice from Deep Half
+Knee Slice from Half
+Knee Slice from Knee Shield
+Knee Slice from Reverse X-Guard
+Knee Slice from Seated Guard
+Knee Slice from Z-Guard
+Knee Slide from Combat Base
+Knee Slide from Flattened Half
+Knee Slide from Jailbreak
+Knee Tap
+Knee Through
+Knee Through from Quarter
+Knee Torque Sweep
+Knee on Belly
+Kneebar
+Kneebar Control Maintenance
+Kneebar Finish
+Kneebar Setup
+Kneebar entry
+Kneebar from Estima Lock
+Kneebar from Grasshopper
+Kneebar from Ushiro
+Kneebar to 50-50 Transition
+Kneebar to Ashi Garami
+Kosoto Gake
+Kosoto Gari
+Kouchi Gari
+Kuzure Kesa Gatame to Kesa Gatame
+Kuzure Kesa Gatame to Mount
+Lapel Clear to Toreando Pass
+Lapel Elevator Sweep
+Lapel Grip Break and Posture Recovery
+Lapel Guard to Piranha Guard
+Lapel Omoplata Entry
+Lapel Strip from Worm Guard
+Lapel Sweep to Back
+Lapel Triangle Setup
+Lapel to De La Riva
+Lapel to Lasso Guard
+Lapel to Spider Guard
+Lasso Guard Backstep Pass
+Lasso Guard Pass
+Lasso Guard Stack Pass
+Lasso Guard to Inverted Lasso Guard
+Lasso Guard to Russian Leg Lasso
+Lasso Sweep
+Leg Drag Counter to Half Guard
+Leg Drag Escape to Closed Guard
+Leg Drag Pass
+Leg Drag Pass to Side Control
+Leg Drag While Clearing Lapel
+Leg Drag from DLR
+Leg Drag from Headquarters
+Leg Drag to Back Take
+Leg Drag to Crucifix
+Leg Drag to Darce Setup
+Leg Drag to Inside Ashi
+Leg Drag to Knee on Belly
+Leg Drag to Mount
+Leg Drag to North-South
+Leg Drag to Technical Mount
+Leg Extraction
+Leg Extraction Escape
+Leg Extraction Escape from Entanglement
+Leg Extraction Pass
+Leg Extraction from Cross Ashi
+Leg Extraction from Inside Ashi
+Leg Extraction from Lapel Wrap
+Leg Extraction from Leg Knot
+Leg Extraction from Truck
+Leg Extraction to Combat Base
+Leg Extraction to Guard
+Leg Hook to Half Guard
+Leg Hook to Side Control
+Leg Pummeling from Saddle
+Leg Recovery to De La Riva
+Leg Weave Escape to Half Guard
+Leg Weave Pass
+Leg Weave Pass Completion
+Level Change Takedown
+Limp Leg Escape to Pass
+Limp leg extraction to Half Guard
+Lockdown Break and Pass
+Lockdown Break from Z-Lock
+Lockdown Escape to Half Guard Pass
+Lockdown Recovery
+Lockdown Whizzer Pass
+Lockdown to Vaporizer
+Lockdown to Z-Lock Half Guard
+Long Step Around Ringworm
+Long Step Pass
+Lumberjack Sweep
+Mat Return from Standing Rear Clinch
+Mat Return to Back Mount
+Matrix Back Take
+Matrix to Back Control
+Matrix to Side Control
+Meathook Entry from Rubber Guard
+Meathook to Gogoplata Control
+Mission Control Entry from Rubber Guard
+Mission Control Recovery
+Morote Seoi Nage
+Mount Control
+Mount Escape to Half Guard Back Take
+Mount to 3-4 Mount
+Mount to Armbar
+Mount to Knee on Belly
+Mount to Modified Mount
+Mount to Technical Mount
+Mounted Crucifix Entry
+Mounted Crucifix to S Mount
+Mounted Triangle
+Mounted Triangle Squeeze
+Mounted Triangle to S Mount
+Muscle Sweep
+New York Control Entry from Rubber Guard
+New York Control Escape
+New York Control to Invisible Collar
+New York Control to Zombie
+New York Entry from Rubber Guard
+New York Pass to Side Control
+New York to Invisible Collar
+North-South Escape
+North-South Recovery from Jailbreak
+North-South to Kimura
+Old School Pass
+Old School Position Sweep
+Old School Sweep
+Old School to Half Guard
+Omoplata Sweep
+Omoplata from Lasso
+Omoplata to Back
+Omoplata to Sweep
+Open Guard to Collar Sleeve Guard
+Open Guard to De La Riva
+Open Guard to Deep Half
+Open Guard to Double Sleeve Guard
+Open Guard to Double Unders
+Open Guard to Feet on Hips Guard
+Osoto Gari
+Ouchi Gari
+Outside Ashi Entry
+Outside Ashi to Inside Ashi
+Outside Ashi to Leg Knot
+Outside Heel Hook Adjustment
+Outside to Ushiro Ashi
+Over-Under Pass
+Overhook Control Sweep
+Overhook Escape
+Overhook Extraction
+Overhook Guard Sweep
+Overhook Pass to Side Control
+Overhook Strip from Diamond Guard
+Overhook Sweep
+Overhook to Closed Guard
+Overhook to Half Guard
+Pass Butterfly Hook Control
+Pass Collar Sleeve Guard
+Pass Double Sleeve Guard
+Pass Feet on Hips Guard
+Pass Half Butterfly
+Pass Inverted Lasso Guard
+Pass K-Guard
+Pass Overhook Guard
+Pass Piranha Guard
+Pass Pocket Half
+Pass Reverse Half
+Pass Russian Leg Lasso
+Pass Shin-to-Shin Guard
+Pass Squid Guard
+Pass Vaporizer Position
+Pass Z-Guard
+Pass Z-Lock
+Pass to Side Control
+Pendulum Sweep
+Peruvian Necktie Setup
+Peterson Roll
+Piranha Guard Sweep
+Piranha to Worm Guard
+Pocket Half Pass
+Position reversal sweep to top
+Posture Break from Mission Control
+Posture Defense from Rear Triangle
+Posture Recovery
+Posture Recovery from Carni
+Posture Recovery from Diamond Guard
+Posture Recovery from Meathook
+Posture Recovery from Mission Control
+Posture Recovery from Zombie
+Posture Recovery to Closed Guard
+Posture Up from Gogoplata
+Posture Up from Mounted Triangle
+Posture Up from Triangle
+Posture from Chill Dog
+Posture from Williams Guard
+Posture in Triangle Escape
+Pressure Pass
+Pressure Pass Through Squid
+Pressure Pass from Leg Knot
+Pressure Pass through Center
+Pressure Through Squid Guard
+Pressure from Shin-to-Shin
+Progression to Zombie
+Pull Guard from Combat Base
+Pull Guard from Ground
+Pull Guard from Standing
+Pummeling Escape from Body Lock
+Push Knee and Reguard from Knee on Belly
+Push Sweep from Feet on Hips
+RDLR Backstep Counter
+RDLR Pass
+RDLR to Crab Ride
+Re-Guard from Headquarters
+Re-flatten from Dogfight
+Re-pull Half Guard from Dogfight
+Rear Clinch to Body Lock
+Rear Naked Choke Setup
+Rear Triangle Choke Finish
+Rear Triangle to Armbar
+Recover Full Guard from Quarter Guard
+Recover Knee Shield from Flattened Half
+Recovery from Failed Sweep
+Reestablish Side Control from Jailbreak
+Reguard from Butterfly Half Guard
+Reguard from Double Jump
+Reguard from Half Butterfly
+Reguard from Pocket Half Guard
+Reguard to Butterfly Guard
+Restore Back Control
+Return to Outside Ashi
+Reversal from Body Lock
+Reversal from Flattened Half Guard
+Reversal from Kneebar Control
+Reversal from Leg Knot
+Reversal from Triangle Escape
+Reverse De La Riva Recovery
+Reverse Heel Hook Counter
+Reverse Mount Transition
+Reverse Mount to Mount
+Reverse Mount to Side Control
+Reverse X to Ashi Garami Entry
+Reverse X to Back Take
+Reverse X to Single Leg X Entry
+Reverse X-Guard Entry
+Reverse X-Guard Sweep
+Reverse X-Guard to Standard X-Guard
+Reverse the entanglement to Outside Ashi
+Ringworm Guard Entry
+Ringworm Guard to Worm Guard
+Ringworm Sweep to Back Control
+Ringworm to Spider Guard
+Rodeo Ride to Back Control
+Rodeo Ride to Turtle
+Roll Defense from Anaconda
+Roll Escape from Cross Body Ride
+Roll Escape from Russian Cowboy
+Roll Forward from Omoplata
+Roll Through Escape
+Roll Through to Reversal
+Roll from Chill Dog
+Roll from Dead Orchard
+Roll from Rodeo Ride
+Roll from Vaporizer
+Roll to Deep Half Guard
+Roll to Guard
+Roll to Guard from Truck
+Roll to Truck
+Roll to Turtle
+Rolling Back Take
+Rolling Back Take Reversal
+Rolling Back Take from Half Butterfly
+Rolling Escape from Anaconda
+Rolling Escape to Guard
+Rolling Guard Pull
+Rolling Kimura
+Rolling Kimura Escape
+Rolling Kneebar
+Rolling to Guard
+Rotate to Carni
+Rubber Guard Clear to Pass
+Rubber Guard Sweep
+Rubber Guard Top Posture Escape
+Rubber Guard to Closed Guard
+Russian Cowboy to Back Control
+Russian Lasso Sweep
+Russian Lasso to De La Riva
+Russian Tie to Back Take
+S Mount Armbar Setup
+S Mount to Mounted Triangle
+S-Mount Transition
+SLX to Ashi Garami
+SLX to X-Guard
+Saddle Entry from Outside Ashi
+Saddle Entry from Top
+Saddle Fallback to Inside Ashi
+Sasae Tsurikomi Ashi
+Scissor Sweep
+Scissor Sweep from Open Guard
+Scoot Hips to Guard from Back
+Scramble to Guard
+Seat Belt Control Back
+Seat Belt Peel Escape
+Seat Belt to Body Triangle
+Seat Belt to Full Back Control
+Shake Off Rodeo Ride
+Shin Removal to Pass
+Shin Shield Recovery
+Shin to Shin Pull
+Shin-to-Shin Sweep
+Shin-to-Shin from Headquarters
+Shin-to-Shin to Single Leg X
+Short Choke Attack
+Shoulder Walk Escape from Back
+Shoulder of Justice Kimura Setup
+Shoulder of Justice to Mount
+Shrimp Escape
+Sickle Sweep
+Side Control Escape
+Side Control to Kesa Gatame
+Side Control to Knee on Belly
+Side Control to Kuzure Kesa Gatame
+Side Control to Mount
+Side Control to North-South
+Side Control to Shoulder of Justice
+Single Leg Entry
+Single Leg Takedown
+Single Leg X Entry
+Single Leg X Recovery
+Single Leg X Sweep
+Single Leg X Transition
+Single Leg X to Estima Lock
+Single Leg X-Guard to Inside Sankaku
+Single Leg to Back Take
+Sit Out from Side Control
+Sit Out from Turtle
+Sit Through Escape
+Sit Through to Guard
+Sit to Half Guard
+Sitting Guard Pull
+Smash Half Butterfly
+Smash Pass
+Smash Pass Counter
+Smash Pass from Knee Shield
+Smash Pass from X-Guard
+Smash Pocket Half
+Smash from Butterfly Half
+Smash from Butterfly Hook Control
+Smash from Knee Shield
+Snap Down from Dogfight
+Snap Down from Standing
+Snap Down to Front Headlock
+Spider Guard Pass
+Spider Guard to Omoplata
+Spider Sweep
+Spider to Lasso Guard
+Sprawl
+Sprawl Defense
+Sprawl and Disengage
+Squid Guard Entry
+Squid Guard Sweep
+Squid to Ringworm Guard
+Stack Defense
+Stack Defense from Omoplata
+Stack Escape from Triangle
+Stack Pass
+Stack Pass Over Lapel Barrier
+Stack Pass from Carni
+Stack Pass from Clamp Guard
+Stack Pass from Double Unders
+Stack Pass from Inversion
+Stack Pass from Meathook
+Stack Pass from Mission Control
+Stack Pass from Spider
+Stack Pass with Lapel Control Negation
+Stack from Chill Dog
+Stack from Inverted
+Stack from Inverted Lasso
+Stack from Williams Guard
+Stand Up from Combat Base
+Stand Up in Closed Guard
+Stand and Circle Away
+Standing Back Control Entry
+Standing Escape
+Standing Escape from Reverse X-Guard
+Standing Escape from SLX
+Standing Escape from X-Guard
+Standing Guard Pass with Distance Creation
+Standing Guard Pull
+Standing Reset to Open Guard
+Standing Switch Defense
+Standing Switch from Rear Clinch
+Standing Up from Ashi Garami
+Standing Up from Combat Base
+Standing Up from Inside Ashi
+Standing to Single Leg X
+Standing up in Base
+Step Over Escape
+Step Over from X-Guard
+Step Over to Mount
+Straight Ankle Lock Entry
+Straight Footlock
+Straighten Leg Defense from Electric Chair
+Straighten Leg Kneebar Defense
+Strip Grip from Zombie
+Strip Lapel from Piranha
+Strip Russian Leg Lasso
+Sumi Gaeshi
+Suplex from Rear Clinch
+Sweep from Chill Dog
+Sweep from Clamp Guard
+Sweep from Combat Base
+Sweep from Cross Ashi-Garami
+Sweep from Diamond Guard
+Sweep from Double Jump
+Sweep from Double Unders
+Sweep from Electric Chair
+Sweep from Headquarters
+Sweep from Honey Hole
+Sweep from Inside Sankaku
+Sweep from Inverted Guard
+Sweep from Knee Shield
+Sweep from Leg Hook
+Sweep from Leg Weave
+Sweep from Matrix
+Sweep from Meathook
+Sweep from New York
+Sweep from Pocket Half Guard
+Sweep from Quarter Guard
+Sweep from Reverse Half Guard
+Sweep from Saddle
+Sweep from Standing Guard
+Sweep from Ushiro Ashi-Garami
+Sweep from Z-Guard
+Sweep from Z-Lock Half Guard
+Sweep from Zombie Guard
+Sweep to Mount
+Switch to Anaconda Configuration
+Switch to Darce Configuration
+Switch to Triangle
+Tai Otoshi
+Takedown from Bottom
+Takedown from Standing Guard
+Takedown to Grounded Back Control
+Tani Otoshi
+Tarikoplata Setup
+Technical Mount to Back Control
+Technical Mount to Mount
+Technical Mount to S Mount
+Technical Stand Up from Ground
+Technical Stand Up from Open Guard
+Technical Stand Up to Single Leg
+Technical Stand-up
+Technical Standup from Inversion
+Ten Finger Guillotine Variation
+Toe Hold to Ashi Garami
+Toe Hold to Straight Ankle Lock
+Tomahawk Sweep
+Tomoe Nage
+Toreando Pass
+Toreando Pass from De La Riva
+Toreando Pass from Seated Guard
+Toreando from Double Sleeve
+Toreando from Headquarters
+Toreando from Inverted
+Toss Pass from Double Unders
+Transition to Clamp Guard
+Transition to Diamond Guard
+Trap and Roll from High Mount
+Trap and Roll from Mount
+Trap and Roll from S Mount
+Triangle Clear to Side
+Triangle Escape
+Triangle Setup
+Triangle Setup from De La Riva
+Triangle from Armbar
+Triangle from Back
+Triangle from Clamp Guard
+Triangle from Diamond Guard
+Triangle from Guard
+Triangle from Mount
+Triangle from Spider Guard
+Triangle to Armbar
+Triangle to Back
+Triangle to Omoplata
+Tripod Sweep
+Truck Entry
+Truck Maintenance
+Truck Position Entry
+Truck to Back Control
+Truck to Twister Side Control
+Turn In and Face
+Turn In from Twister Side Control
+Turn In from Ushiro Kesa Gatame
+Turn and Extract from Kneebar
+Turn into Opponent from Back
+Turn to Face from Zombie
+Turn to Turtle from Knee on Belly
+Turtle Attack Sequence
+Turtle Flatten to Side Control
+Turtle from Back Control
+Turtle from Side Control Bottom
+Turtle to Aoki Lock
+Turtle to Back Control
+Turtle to Back Take
+Turtle to Guard
+Turtle to Matrix
+Turtle to Rodeo Ride
+Turtle to Russian Cowboy
+Turtle to Standing
+Turtle to Truck
+Turtle to Truck Entry
+Twister Entry
+Twister SC to Back Take
+Twister SC to Truck
+Two-on-One to Back Take
+Uchi Mata
+Underhook Pass
+Underhook Pummeling from Clinch
+Underhook Recovery from Flattened
+Underhook Sweep
+Underhook Sweep from Dogfight
+Underhook Sweep from Half
+Underhook Sweep from Pocket Half
+Underhook from Knee Shield
+Upa Escape
+Ushiro Ashi-Garami Escape
+Ushiro Ashi-Garami to Deep Half
+Ushiro Kesa Gatame to North-South
+Ushiro Kesa Gatame to Side Control
+Waiter Sweep
+Whip-up Sweep
+Whizzer
+Whizzer from Deep Half
+Williams Guard Sweep
+Worm Guard Entry
+Worm Guard Sweep
+Worm to Squid Guard
+X Pass
+X-Guard Elevation Sweep
+X-Guard Sweep
+X-Guard Technical Stand Up
+X-Guard to Ashi Garami
+X-Guard to Single Leg X
+Z-Guard Pass
+Z-Guard Sweep
+Z-Guard to Half Guard
+
+SUBMISSIONS
+Achilles Lock
+Americana
+Anaconda Choke
+Aoki Lock
+Arm Crush
+Arm Triangle
+Arm in Guillotine
+Armbar
+Banana Split
+Baratoplata
+Baseball Bat Choke
+Belly Down Armbar
+Bicep Slicer
+Boston Crab
+Bow and Arrow Choke
+Brabo Choke
+Breadcutter Choke
+Buggy Choke
+Calf Slicer
+Can Opener
+Choke from Crucifix
+Clock Choke
+Cross Collar Choke
+Crotch Ripper
+Darce Choke
+Electric Chair
+Estima Lock
+Ezekiel Choke
+Far Side Armbar
+Flying Kneebar
+Gogoplata
+Guillotine Choke
+Heel Hook
+High Elbow Guillotine
+Hindulotine
+Inside Heel Hook
+Inverted Triangle
+Japanese Necktie
+Kesa Gatame Arm Crush
+Kimura
+Kneebar
+Loop Choke
+Marce Choke
+Mir Lock
+Monoplata
+Mounted Crucifix Armbar
+North-South Choke
+Omoplata
+Outside Heel Hook
+Paper Cutter Choke
+Peruvian Necktie
+Rear Naked Choke
+Rear Triangle Choke
+Reverse Kimura
+Short Choke
+Spine Lock
+Spinning Armbar
+Straight Ankle Lock
+Tarikoplata
+Ten Finger Guillotine
+Toe Hold
+Triangle Choke
+Triangle Choke Side
+Twister
+Williams Shoulder Lock
+Wrist Lock
