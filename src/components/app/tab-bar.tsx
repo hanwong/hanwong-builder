@@ -7,10 +7,10 @@ import { cn } from "@/lib/utils";
 
 // 하단 탭 4개 (DESIGN.md 4).
 const tabs = [
-  { href: "/app", label: "홈", Icon: House, ready: true },
-  { href: "/app/log", label: "기록", Icon: PenLine, ready: true },
-  { href: "/app/review", label: "복습", Icon: Layers, ready: true },
-  { href: "/app/skills", label: "내 기술", Icon: Map, ready: true },
+  { href: "/app", label: "홈", Icon: House, ready: true, match: undefined },
+  { href: "/app/logs", label: "기록", Icon: PenLine, ready: true, match: "/app/log" }, // 목록 · 쓰기 · 보기 모두(D-40)
+  { href: "/app/review", label: "복습", Icon: Layers, ready: true, match: undefined },
+  { href: "/app/skills", label: "내 기술", Icon: Map, ready: true, match: undefined },
 ];
 
 export function TabBar() {
@@ -31,8 +31,8 @@ function TabBarView({ pathname }: { pathname: string }) {
       className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
     >
       <ul className="mx-auto flex h-(--tabbar-h) max-w-md items-center justify-around px-2">
-        {tabs.map(({ href, label, Icon, ready }) => {
-          const active = href === "/app" ? pathname === "/app" : pathname.startsWith(href);
+        {tabs.map(({ href, label, Icon, ready, match }) => {
+          const active = href === "/app" ? pathname === "/app" : pathname.startsWith(match ?? href);
           const cls = cn(
             "flex flex-col items-center gap-1 rounded-xl py-1 text-[12px] font-medium",
             active ? "text-foreground" : "text-muted-foreground",
