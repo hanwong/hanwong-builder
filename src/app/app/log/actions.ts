@@ -214,34 +214,72 @@ export async function updateLog(logId: string, input: SaveInput): Promise<SaveRe
   const r = await levelsAndCards(supabase, user.id, chosen, v.today);
   if (r.error) return fail(r.step, r.error);
 
-  // 뺀 기술 정리 — 다른 기록에도 없고, 카드를 아직 한 번도 안 풀었을 때만
+  // 뺀 기술 정리
   const now = new Set(chosen.map((c) => c.id));
-  const removed = before.map((b) => b.technique_id).filter((id): id is string => !!id && !now.has(id));
-  if (removed.length) {
-    const { data: still } = await supabase
-      .from("class_log_techniques")
-      .select("technique_id")
-      .in("technique_id", removed);
-    const stillUsed = new Set((still ?? []).map((x) => x.technique_id));
-    const orphan = removed.filter((id) => !stillUsed.has(id));
-    if (orphan.length) {
-      const { data: reviewed } = await supabase
-        .from("review_cards")
-        .select("technique_id")
-        .in("technique_id", orphan)
-        .gt("reviews_count", 0);
-      const keep = new Set((reviewed ?? []).map((x) => x.technique_id));
-      const drop = orphan.filter((id) => !keep.has(id));
-      if (drop.length) {
-        await supabase.from("review_cards").delete().in("technique_id", drop);
-        await supabase.from("technique_levels").delete().in("technique_id", drop);
-      }
-    }
-  }
+  await dropOrphans(
+    supabase,
+    before.map((b) => b.technique_id).filter((id): id is string => !!id && !now.has(id)),
+  );
 
   revalidatePath("/app");
   revalidatePath(`/app/log/${logId}`);
   return { ok: true, newCards: r.newCards, linked: chosen.length };
+}
+
+// 기록에서 빠진 기술 정리 (D-25 · D-26) — 다른 기록에도 없고, 카드를 아직 한 번도 안 풀었을 때만 카드 · 숙련도를 지운다.
+// RLS 로 본인 것만 지워진다. 실패해도 기록 저장 · 삭제는 이미 끝났으므로 결과를 막지 않는다.
+async function dropOrphans(supabase: Supabase, techniqueIds: string[]) {
+  if (!techniqueIds.length) return;
+  const { data: still } = await supabase
+    .from("class_log_techniques")
+    .select("technique_id")
+    .in("technique_id", techniqueIds);
+  const stillUsed = new Set((still ?? []).map((x) => x.technique_id));
+  const orphan = techniqueIds.filter((id) => !stillUsed.has(id));
+  if (!orphan.length) return;
+  const { data: reviewed } = await supabase
+    .from("review_cards")
+    .select("technique_id")
+    .in("technique_id", orphan)
+    .gt("reviews_count", 0);
+  const keep = new Set((reviewed ?? []).map((x) => x.technique_id));
+  const drop = orphan.filter((id) => !keep.has(id));
+  if (!drop.length) return;
+  await supabase.from("review_cards").delete().in("technique_id", drop);
+  await supabase.from("technique_levels").delete().in("technique_id", drop);
+}
+
+export type DeleteResult = { ok: true } | { ok: false; message: string };
+
+// 기록 지우기 (D-26) — 기록을 지우면 기술 연결은 같이 지워진다(cascade). 남의 기록은 RLS 로 안 보여 못 지운다.
+export async function deleteLog(logId: string): Promise<DeleteResult> {
+  const supabase = await createSupabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "로그인이 풀렸어요. 다시 로그인해 주세요." };
+  if (typeof logId !== "string") return { ok: false, message: "기록을 찾지 못했어요." };
+
+  const { data: log } = await supabase
+    .from("class_logs")
+    .select("id, class_log_techniques(technique_id)")
+    .eq("id", logId)
+    .maybeSingle();
+  if (!log) return { ok: false, message: "기록을 찾지 못했어요." };
+
+  const { error } = await supabase.from("class_logs").delete().eq("id", logId);
+  if (error) {
+    console.error("deleteLog failed:", error.code ?? "", (error.message ?? "").slice(0, 120));
+    return { ok: false, message: "지우지 못했어요. 잠시 뒤 다시 눌러 주세요." };
+  }
+  await dropOrphans(
+    supabase,
+    log.class_log_techniques.map((l) => l.technique_id).filter((id): id is string => !!id),
+  );
+
+  revalidatePath("/app");
+  revalidatePath("/app/review");
+  return { ok: true };
 }
 
 function fail(step: string, error: DbError): SaveResult {

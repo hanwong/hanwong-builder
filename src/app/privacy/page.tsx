@@ -63,7 +63,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
       <ul className="list-disc space-y-1 pl-5">
         <li>탈퇴를 요청하면 로그인 정보와 기록 전부를 7일 안에 지워요.</li>
         <li>검증 단계가 끝나고 서비스를 접게 되면, 미리 알린 뒤 모든 기록을 지워요.</li>
-        <li>본인 기록은 언제든 앱에서 직접 지울 수 있게 만들 예정이에요(준비 중).</li>
+        <li>본인 기록은 언제든 앱에서 직접 지울 수 있어요(홈 → 최근 기록 → 맨 아래 &quot;이 기록 지우기&quot;). 지우면 바로 사라지고 되돌릴 수 없어요.</li>
       </ul>
     ),
   },

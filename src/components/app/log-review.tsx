@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ArrowLeft, ChevronDown, FlaskConical, Loader2, PencilLine, Plus, Sparkles, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, FlaskConical, Loader2, PencilLine, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { BottomAction } from "@/components/app/bottom-action";
@@ -32,11 +32,13 @@ type Props = {
   saveLabel?: string; // 새 기록 "저장", 저장한 기록 고치기 "고친 내용 저장"
   // 저장 — 성공하면 부모가 다음 화면으로 보낸다
   onSave: (value: ReviewValue) => Promise<void>;
+  // 저장한 기록만 — 지우기 (D-26). 한 번 더 확인한 뒤 부른다
+  onDelete?: () => Promise<void>;
 };
 
 // 정리 완료 화면(상태 C) — 새 기록(/app/log)과 저장한 기록 고치기(/app/log/[id], D-25)가 함께 쓴다.
 // 글은 "글 고치기"로 그 자리에서 고치고, "다시 정리하기"를 누를 때만 기술 · 용어를 다시 찾는다(Claude 비용).
-export function LogReview({ initial, onBack, saveLabel = "저장", onSave }: Props) {
+export function LogReview({ initial, onBack, saveLabel = "저장", onSave, onDelete }: Props) {
   const [body, setBody] = useState(initial.body);
   const [editing, setEditing] = useState<string | null>(null); // 고치는 중인 글
   const [techniques, setTechniques] = useState(initial.techniques);
@@ -46,6 +48,8 @@ export function LogReview({ initial, onBack, saveLabel = "저장", onSave }: Pro
   const [nameDraft, setNameDraft] = useState<string | null>(null);
   const [saving, startSaving] = useTransition();
   const [organizing, startOrganizing] = useTransition();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, startDeleting] = useTransition();
 
   const setLevel = (id: string, level: Level) =>
     setTechniques((list) => list.map((t) => (t.id === id ? { ...t, level } : t)));
@@ -256,10 +260,52 @@ export function LogReview({ initial, onBack, saveLabel = "저장", onSave }: Pro
         </section>
       )}
 
+      {/* 기록 지우기 — 저장한 기록에서만 (D-26) */}
+      {onDelete && (
+        <section className="flex flex-col items-start gap-2 border-t border-border pt-4">
+          {!confirmDelete ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="-ml-3 rounded-full text-destructive hover:text-destructive"
+              onClick={() => setConfirmDelete(true)}
+              disabled={saving || organizing}
+            >
+              <Trash2 data-icon="inline-start" aria-hidden />이 기록 지우기
+            </Button>
+          ) : (
+            <>
+              <p className="text-[15px] font-medium">
+                이 기록을 지울까요? 되돌릴 수 없어요. 이 기록에만 있던 기술의 복습 전 카드도 같이 지워져요.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="h-10 rounded-full border-destructive/40 text-destructive hover:text-destructive"
+                  disabled={deleting}
+                  onClick={() => startDeleting(() => onDelete())}
+                >
+                  {deleting && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
+                  {deleting ? "지우는 중…" : "지우기"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="h-10 rounded-full text-muted-foreground"
+                  disabled={deleting}
+                  onClick={() => setConfirmDelete(false)}
+                >
+                  취소
+                </Button>
+              </div>
+            </>
+          )}
+        </section>
+      )}
+
       <BottomAction>
         <Button
           className="h-12 w-full rounded-full text-base shadow-none"
-          disabled={saving || organizing}
+          disabled={saving || organizing || deleting}
           onClick={() =>
             startSaving(() => {
               // 고치는 중인 글 · 이름 칸에 적고 안 누른 것도 저장에 넣는다
