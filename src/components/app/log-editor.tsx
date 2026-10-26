@@ -7,20 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useSpeechInput } from "@/lib/use-speech-input";
 import { MAX_BODY } from "@/lib/log-limits";
+import { seoulToday } from "@/lib/seoul-date";
 
 // 오늘 배운 것 기록 — 상태 A 쓰기 (FLOW.md 4 · D-03 · D-12).
 // 쓰는 동안은 아무것도 추천하지 않는다. 마이크는 브라우저 내장 음성 인식(녹음 저장 없음).
-
-// 서울 기준 오늘 (YYYY-MM-DD). 렌더 중이 아니라 effect 안에서만 부른다(cacheComponents).
-function seoulToday(): string {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-  return parts; // en-CA 는 YYYY-MM-DD
-}
 
 export function formatKoreanDate(iso: string): string {
   if (!iso) return "";

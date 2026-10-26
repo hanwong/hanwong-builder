@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowLeft, ChevronDown, FlaskConical, Plus, X } from "lucide-react";
-import { toast } from "sonner";
+import { useState, useTransition } from "react";
+import { ArrowLeft, ChevronDown, FlaskConical, Loader2, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,13 +18,16 @@ type Props = {
     skipped?: boolean; // 정리 실패 뒤 "그냥 저장" — 기술 없이 글만
   };
   onBack?: () => void;
+  // 저장(T-08) — 남겨 둔 기술 · 숙련도 · 직접 적은 이름. 성공하면 부모가 홈으로 보낸다
+  onSave: (value: { techniques: MatchedTechnique[]; customNames: string[] }) => Promise<void>;
 };
 
 // 오늘 배운 것 기록 — 상태 C(확인). FLOW.md 5 배치도 그대로.
-export function LogReview({ initial, onBack }: Props) {
+export function LogReview({ initial, onBack, onSave }: Props) {
   const [techniques, setTechniques] = useState(initial.techniques);
   const [customNames, setCustomNames] = useState<string[]>([]);
   const [draft, setDraft] = useState<string | null>(null);
+  const [saving, startSaving] = useTransition();
 
   const setLevel = (id: string, level: Level) =>
     setTechniques((list) => list.map((t) => (t.id === id ? { ...t, level } : t)));
@@ -162,10 +164,17 @@ export function LogReview({ initial, onBack }: Props) {
         <div className="mx-auto max-w-md">
           <Button
             className="h-12 w-full rounded-full text-base shadow-none"
-            // 실제 저장 · 복습 카드 만들기는 T-08. 그 전까지는 저장됐다고 말하지 않는다.
-            onClick={() => toast("아직 저장되지 않아요. 저장은 다음 단계(T-08)에서 연결돼요.")}
+            disabled={saving}
+            onClick={() =>
+              startSaving(() => {
+                // 이름 칸에 적고 "추가" 를 안 눌렀어도 저장에 넣는다
+                const typed = draft?.trim();
+                return onSave({ techniques, customNames: typed ? [...customNames, typed] : customNames });
+              })
+            }
           >
-            저장
+            {saving && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
+            {saving ? "저장 중…" : "저장"}
           </Button>
         </div>
       </div>

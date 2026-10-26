@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Loader2, PencilLine, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LogEditor, formatKoreanDate } from "@/components/app/log-editor";
 import { LogReview } from "@/components/app/log-review";
-import { organizeLog } from "@/app/app/log/actions";
+import { organizeLog, saveLog } from "@/app/app/log/actions";
 import type { MatchedTechnique, Term } from "@/lib/mock/log-seed";
 
 // 오늘 배운 것 기록 — 한 화면 3상태 (FLOW 4).
@@ -23,6 +25,7 @@ type State =
 
 export function LogFlow() {
   const [state, setState] = useState<State>({ step: "write", draft: { body: "", loggedOn: "" } });
+  const router = useRouter();
 
   async function organize(draft: Draft) {
     setState({ step: "organizing", draft });
@@ -44,6 +47,28 @@ export function LogFlow() {
       <LogReview
         initial={{ ...review, loggedOn: formatKoreanDate(review.loggedOn) }}
         onBack={() => setState({ step: "write", draft: { body: review.body, loggedOn: review.loggedOn } })}
+        onSave={async ({ techniques, customNames }) => {
+          const res = await saveLog({
+            loggedOn: review.loggedOn,
+            body: review.body,
+            aiStatus: review.skipped ? "none" : review.isMock ? "mock" : "ok",
+            techniques: techniques.map((t) => ({ slug: t.id, level: t.level })),
+            customNames,
+            terms: review.terms,
+          }).catch(() => null);
+          if (!res || !res.ok) {
+            toast.error(res?.message ?? "저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
+            return;
+          }
+          toast.success(
+            res.newCards > 0
+              ? `복습 카드 ${res.newCards}장 생겼어요. 내일부터 물어볼게요`
+              : res.linked > 0
+                ? "기록을 저장했어요. 이미 있던 복습 카드는 그대로예요"
+                : "기록을 저장했어요",
+          );
+          router.push("/app");
+        }}
       />
     );
   }
