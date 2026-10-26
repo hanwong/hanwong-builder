@@ -10,11 +10,13 @@ import type { SavedLog } from "@/lib/log-data";
 // 저장한 기록 보기 · 고치기 (D-25) — 정리 완료 화면을 그대로 쓴다.
 export function LogDetail({ log }: { log: SavedLog }) {
   const router = useRouter();
+  // 들어온 곳(기록 목록 · 홈 · 기술 상세)으로 돌아간다. 주소로 바로 열어 돌아갈 곳이 없으면 기록 목록으로.
+  const goBack = () => (window.history.length > 1 ? router.back() : router.push("/app/logs"));
   return (
     <LogReview
       initial={{ ...log, loggedOn: formatKoreanDate(log.loggedOn) }}
       saveLabel="고친 내용 저장"
-      onBack={() => router.push("/app")}
+      onBack={goBack}
       onSave={async (value) => {
         const res = await updateLog(log.id, {
           loggedOn: log.loggedOn,
@@ -29,7 +31,7 @@ export function LogDetail({ log }: { log: SavedLog }) {
           return;
         }
         toast.success(res.newCards > 0 ? `고쳤어요. 복습 카드 ${res.newCards}장이 새로 생겼어요` : "고친 내용을 저장했어요");
-        router.push("/app");
+        goBack();
       }}
       onDelete={async () => {
         const res = await deleteLog(log.id).catch(() => null);
@@ -38,7 +40,7 @@ export function LogDetail({ log }: { log: SavedLog }) {
           return;
         }
         toast.success("기록을 지웠어요");
-        router.push("/app");
+        goBack();
       }}
     />
   );
