@@ -5,12 +5,12 @@ import { usePathname } from "next/navigation";
 import { House, PenLine, Layers, Map } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// 하단 탭 4개 (DESIGN.md 4). 내 기술은 T-10 에서 화면이 생긴다.
+// 하단 탭 4개 (DESIGN.md 4).
 const tabs = [
   { href: "/app", label: "홈", Icon: House, ready: true },
   { href: "/app/log", label: "기록", Icon: PenLine, ready: true },
   { href: "/app/review", label: "복습", Icon: Layers, ready: true },
-  { href: "/app/skills", label: "내 기술", Icon: Map, ready: false },
+  { href: "/app/skills", label: "내 기술", Icon: Map, ready: true },
 ];
 
 export function TabBar() {
