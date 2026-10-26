@@ -17,10 +17,11 @@ type Props = {
     techniques: MatchedTechnique[];
     terms: Term[];
   };
+  onBack?: () => void;
 };
 
 // 오늘 배운 것 기록 — 상태 C(확인). FLOW.md 5 배치도 그대로.
-export function LogReview({ initial }: Props) {
+export function LogReview({ initial, onBack }: Props) {
   const [techniques, setTechniques] = useState(initial.techniques);
   const [customNames, setCustomNames] = useState<string[]>([]);
   const [draft, setDraft] = useState<string | null>(null);
@@ -35,7 +36,7 @@ export function LogReview({ initial }: Props) {
     <div className="flex flex-col gap-5">
       {/* 제목 줄 */}
       <header className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" aria-label="뒤로" className="-ml-2 rounded-full">
+        <Button variant="ghost" size="icon" aria-label="뒤로" className="-ml-2 rounded-full" onClick={onBack}>
           <ArrowLeft className="size-5" strokeWidth={1.75} />
         </Button>
         <h1 className="text-[22px] font-bold tracking-tight">오늘 배운 것</h1>

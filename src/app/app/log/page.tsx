@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
-import { LogReview } from "@/components/app/log-review";
-import { seedLog } from "@/lib/mock/log-seed";
+import { LogFlow } from "@/components/app/log-flow";
 
 export const metadata: Metadata = {
   title: "오늘 배운 것 — Re:Re:롤",
 };
 
-// 4단계 대표 화면: 오늘 배운 것 기록 — 상태 C(확인). 가짜 데이터로 모양만 본다.
-// 5단계(T-05~T-08)에서 상태 A·B 와 서버 저장을 붙인다.
+// 오늘 배운 것 기록: 상태 A 쓰기(T-05) → B 정리 중 · C 확인(T-06 · T-07 에서 서버 결과로).
 export default function LogPage() {
-  return <LogReview initial={seedLog} />;
+  return <LogFlow />;
 }
