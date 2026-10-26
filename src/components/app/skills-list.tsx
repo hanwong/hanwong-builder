@@ -74,12 +74,18 @@ export function SkillsList({ groups }: { groups: PositionGroup[] }) {
               </summary>
               <ul className="flex flex-col pb-2">
                 {g.skills.map((s) => (
-                  <li
-                    key={s.slug}
-                    className={cn("flex min-w-0 items-center gap-2 px-4 py-2", !s.level && "opacity-40")}
-                  >
-                    <span className="min-w-0 flex-1 truncate text-[15px]">{s.nameKo}</span>
-                    {s.level && <Badge variant="secondary">{LEVEL_LABEL.get(s.level)}</Badge>}
+                  <li key={s.slug} className="min-w-0">
+                    {/* 누르면 기술 상세 (T-10b) */}
+                    <Link
+                      href={`/app/skills/${s.slug}`}
+                      className={cn(
+                        "flex min-w-0 items-center gap-2 px-4 py-2 transition-colors hover:bg-muted",
+                        !s.level && "opacity-40",
+                      )}
+                    >
+                      <span className="min-w-0 flex-1 truncate text-[15px]">{s.nameKo}</span>
+                      {s.level && <Badge variant="secondary">{LEVEL_LABEL.get(s.level)}</Badge>}
+                    </Link>
                   </li>
                 ))}
               </ul>

@@ -11,7 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { MAX_BODY } from "@/lib/log-limits";
 import { organizeLog } from "@/app/app/log/actions";
-import { LEVELS, type Level, type MatchedTechnique, type Term } from "@/lib/mock/log-seed";
+import { LevelPicker } from "@/components/app/level-picker";
+import type { Level, MatchedTechnique, Term } from "@/lib/mock/log-seed";
 
 export type AiStatus = "ok" | "mock" | "none";
 
@@ -152,7 +153,7 @@ export function LogReview({ initial, onBack, saveLabel = "저장", onSave, onDel
             </Button>
           </div>
           <p className="text-[13px] font-medium text-muted-foreground">
-            "다시 정리하기"는 고친 글에서 기술을 새로 찾아요. 정한 숙련도는 그대로 둬요.
+            ‘다시 정리하기’는 고친 글에서 기술을 새로 찾아요. 정한 숙련도는 그대로 둬요.
           </p>
         </div>
       )}
@@ -395,28 +396,7 @@ function TechniqueCard({
 
         <div className="flex flex-col gap-1.5">
           <span className="text-[13px] font-medium text-muted-foreground">내 숙련도</span>
-          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={`${t.nameKo} 숙련도`}>
-            {LEVELS.map((lv) => {
-              const selected = lv.value === t.level;
-              return (
-                <button
-                  key={lv.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  onClick={() => onLevel(t.id, lv.value)}
-                  className={cn(
-                    "h-8 rounded-full border px-3 text-[13px] font-medium transition-colors",
-                    selected
-                      ? "border-accent bg-accent text-accent-foreground"
-                      : "border-border bg-card text-foreground hover:bg-muted",
-                  )}
-                >
-                  {lv.label}
-                </button>
-              );
-            })}
-          </div>
+          <LevelPicker label={`${t.nameKo} 숙련도`} value={t.level} onChange={(lv) => onLevel(t.id, lv)} />
         </div>
       </CardContent>
     </Card>
