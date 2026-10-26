@@ -47,7 +47,21 @@ const FATAL: Record<string, string> = {
     "음성 인식 서버에 연결하지 못했어요. 이 브라우저에서는 음성 인식이 안 될 수 있어요(크롬 · 사파리 권장). 키보드의 마이크(받아쓰기)를 써 주세요.",
 };
 // 이 오류가 첫 인식도 못 하고 났다면 이 브라우저에선 못 쓴다고 보고 마이크 버튼을 접는다
-const GIVE_UP_BUTTON = new Set(["network", "service-not-allowed", "language-not-supported"]);
+// (service-not-allowed 는 휴대폰 설정으로 고칠 수 있어서 버튼을 남긴다)
+const GIVE_UP_BUTTON = new Set(["network", "language-not-supported"]);
+
+const IN_APP_MESSAGE =
+  "카카오톡 · 인스타그램 같은 앱 안의 브라우저에서는 마이크가 안 돼요. 메뉴에서 '다른 브라우저로 열기'(크롬 · 사파리)를 눌러 주세요. 키보드의 마이크로 말해도 돼요.";
+
+function isInAppBrowser(ua: string): boolean {
+  return /KAKAOTALK|Instagram|FBAN|FBAV|NAVER\(inapp|Line\/|DaumApps|Snapchat|; wv\)/i.test(ua);
+}
+function isIOS(ua: string): boolean {
+  return (
+    /iPad|iPhone|iPod/.test(ua) ||
+    (/Macintosh/.test(ua) && typeof navigator !== "undefined" && navigator.maxTouchPoints > 1)
+  );
+}
 
 const RESTART_MS = 600; // 끝난 직후 바로 켜면 모바일에서 실패한다
 const QUICK_MS = 1000; // 이보다 빨리 꺼지고 아무 신호도 없으면 "바로 꺼짐"
@@ -55,14 +69,9 @@ const MAX_QUICK_ENDS = 3;
 const MAX_NO_SPEECH = 3;
 const MAX_ABORTED = 6;
 
-export function useSpeechInput({
-  onText,
-  onProblem,
-}: {
-  onText: (finalText: string) => void;
-  onProblem: (message: string) => void;
-}) {
+export function useSpeechInput({ onText }: { onText: (finalText: string) => void }) {
   const [supported, setSupported] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null); // 화면에 계속 남기는 안내
   const [listening, setListening] = useState(false);
   const [interim, setInterim] = useState("");
   const [debugLines, setDebugLines] = useState<string[]>([]);
@@ -80,10 +89,9 @@ export function useSpeechInput({
   const debugRef = useRef(false);
   const t0Ref = useRef(0);
   const onTextRef = useRef(onText);
-  const onProblemRef = useRef(onProblem);
+  const iosRef = useRef(false);
   useEffect(() => {
     onTextRef.current = onText;
-    onProblemRef.current = onProblem;
   });
 
   const note = useCallback((text: string) => {
@@ -94,7 +102,14 @@ export function useSpeechInput({
 
   useEffect(() => {
     debugRef.current = new URLSearchParams(window.location.search).get("debug") === "1";
-    setSupported(getCtor() !== null);
+    const ua = navigator.userAgent;
+    iosRef.current = isIOS(ua);
+    if (isInAppBrowser(ua)) {
+      setSupported(false);
+      setProblem(IN_APP_MESSAGE);
+    } else {
+      setSupported(getCtor() !== null);
+    }
     return () => {
       wantRef.current = false;
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -112,7 +127,7 @@ export function useSpeechInput({
       setListening(false);
       setInterim("");
       note(`멈춤${message ? `: ${message.slice(0, 30)}…` : ""}`);
-      if (message) onProblemRef.current(message);
+      if (message) setProblem(message);
     },
     [note],
   );
@@ -122,8 +137,9 @@ export function useSpeechInput({
     if (!Ctor || !wantRef.current) return;
     const rec = new Ctor();
     rec.lang = "ko-KR";
-    // 한 문장씩 받고 끝나면 다시 켠다 (모바일 크롬의 continuous 중복 · 조기 종료를 피함)
-    rec.continuous = false;
+    // 안드로이드 · 데스크탑 크롬: 한 문장씩 받고 끝나면 다시 켠다(continuous 중복 · 조기 종료를 피함)
+    // 아이폰 사파리: 손가락으로 누르지 않은 재시작이 막힐 수 있어 한 번 켜서 계속 듣는다
+    rec.continuous = iosRef.current;
     rec.interimResults = true;
     startedAtRef.current = Date.now();
     gotResultRef.current = false;
@@ -158,9 +174,12 @@ export function useSpeechInput({
       lastErrorRef.current = e.error;
       note(`오류: ${e.error}`);
       const fatal = FATAL[e.error];
-      if (fatal) {
+      if (e.error === "not-allowed" && workedRef.current) {
+        // 잘 되다가 자동 재시작에서 막힘(브라우저가 손가락 입력 없는 시작을 막음)
+        finish("마이크가 멈췄어요. 마이크 버튼을 한 번 더 눌러 주세요.");
+      } else if (fatal) {
         const first = !workedRef.current;
-        finish(fatal);
+        finish(`${fatal} (오류: ${e.error})`);
         if (first && GIVE_UP_BUTTON.has(e.error)) setSupported(false);
       } else if (e.error === "no-speech") {
         noSpeechRef.current += 1;
@@ -222,6 +241,7 @@ export function useSpeechInput({
     workedRef.current = false;
     t0Ref.current = Date.now();
     setDebugLines([]);
+    setProblem(null);
     setListening(true);
     begin();
   }, [begin]);
@@ -236,5 +256,5 @@ export function useSpeechInput({
     recRef.current?.stop();
   }, [note]);
 
-  return { supported, listening, interim, start, stop, debugLines };
+  return { supported, listening, interim, problem, start, stop, debugLines };
 }

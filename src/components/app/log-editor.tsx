@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Mic, MicOff, Sparkles } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -41,13 +40,12 @@ export function LogEditor({ initialBody = "", initialDate, onSubmit }: Props) {
   const [body, setBody] = useState(initialBody);
   const [date, setDate] = useState(initialDate ?? "");
   const [today, setToday] = useState("");
-  const { supported, listening, interim, start, stop, debugLines } = useSpeechInput({
+  const { supported, listening, interim, problem, start, stop, debugLines } = useSpeechInput({
     onText: (text) =>
       setBody((prev) => {
         const sep = prev && !/\s$/.test(prev) ? " " : "";
         return (prev + sep + text).slice(0, MAX_BODY);
       }),
-    onProblem: (message) => toast.error(message),
   });
 
   useEffect(() => {
@@ -131,6 +129,11 @@ export function LogEditor({ initialBody = "", initialDate, onSubmit }: Props) {
             </span>
           )}
         </p>
+        {problem && (
+          <p role="alert" className="text-[13px] leading-relaxed font-medium text-destructive">
+            {problem}
+          </p>
+        )}
       </div>
 
       {debugLines.length > 0 && (
