@@ -104,10 +104,7 @@ export function HomeView({ data }: { data: HomeData }) {
 export function HomeSkeleton() {
   return (
     <div className="flex flex-col gap-5" aria-busy="true">
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-5 w-24" />
-        <Skeleton className="h-14 w-full rounded-[3px]" />
-      </div>
+      <Skeleton className="h-14 w-full rounded-[3px]" />
       <div className="flex flex-col gap-3 rounded-2xl bg-card p-4 ring-1 ring-border">
         <div className="flex items-center justify-between">
           <Skeleton className="h-5 w-20" />

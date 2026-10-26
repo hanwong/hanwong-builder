@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Check, Settings2 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { setBelt } from "@/app/app/actions";
 import { BELTS, BELT_BG, BELT_ROWS, BELT_WEEKS, WEEK_SHADES, type Belt } from "@/lib/belt";
 import { formatKoreanDate } from "@/lib/seoul-date";
@@ -9,6 +12,7 @@ import { cn } from "@/lib/utils";
 
 // 홈 "수련 벨트" (D-33, DESIGN 2) — 최근 2년(104주)을 1주 1칸으로, 그 주 수련(기록) 횟수만큼 밝게.
 // 바깥은 내 벨트 색(양옆 너비의 약 5%, 위아래 높이의 약 1%), 가운데는 검정 바탕 + 살짝 둥근 네모.
+// 제목 없이 벨트만, 아래에 범례 · 최근 2년 횟수 · 벨트 색 설정(팝업).
 export function TrainingBelt({ weeks, belt: initialBelt }: { weeks: { start: string; count: number }[]; belt: Belt }) {
   const [belt, setBeltState] = useState<Belt>(initialBelt);
   const [picking, setPicking] = useState(false);
@@ -33,11 +37,6 @@ export function TrainingBelt({ weeks, belt: initialBelt }: { weeks: { start: str
 
   return (
     <section className="flex flex-col gap-2" aria-label="수련 벨트">
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-[17px] font-semibold">수련 벨트</h2>
-        <span className="text-[13px] font-medium text-muted-foreground tabular-nums">최근 2년 · {total}번</span>
-      </div>
-
       {/* 벨트: 바깥 = 벨트 색, 위아래는 높이의 약 1%(≈ 너비의 0.17%) */}
       <div
         className="rounded-[3px]"
@@ -73,37 +72,39 @@ export function TrainingBelt({ weeks, belt: initialBelt }: { weeks: { start: str
           ))}
           주 5번+
         </span>
-        <button
-          type="button"
-          onClick={() => setPicking((v) => !v)}
-          aria-expanded={picking}
-          className="flex items-center gap-1.5 rounded-full px-2 py-1 text-[13px] font-medium text-muted-foreground hover:bg-muted"
-        >
-          <span className="size-3 rounded-full ring-1 ring-border" style={{ backgroundColor: color }} />
-          {label} 벨트
-        </button>
+        <span className="flex items-center gap-1">
+          <span className="text-[13px] font-medium text-muted-foreground tabular-nums">최근 2년 · {total}번</span>
+          <Popover open={picking} onOpenChange={setPicking}>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon-sm" aria-label="벨트 색 설정" className="rounded-full text-muted-foreground">
+                <Settings2 />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-44 gap-1 p-1.5">
+              <span className="px-2 pt-1 pb-0.5 text-[12px] font-medium text-muted-foreground">벨트 색</span>
+              <div role="radiogroup" aria-label="벨트 색" className="flex flex-col">
+                {BELTS.map((b) => (
+                  <button
+                    key={b.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={b.value === belt}
+                    onClick={() => choose(b.value)}
+                    className={cn(
+                      "flex h-9 items-center gap-2 rounded-md px-2 text-[14px] hover:bg-muted",
+                      b.value === belt && "font-semibold",
+                    )}
+                  >
+                    <span className="size-3.5 rounded-full ring-1 ring-border" style={{ backgroundColor: b.color }} />
+                    {b.label}
+                    {b.value === belt && <Check className="ml-auto size-4" aria-hidden />}
+                  </button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </span>
       </div>
-
-      {picking && (
-        <div className="flex flex-wrap justify-end gap-1.5" role="radiogroup" aria-label="벨트 색">
-          {BELTS.map((b) => (
-            <button
-              key={b.value}
-              type="button"
-              role="radio"
-              aria-checked={b.value === belt}
-              onClick={() => choose(b.value)}
-              className={cn(
-                "flex h-8 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium",
-                b.value === belt ? "border-foreground" : "border-border bg-card hover:bg-muted",
-              )}
-            >
-              <span className="size-3 rounded-full ring-1 ring-border" style={{ backgroundColor: b.color }} />
-              {b.label}
-            </button>
-          ))}
-        </div>
-      )}
     </section>
   );
 }
