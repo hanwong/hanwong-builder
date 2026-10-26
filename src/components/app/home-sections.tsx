@@ -1,0 +1,106 @@
+import { Layers } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatKoreanDate } from "@/lib/seoul-date";
+import { getHomeData, type HomeData } from "@/lib/home-data";
+
+// 홈 ② 오늘 복습 · ③ 최근 기록 (FLOW 3 · DESIGN 6). 로그인 쿠키를 읽으므로 page 에서 Suspense 로 감싼다.
+export async function HomeSections() {
+  let data;
+  try {
+    data = await getHomeData();
+  } catch (e) {
+    console.error("home failed:", e instanceof Error ? e.message : "unknown");
+    return (
+      <p role="alert" className="text-[15px] font-medium text-destructive">
+        불러오지 못했어요 —{" "}
+        <a href="/app" className="underline underline-offset-4">
+          새로고침
+        </a>
+      </p>
+    );
+  }
+
+  return <HomeView data={data} />;
+}
+
+export function HomeView({ data }: { data: HomeData }) {
+  const { dueToday, totalCards, nextDue, recent } = data;
+
+  return (
+    <>
+      {/* ② 오늘 복습 */}
+      <Card className="rounded-2xl ring-border">
+        <CardContent className="flex flex-col gap-3">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-[17px] font-semibold">오늘 복습</h2>
+            <span className="text-[22px] font-bold tabular-nums">
+              {dueToday > 0 ? <span className="mark-lime">{dueToday}장</span> : "0장"}
+            </span>
+          </div>
+          {dueToday > 0 ? (
+            <>
+              {/* 복습 화면은 T-09 에서. 그 전엔 누를 수 없게 둔다 */}
+              <Button variant="secondary" disabled className="h-11 w-full rounded-full text-[15px]">
+                <Layers data-icon="inline-start" aria-hidden />
+                복습 시작
+              </Button>
+              <p className="text-[13px] font-medium text-muted-foreground">복습 화면은 곧 열려요.</p>
+            </>
+          ) : (
+            <p className="text-[15px] leading-relaxed text-muted-foreground">
+              {totalCards === 0
+                ? "아직 카드가 없어요. 오늘 배운 걸 기록하면 내일부터 물어볼게요."
+                : nextDue
+                  ? `오늘 복습할 카드가 없어요. 다음 복습은 ${formatKoreanDate(nextDue)}이에요.`
+                  : "오늘 복습할 카드가 없어요."}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ③ 최근 기록 */}
+      <section className="flex flex-col gap-3">
+        <h2 className="text-[17px] font-semibold">최근 기록</h2>
+        {recent.length === 0 ? (
+          <p className="text-[15px] leading-relaxed text-muted-foreground">첫 수업을 기록하면 여기에 쌓여요.</p>
+        ) : (
+          <ul className="flex min-w-0 flex-col divide-y divide-border rounded-2xl bg-card ring-1 ring-border">
+            {recent.map((r) => (
+              <li key={r.id} className="flex min-w-0 flex-col gap-0.5 px-4 py-3">
+                <span className="text-[13px] font-medium text-muted-foreground">{formatKoreanDate(r.loggedOn)}</span>
+                {r.names.length > 0 ? (
+                  <span className="text-[15px] font-semibold">{r.names.join(" · ")}</span>
+                ) : (
+                  <span className="truncate text-[15px] text-muted-foreground">{r.excerpt}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </>
+  );
+}
+
+// 로딩 — 숫자 · 목록 자리 스켈레톤 (FLOW 3)
+export function HomeSkeleton() {
+  return (
+    <div className="flex flex-col gap-5" aria-busy="true">
+      <div className="flex flex-col gap-3 rounded-2xl bg-card p-4 ring-1 ring-border">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-5 w-20" />
+          <Skeleton className="h-7 w-12" />
+        </div>
+        <Skeleton className="h-11 w-full rounded-full" />
+      </div>
+      <div className="flex flex-col gap-3">
+        <Skeleton className="h-5 w-20" />
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} className="h-14 w-full rounded-xl" />
+        ))}
+      </div>
+    </div>
+  );
+}

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { matchLog } from "@/lib/matching";
 import type { OrganizeResult } from "@/lib/matching/types";
@@ -138,9 +139,11 @@ export async function saveLog(input: SaveInput): Promise<SaveResult> {
       )
       .select("id");
     if (cardError) return undo(log.id, "review_cards", cardError);
+    revalidatePath("/app"); // 홈의 오늘 복습 · 최근 기록을 새로
     return { ok: true, newCards: created?.length ?? 0, linked: uniqueChosen.length };
   }
 
+  revalidatePath("/app");
   return { ok: true, newCards: 0, linked: 0 };
 }
 

@@ -18,3 +18,11 @@ export function addDays(iso: string, n: number): string {
 
 export const isIsoDate = (s: unknown): s is string =>
   typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s));
+
+// "10월 26일 (월)" — 화면 표시용
+export function formatKoreanDate(iso: string): string {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  const dow = ["일", "월", "화", "수", "목", "금", "토"][new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+  return `${m}월 ${d}일 (${dow})`;
+}

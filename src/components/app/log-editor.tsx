@@ -12,13 +12,6 @@ import { seoulToday } from "@/lib/seoul-date";
 // 오늘 배운 것 기록 — 상태 A 쓰기 (FLOW.md 4 · D-03 · D-12).
 // 쓰는 동안은 아무것도 추천하지 않는다. 마이크는 브라우저 내장 음성 인식(녹음 저장 없음).
 
-export function formatKoreanDate(iso: string): string {
-  if (!iso) return "";
-  const [y, m, d] = iso.split("-").map(Number);
-  const dow = ["일", "월", "화", "수", "목", "금", "토"][new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
-  return `${m}월 ${d}일 (${dow})`;
-}
-
 type Props = {
   initialBody?: string;
   initialDate?: string;

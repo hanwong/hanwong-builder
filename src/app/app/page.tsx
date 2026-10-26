@@ -1,9 +1,12 @@
+import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { LogOut, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { HomeSections, HomeSkeleton } from "@/components/app/home-sections";
 
-// 임시 홈 (T-12). 진짜 홈(복습 N장 · 최근 기록)은 T-21 에서. 로그아웃은 홈 한 줄로 (FLOW 6).
+// 홈 (T-21, FLOW 3): ① 기록하기 버튼(항상 맨 위, D-08) ② 오늘 복습 ③ 최근 기록 ④ 하단 탭(레이아웃).
+// ② · ③ 은 로그인한 사람 데이터라 요청 때 읽는다 — 그동안 스켈레톤.
 export default function AppHome() {
   return (
     <div className="flex flex-col gap-5">
@@ -19,18 +22,17 @@ export default function AppHome() {
           </Button>
         </form>
       </header>
-      <p className="text-[15px] leading-relaxed text-muted-foreground">
-        오늘도 수고했어요. 배운 걸 잊기 전에 적어 둘까요?
-      </p>
+
       <Button asChild className="h-12 w-full rounded-full text-base">
         <Link href="/app/log">
           <Plus data-icon="inline-start" aria-hidden />
           오늘 배운 것 기록하기
         </Link>
       </Button>
-      <p className="text-[13px] font-medium text-muted-foreground">
-        오늘 복습 · 최근 기록은 다음 태스크(T-21)에서 붙어요.
-      </p>
+
+      <Suspense fallback={<HomeSkeleton />}>
+        <HomeSections />
+      </Suspense>
     </div>
   );
 }
