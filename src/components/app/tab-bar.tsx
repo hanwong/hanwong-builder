@@ -19,9 +19,9 @@ export function TabBar() {
   return (
     <nav
       aria-label="주요 메뉴"
-      className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 backdrop-blur"
+      className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
     >
-      <ul className="mx-auto flex max-w-md items-stretch justify-around px-2 pt-2 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
+      <ul className="mx-auto flex h-(--tabbar-h) max-w-md items-center justify-around px-2">
         {tabs.map(({ href, label, Icon, ready }) => {
           const active = href === "/app" ? pathname === "/app" : pathname.startsWith(href);
           const cls = cn(

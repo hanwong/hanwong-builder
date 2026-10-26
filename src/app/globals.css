@@ -49,6 +49,7 @@
 }
 
 :root {
+  --tabbar-h: 4rem; /* 하단 탭 높이(아이폰 홈 막대 자리는 따로 더함) — tab-bar · bottom-action 이 함께 쓴다 */
   --background: #FAF9F4;
   --foreground: #16160F;
   --card: #FFFFFF;

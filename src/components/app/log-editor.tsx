@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Mic, MicOff, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BottomAction } from "@/components/app/bottom-action";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useSpeechInput } from "@/lib/use-speech-input";
@@ -131,23 +132,19 @@ export function LogEditor({ initialBody = "", initialDate, locked = false, below
         </pre>
       )}
 
-      {/* 자리 확보 + 정리하기 — 하단 탭 위에 고정 */}
-      <div className="h-16" aria-hidden />
-      <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-10 px-4">
-        <div className="mx-auto max-w-md">
-          {footer ?? (
-            <Button
-              type="button"
-              onClick={submit}
-              disabled={!canSubmit}
-              className="h-12 w-full rounded-full text-base shadow-none"
-            >
-              <Sparkles data-icon="inline-start" aria-hidden />
-              정리하기
-            </Button>
-          )}
-        </div>
-      </div>
+      <BottomAction>
+        {footer ?? (
+          <Button
+            type="button"
+            onClick={submit}
+            disabled={!canSubmit}
+            className="h-12 w-full rounded-full text-base shadow-none"
+          >
+            <Sparkles data-icon="inline-start" aria-hidden />
+            정리하기
+          </Button>
+        )}
+      </BottomAction>
     </div>
   );
 }

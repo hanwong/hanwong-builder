@@ -1,4 +1,5 @@
-import { Layers } from "lucide-react";
+import Link from "next/link";
+import { ChevronRight, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -70,15 +71,24 @@ export function HomeView({ data }: { data: HomeData }) {
         {recent.length === 0 ? (
           <p className="text-[15px] leading-relaxed text-muted-foreground">첫 수업을 기록하면 여기에 쌓여요.</p>
         ) : (
-          <ul className="flex min-w-0 flex-col divide-y divide-border rounded-2xl bg-card ring-1 ring-border">
+          <ul className="flex min-w-0 flex-col divide-y divide-border overflow-hidden rounded-2xl bg-card ring-1 ring-border">
             {recent.map((r) => (
-              <li key={r.id} className="flex min-w-0 flex-col gap-0.5 px-4 py-3">
-                <span className="text-[13px] font-medium text-muted-foreground">{formatKoreanDate(r.loggedOn)}</span>
-                {r.names.length > 0 ? (
-                  <span className="text-[15px] font-semibold">{r.names.join(" · ")}</span>
-                ) : (
-                  <span className="truncate text-[15px] text-muted-foreground">{r.excerpt}</span>
-                )}
+              <li key={r.id} className="min-w-0">
+                {/* 누르면 그 기록 보기 · 고치기 (D-25) */}
+                <Link
+                  href={`/app/log/${r.id}`}
+                  className="flex min-w-0 items-center gap-2 px-4 py-3 transition-colors hover:bg-muted"
+                >
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-[13px] font-medium text-muted-foreground">{formatKoreanDate(r.loggedOn)}</span>
+                    {r.names.length > 0 ? (
+                      <span className="text-[15px] font-semibold">{r.names.join(" · ")}</span>
+                    ) : (
+                      <span className="truncate text-[15px] text-muted-foreground">{r.excerpt}</span>
+                    )}
+                  </span>
+                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                </Link>
               </li>
             ))}
           </ul>

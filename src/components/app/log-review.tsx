@@ -1,39 +1,84 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ArrowLeft, ChevronDown, FlaskConical, Loader2, Plus, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, FlaskConical, Loader2, PencilLine, Plus, Sparkles, X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { BottomAction } from "@/components/app/bottom-action";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { MAX_BODY } from "@/lib/log-limits";
+import { organizeLog } from "@/app/app/log/actions";
 import { LEVELS, type Level, type MatchedTechnique, type Term } from "@/lib/mock/log-seed";
 
+export type AiStatus = "ok" | "mock" | "none";
+
+export type ReviewValue = {
+  body: string;
+  techniques: MatchedTechnique[];
+  customNames: string[];
+  terms: Term[];
+  aiStatus: AiStatus;
+};
+
 type Props = {
-  initial: {
-    loggedOn: string;
-    body: string;
-    isMock: boolean;
-    techniques: MatchedTechnique[];
-    terms: Term[];
+  initial: ReviewValue & {
+    loggedOn: string; // 화면 표시용 "10월 26일 (월)"
     skipped?: boolean; // 정리 실패 뒤 "그냥 저장" — 기술 없이 글만
   };
   onBack?: () => void;
-  // 저장(T-08) — 남겨 둔 기술 · 숙련도 · 직접 적은 이름. 성공하면 부모가 홈으로 보낸다
-  onSave: (value: { techniques: MatchedTechnique[]; customNames: string[] }) => Promise<void>;
+  saveLabel?: string; // 새 기록 "저장", 저장한 기록 고치기 "고친 내용 저장"
+  // 저장 — 성공하면 부모가 다음 화면으로 보낸다
+  onSave: (value: ReviewValue) => Promise<void>;
 };
 
-// 오늘 배운 것 기록 — 상태 C(확인). FLOW.md 5 배치도 그대로.
-export function LogReview({ initial, onBack, onSave }: Props) {
+// 정리 완료 화면(상태 C) — 새 기록(/app/log)과 저장한 기록 고치기(/app/log/[id], D-25)가 함께 쓴다.
+// 글은 "글 고치기"로 그 자리에서 고치고, "다시 정리하기"를 누를 때만 기술 · 용어를 다시 찾는다(Claude 비용).
+export function LogReview({ initial, onBack, saveLabel = "저장", onSave }: Props) {
+  const [body, setBody] = useState(initial.body);
+  const [editing, setEditing] = useState<string | null>(null); // 고치는 중인 글
   const [techniques, setTechniques] = useState(initial.techniques);
-  const [customNames, setCustomNames] = useState<string[]>([]);
-  const [draft, setDraft] = useState<string | null>(null);
+  const [customNames, setCustomNames] = useState<string[]>(initial.customNames);
+  const [terms, setTerms] = useState(initial.terms);
+  const [aiStatus, setAiStatus] = useState<AiStatus>(initial.aiStatus);
+  const [nameDraft, setNameDraft] = useState<string | null>(null);
   const [saving, startSaving] = useTransition();
+  const [organizing, startOrganizing] = useTransition();
 
   const setLevel = (id: string, level: Level) =>
     setTechniques((list) => list.map((t) => (t.id === id ? { ...t, level } : t)));
   const remove = (id: string) => setTechniques((list) => list.filter((t) => t.id !== id));
 
   const cardCount = techniques.length;
+  const skipped = initial.skipped && aiStatus === "none";
+
+  function finishEditing() {
+    const text = editing?.trim();
+    if (text) setBody(text);
+    setEditing(null);
+  }
+
+  function reorganize() {
+    const text = (editing ?? body).trim();
+    if (!text) return;
+    startOrganizing(async () => {
+      const res = await organizeLog(text).catch(() => null);
+      if (!res || !res.ok) {
+        toast.error(res?.message ?? "정리하지 못했어요. 인터넷 연결을 확인해 주세요.");
+        return;
+      }
+      // 이미 골라 둔 숙련도는 그대로 살린다
+      const chosen = new Map(techniques.map((t) => [t.id, t.level]));
+      setBody(text);
+      setEditing(null);
+      setTechniques(res.techniques.map((t) => ({ ...t, level: chosen.get(t.id) ?? t.level })));
+      setTerms(res.terms);
+      setAiStatus(res.isMock ? "mock" : "ok");
+      toast.success("고친 글로 다시 정리했어요");
+    });
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -48,16 +93,71 @@ export function LogReview({ initial, onBack, onSave }: Props) {
         </span>
       </header>
 
-      {/* 내가 쓴 글 (읽기) */}
-      <Card className="rounded-2xl ring-border">
-        <CardContent className="text-[15px] leading-relaxed">{initial.body}</CardContent>
-      </Card>
+      {/* 내가 쓴 글 — 그 자리에서 고치기 (D-25) */}
+      {editing === null ? (
+        <Card className="rounded-2xl ring-border">
+          <CardContent className="flex flex-col gap-2">
+            <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{body}</p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="-ml-3 self-start rounded-full text-muted-foreground"
+              onClick={() => setEditing(body)}
+              disabled={organizing || saving}
+            >
+              <PencilLine data-icon="inline-start" aria-hidden />
+              글 고치기
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <Textarea
+            autoFocus
+            value={editing}
+            onChange={(e) => setEditing(e.target.value.slice(0, MAX_BODY))}
+            maxLength={MAX_BODY}
+            aria-label="글 고치기"
+            readOnly={organizing}
+            className="min-h-40 resize-none rounded-2xl bg-card px-4 py-3 text-base leading-relaxed"
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="secondary"
+              className="h-10 rounded-full"
+              onClick={finishEditing}
+              disabled={organizing || !editing.trim()}
+            >
+              글만 바꾸기
+            </Button>
+            <Button className="h-10 rounded-full" onClick={reorganize} disabled={organizing || !editing.trim()}>
+              {organizing ? (
+                <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />
+              ) : (
+                <Sparkles data-icon="inline-start" aria-hidden />
+              )}
+              {organizing ? "정리 중…" : "다시 정리하기"}
+            </Button>
+            <Button
+              variant="ghost"
+              className="h-10 rounded-full text-muted-foreground"
+              onClick={() => setEditing(null)}
+              disabled={organizing}
+            >
+              취소
+            </Button>
+          </div>
+          <p className="text-[13px] font-medium text-muted-foreground">
+            "다시 정리하기"는 고친 글에서 기술을 새로 찾아요. 정한 숙련도는 그대로 둬요.
+          </p>
+        </div>
+      )}
 
       {/* 언급된 기술 */}
-      <section className="flex flex-col gap-3">
+      <section className={cn("flex flex-col gap-3", organizing && "opacity-50")}>
         <div className="flex items-center gap-2">
           <h2 className="text-[17px] font-semibold">언급된 기술</h2>
-          {initial.isMock && (
+          {aiStatus === "mock" && (
             <Badge variant="secondary">
               <FlaskConical data-icon="inline-start" aria-hidden />
               연습용 예시
@@ -70,7 +170,7 @@ export function LogReview({ initial, onBack, onSave }: Props) {
 
         {techniques.length === 0 && customNames.length === 0 && (
           <p className="text-[15px] leading-relaxed text-muted-foreground">
-            {initial.skipped
+            {skipped
               ? "정리 없이 글만 저장해요. 배운 기술 이름을 알면 아래에 직접 적어도 돼요."
               : "글에서 목록에 있는 기술을 찾지 못했어요. 아래에서 이름을 직접 적어 주세요."}
           </p>
@@ -104,10 +204,10 @@ export function LogReview({ initial, onBack, onSave }: Props) {
           </Card>
         ))}
 
-        {draft === null ? (
+        {nameDraft === null ? (
           <button
             type="button"
-            onClick={() => setDraft("")}
+            onClick={() => setNameDraft("")}
             className="flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border py-3 text-[15px] font-medium text-muted-foreground transition-colors hover:bg-muted"
           >
             <Plus className="size-4" strokeWidth={2} aria-hidden />
@@ -118,17 +218,17 @@ export function LogReview({ initial, onBack, onSave }: Props) {
             className="flex gap-2"
             onSubmit={(e) => {
               e.preventDefault();
-              const name = draft.trim();
-              if (name) setCustomNames((l) => [...l, name]);
-              setDraft(null);
+              const name = nameDraft.trim();
+              if (name && !customNames.includes(name)) setCustomNames((l) => [...l, name]);
+              setNameDraft(null);
             }}
           >
             <input
               autoFocus
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
               placeholder="기술 이름 (예: 베림볼로)"
-              className="h-12 flex-1 rounded-xl border border-input bg-card px-3 text-base outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="h-12 min-w-0 flex-1 rounded-xl border border-input bg-card px-3 text-base outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             />
             <Button type="submit" variant="secondary" className="h-12 rounded-full px-4">
               추가
@@ -138,13 +238,13 @@ export function LogReview({ initial, onBack, onSave }: Props) {
       </section>
 
       {/* 용어 */}
-      {initial.terms.length > 0 && (
+      {terms.length > 0 && (
         <section className="flex flex-col gap-3">
           <h2 className="text-[17px] font-semibold">용어</h2>
           <Card className="rounded-2xl ring-border">
             <CardContent>
               <dl className="flex flex-col gap-2.5">
-                {initial.terms.map(({ term, meaning }) => (
+                {terms.map(({ term, meaning }) => (
                   <div key={term} className="flex gap-3 text-[15px] leading-relaxed">
                     <dt className="shrink-0 font-semibold">{term}</dt>
                     <dd className="text-muted-foreground">{meaning}</dd>
@@ -156,28 +256,29 @@ export function LogReview({ initial, onBack, onSave }: Props) {
         </section>
       )}
 
-      {/* 고정 저장 버튼 자리 확보 */}
-      <div className="h-16" aria-hidden />
-
-      {/* 저장 — 하단 탭 위에 고정 */}
-      <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-10 px-4">
-        <div className="mx-auto max-w-md">
-          <Button
-            className="h-12 w-full rounded-full text-base shadow-none"
-            disabled={saving}
-            onClick={() =>
-              startSaving(() => {
-                // 이름 칸에 적고 "추가" 를 안 눌렀어도 저장에 넣는다
-                const typed = draft?.trim();
-                return onSave({ techniques, customNames: typed ? [...customNames, typed] : customNames });
-              })
-            }
-          >
-            {saving && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
-            {saving ? "저장 중…" : "저장"}
-          </Button>
-        </div>
-      </div>
+      <BottomAction>
+        <Button
+          className="h-12 w-full rounded-full text-base shadow-none"
+          disabled={saving || organizing}
+          onClick={() =>
+            startSaving(() => {
+              // 고치는 중인 글 · 이름 칸에 적고 안 누른 것도 저장에 넣는다
+              const text = editing?.trim() || body;
+              const typed = nameDraft?.trim();
+              return onSave({
+                body: text,
+                techniques,
+                customNames: typed && !customNames.includes(typed) ? [...customNames, typed] : customNames,
+                terms,
+                aiStatus,
+              });
+            })
+          }
+        >
+          {saving && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
+          {saving ? "저장 중…" : saveLabel}
+        </Button>
+      </BottomAction>
     </div>
   );
 }

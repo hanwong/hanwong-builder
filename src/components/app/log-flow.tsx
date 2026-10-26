@@ -46,16 +46,24 @@ export function LogFlow() {
     const { review } = state;
     return (
       <LogReview
-        initial={{ ...review, loggedOn: formatKoreanDate(review.loggedOn) }}
+        initial={{
+          loggedOn: formatKoreanDate(review.loggedOn),
+          body: review.body,
+          techniques: review.techniques,
+          customNames: [],
+          terms: review.terms,
+          aiStatus: review.skipped ? "none" : review.isMock ? "mock" : "ok",
+          skipped: review.skipped,
+        }}
         onBack={() => setState({ step: "write", draft: { body: review.body, loggedOn: review.loggedOn } })}
-        onSave={async ({ techniques, customNames }) => {
+        onSave={async (value) => {
           const res = await saveLog({
             loggedOn: review.loggedOn,
-            body: review.body,
-            aiStatus: review.skipped ? "none" : review.isMock ? "mock" : "ok",
-            techniques: techniques.map((t) => ({ slug: t.id, level: t.level })),
-            customNames,
-            terms: review.terms,
+            body: value.body,
+            aiStatus: value.aiStatus,
+            techniques: value.techniques.map((t) => ({ slug: t.id, level: t.level })),
+            customNames: value.customNames,
+            terms: value.terms,
           }).catch(() => null);
           if (!res || !res.ok) {
             toast.error(res?.message ?? "저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
