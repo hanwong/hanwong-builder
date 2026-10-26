@@ -4,7 +4,7 @@
 AI 프로덕트 빌더 클럽 3기 1주차 실습으로 만든 랜딩 페이지입니다.
 
 ## 주소
-- 사이트: https://hanwong-builder.vercel.app
+- 사이트: https://rereroll.xyz (예전 주소 https://hanwong-builder.vercel.app 도 그대로 열림)
 - GitHub 저장소: https://github.com/hanwong/hanwong-builder
 - Supabase 대시보드: https://supabase.com/dashboard/project/imzdlhwvylxxozpgjudn
 

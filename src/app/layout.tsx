@@ -16,7 +16,7 @@ const description =
 
 // 카톡 · 인스타 미리보기(T-11): 제목 · 설명 · 주소 + 이미지(src/app/opengraph-image.png, 로고 카드). 아이콘은 src/app/icon.png
 export const metadata: Metadata = {
-  metadataBase: new URL("https://hanwong-builder.vercel.app"),
+  metadataBase: new URL("https://rereroll.xyz"),
   title,
   description,
   openGraph: { title, description, siteName: "Re:Re:롤", locale: "ko_KR", type: "website", url: "/" },
