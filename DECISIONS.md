@@ -36,3 +36,5 @@
 
 ## D-18 (2026-10-26) 로그인 뒤 돌아갈 주소 → **Supabase Site URL 은 인터넷 주소(https://hanwong-builder.vercel.app), Redirect URLs 는 `http://localhost:3000/auth/callback` 과 `https://hanwong-builder.vercel.app/auth/callback` 둘 다.** 앱은 `redirectTo` 로 현재 주소의 `/auth/callback?next=…` 를 보내고, 허용 목록에 없으면 Supabase 가 Site URL 로 보내 버린다(첫 로그인이 localhost 로 튄 원인) / 영향: 새 도메인을 붙이면 Redirect URLs 에 그 주소의 `/auth/callback` 을 추가해야 함. Google 동의 화면 게시를 위해 `/privacy` · `/terms` · 로고를 만들었고, 두 문서의 문의 연락처는 비어 있음(미정 11)
 
+## D-19 (2026-10-26) 브라우저 음성 인식은 불안정하다 — 어디까지 책임질까 → **D-12(브라우저 내장 음성 인식)는 유지하되 "실패해도 글 쓰기는 막지 않는" 쪽으로 보강.** 휴대폰 실사용에서 ① 인식이 끝난 직후 바로 다시 켜면 실패 ② 데스크탑 일부 브라우저(크롬 외)는 "network" 오류로 아예 안 됨이 나왔다. 대응: 끝나면 0.6초 뒤 다시 켬, 오래된 신호 무시, 첫 시도부터 network · service-not-allowed 이면 마이크 버튼을 접고 키보드 받아쓰기 안내, `?debug=1` 진단 줄. 그래도 휴대폰에서 안정적이지 않으면 서버 음성 인식(녹음 → 글, 비용 · 외부 전송)을 M2 로 당겨서 판단한다 / 영향: T-05, PLAN 미정 5
+

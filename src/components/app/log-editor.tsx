@@ -41,7 +41,7 @@ export function LogEditor({ initialBody = "", initialDate, onSubmit }: Props) {
   const [body, setBody] = useState(initialBody);
   const [date, setDate] = useState(initialDate ?? "");
   const [today, setToday] = useState("");
-  const { supported, listening, interim, start, stop } = useSpeechInput({
+  const { supported, listening, interim, start, stop, debugLines } = useSpeechInput({
     onText: (text) =>
       setBody((prev) => {
         const sep = prev && !/\s$/.test(prev) ? " " : "";
@@ -132,6 +132,12 @@ export function LogEditor({ initialBody = "", initialDate, onSubmit }: Props) {
           )}
         </p>
       </div>
+
+      {debugLines.length > 0 && (
+        <pre className="overflow-x-auto rounded-xl bg-secondary p-3 text-[12px] leading-relaxed whitespace-pre-wrap">
+          {debugLines.join("\n")}
+        </pre>
+      )}
 
       {/* 자리 확보 + 정리하기 — 하단 탭 위에 고정 */}
       <div className="h-16" aria-hidden />
