@@ -1,16 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Mic, MicOff, Sparkles } from "lucide-react";
+import { Loader2, Mic, MicOff, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useSpeechInput } from "@/lib/use-speech-input";
+import { MAX_BODY } from "@/lib/log-limits";
 
 // 오늘 배운 것 기록 — 상태 A 쓰기 (FLOW.md 4 · D-03 · D-12).
 // 쓰는 동안은 아무것도 추천하지 않는다. 마이크는 브라우저 내장 음성 인식(녹음 저장 없음).
-
-export const MAX_BODY = 5000; // DB class_logs_body_len 과 같게
 
 // 서울 기준 오늘 (YYYY-MM-DD). 렌더 중이 아니라 effect 안에서만 부른다(cacheComponents).
 function seoulToday(): string {
@@ -33,10 +32,11 @@ export function formatKoreanDate(iso: string): string {
 type Props = {
   initialBody?: string;
   initialDate?: string;
+  pending?: boolean; // 정리 중(서버 매칭 기다리는 중)
   onSubmit: (value: { body: string; loggedOn: string }) => void;
 };
 
-export function LogEditor({ initialBody = "", initialDate, onSubmit }: Props) {
+export function LogEditor({ initialBody = "", initialDate, pending = false, onSubmit }: Props) {
   const [body, setBody] = useState(initialBody);
   const [date, setDate] = useState(initialDate ?? "");
   const [today, setToday] = useState("");
@@ -59,7 +59,7 @@ export function LogEditor({ initialBody = "", initialDate, onSubmit }: Props) {
   const shown = interim ? `${body}${body && !/\s$/.test(body) ? " " : ""}${interim}` : body;
 
   function submit() {
-    if (!canSubmit) return;
+    if (!canSubmit || pending) return;
     stop();
     onSubmit({ body: trimmed, loggedOn: date || today });
   }
@@ -149,11 +149,15 @@ export function LogEditor({ initialBody = "", initialDate, onSubmit }: Props) {
           <Button
             type="button"
             onClick={submit}
-            disabled={!canSubmit}
+            disabled={!canSubmit || pending}
             className="h-12 w-full rounded-full text-base shadow-none"
           >
-            <Sparkles data-icon="inline-start" aria-hidden />
-            정리하기
+            {pending ? (
+              <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />
+            ) : (
+              <Sparkles data-icon="inline-start" aria-hidden />
+            )}
+            {pending ? "정리 중…" : "정리하기"}
           </Button>
         </div>
       </div>

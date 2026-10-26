@@ -134,7 +134,7 @@
 - `review_cards.interval_step` 0~4, `technique_levels.level` 5개 값, `review_logs.rating` 4개 값, `class_logs.ai_status` 4개 값 — 체크 제약.
 - 인덱스: `review_cards (user_id, due_on)` — "오늘 복습" 조회. `class_logs (user_id, logged_on desc)` — 최근 기록. `class_log_techniques (user_id, technique_id)` — 기술 상세의 "내 기록 모음". `techniques (position_id, sort_order)`.
 - **날짜는 전부 Asia/Seoul** — `logged_on`, `due_on` 은 서버 코드에서 서울 기준 날짜를 계산해 넣는다(DB 기본값 `current_date` 는 UTC 라 쓰지 않음). 밤 9시 이후 기록이 하루 어긋나지 않게.
-- **매칭 결과는 `techniques.id` 만** — 서버가 Claude 에서 id 배열을 받아 `is_reviewed = true` 인 것만 남기고, 없는 id 는 버린다. 이름 문자열은 저장하지 않는다(custom_name 은 사용자가 직접 적은 것만).
+- **매칭 결과는 `techniques.id` 만** — 서버가 Claude 에서 slug(고유 키) 배열을 받아 후보에 있는 것만 남기고(없는 건 버림), 저장할 때 id 로 바꾼다. 후보는 `is_reviewed = true` 인 것, 단 검수된 기술이 20개 전이면 초안 포함(D-21). 이름 문자열은 저장하지 않는다(custom_name 은 사용자가 직접 적은 것만).
 - **복습 간격 규칙(D-09, 안키식)**: 단계 `[1, 3, 7, 14, 30]`일. 새 카드 = 단계 0, 다음 복습 = 내일. `again` → 단계 0 · 내일 / `hard` → 단계 유지 / `good` → +1 / `easy` → +2 (최대 4). 다음 복습일 = 오늘(서울) + 그 단계의 일수. 계산은 서버 코드(DB 함수 아님).
 
 ## 7. 개인정보

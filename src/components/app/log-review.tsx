@@ -65,6 +65,12 @@ export function LogReview({ initial, onBack }: Props) {
           </span>
         </div>
 
+        {techniques.length === 0 && customNames.length === 0 && (
+          <p className="text-[15px] leading-relaxed text-muted-foreground">
+            글에서 목록에 있는 기술을 찾지 못했어요. 아래에서 이름을 직접 적어 주세요.
+          </p>
+        )}
+
         {techniques.map((t) => (
           <TechniqueCard key={t.id} technique={t} onLevel={setLevel} onRemove={remove} />
         ))}
@@ -183,6 +189,11 @@ function TechniqueCard({
             <span className="text-[13px] font-medium text-muted-foreground">
               {t.nameEn} · {t.position}
             </span>
+            {t.draft && (
+              <Badge variant="outline" className="self-start">
+                검수 전
+              </Badge>
+            )}
           </div>
           <Button
             variant="ghost"
