@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatKoreanDate } from "@/lib/seoul-date";
 import { getHomeData, type HomeData } from "@/lib/home-data";
+import { TrainingBelt } from "@/components/app/training-belt";
 import { createSupabaseServer } from "@/lib/supabase/server";
 
 // 홈 ② 오늘 복습 · ③ 최근 기록 (FLOW 3 · DESIGN 6). 로그인 쿠키를 읽으므로 page 에서 Suspense 로 감싼다.
@@ -31,10 +32,13 @@ export async function HomeSections() {
 }
 
 export function HomeView({ data }: { data: HomeData }) {
-  const { dueToday, totalCards, nextDue, recent } = data;
+  const { dueToday, totalCards, nextDue, recent, weeks, belt } = data;
 
   return (
     <>
+      {/* ② 수련 벨트 (D-33) */}
+      <TrainingBelt weeks={weeks} belt={belt} />
+
       {/* ② 오늘 복습 */}
       <Card className="rounded-2xl ring-border">
         <CardContent className="flex flex-col gap-3">
@@ -100,6 +104,10 @@ export function HomeView({ data }: { data: HomeData }) {
 export function HomeSkeleton() {
   return (
     <div className="flex flex-col gap-5" aria-busy="true">
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-5 w-24" />
+        <Skeleton className="h-14 w-full rounded-[3px]" />
+      </div>
       <div className="flex flex-col gap-3 rounded-2xl bg-card p-4 ring-1 ring-border">
         <div className="flex items-center justify-between">
           <Skeleton className="h-5 w-20" />

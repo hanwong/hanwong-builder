@@ -7,6 +7,7 @@
 
 ## 1. 로그인
 - 누가: **수련자**만. 랜딩(`/`)은 로그인 없이, `/app/...` 전부 로그인 필요(D-07).
+- 벨트 색(홈 수련 벨트, D-33)은 표를 만들지 않고 `auth.users` 의 `user_metadata.belt`(white · blue · purple · brown · black)에 둔다. 본인만 바꾼다(supabase.auth.updateUser).
 - 방식: **Supabase Auth + Google**(D-05). 이메일 · 매직링크 없음. 사용자 식별은 `auth.users.id`(uuid) — 아래 표의 `user_id` 가 이것을 가리킨다.
 - 운영자(본인): 앱에 운영자 역할은 없다. 기술 콘텐츠는 마이그레이션 · 시드 파일로 넣고, 필요하면 Supabase 대시보드에서 본다(앱 밖).
 - 참고: Google 로그인은 Google Cloud 에서 OAuth 클라이언트를 만들어 Supabase 에 넣어야 한다(T-00b). 메일 발송 한도 문제는 없다.
