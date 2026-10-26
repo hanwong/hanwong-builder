@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { matchLog } from "@/lib/matching";
+import { searchLibrary } from "@/lib/matching/search";
 import type { OrganizeResult } from "@/lib/matching/types";
 import { MAX_BODY } from "@/lib/log-limits";
-import { LEVELS, type Level, type Term } from "@/lib/mock/log-seed";
+import { LEVELS, type Level, type MatchedTechnique, type Term } from "@/lib/mock/log-seed";
 import { addDays, isIsoDate, seoulToday } from "@/lib/seoul-date";
 
 // "정리하기" — 글에서 기술 · 용어를 찾는다(T-06). 저장은 하지 않는다.
@@ -41,6 +42,35 @@ export async function organizeLog(body: string): Promise<OrganizeResult> {
     result.techniques = result.techniques.map((t) => ({ ...t, level: prev.get(t.id) ?? t.level }));
   }
   return result;
+}
+
+// 정리 화면 "기술 추가" 검색 (D-31) — 우리 목록에서 찾고, 이미 정해 둔 숙련도가 있으면 그 값으로 돌려준다.
+export async function searchTechniques(query: string): Promise<MatchedTechnique[]> {
+  const supabase = await createSupabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user || typeof query !== "string") return [];
+
+  const found = searchLibrary(query.slice(0, 40));
+  if (!found.length) return [];
+  const { data } = await supabase
+    .from("technique_levels")
+    .select("level, techniques!inner(slug)")
+    .in(
+      "techniques.slug",
+      found.map((t) => t.slug),
+    );
+  const prev = new Map((data ?? []).map((r) => [r.techniques.slug, r.level as Level]));
+  return found.map((t) => ({
+    id: t.slug,
+    nameKo: t.nameKo,
+    nameEn: t.nameEn,
+    position: t.position,
+    steps: t.steps,
+    level: prev.get(t.slug) ?? "beginner",
+    draft: t.draft,
+  }));
 }
 
 export type SaveInput = {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ArrowLeft, ChevronDown, FlaskConical, Loader2, PencilLine, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, FlaskConical, Loader2, PencilLine, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { BottomAction } from "@/components/app/bottom-action";
@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { MAX_BODY } from "@/lib/log-limits";
 import { organizeLog } from "@/app/app/log/actions";
 import { LevelPicker } from "@/components/app/level-picker";
+import { TechniqueAdder } from "@/components/app/technique-adder";
 import type { Level, MatchedTechnique, Term } from "@/lib/mock/log-seed";
 
 export type AiStatus = "ok" | "mock" | "none";
@@ -46,7 +47,6 @@ export function LogReview({ initial, onBack, saveLabel = "저장", onSave, onDel
   const [customNames, setCustomNames] = useState<string[]>(initial.customNames);
   const [terms, setTerms] = useState(initial.terms);
   const [aiStatus, setAiStatus] = useState<AiStatus>(initial.aiStatus);
-  const [nameDraft, setNameDraft] = useState<string | null>(null);
   const [saving, startSaving] = useTransition();
   const [organizing, startOrganizing] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -176,8 +176,8 @@ export function LogReview({ initial, onBack, saveLabel = "저장", onSave, onDel
         {techniques.length === 0 && customNames.length === 0 && (
           <p className="text-[15px] leading-relaxed text-muted-foreground">
             {skipped
-              ? "정리 없이 글만 저장해요. 배운 기술 이름을 알면 아래에 직접 적어도 돼요."
-              : "글에서 목록에 있는 기술을 찾지 못했어요. 아래에서 이름을 직접 적어 주세요."}
+              ? "정리 없이 글만 저장해요. 배운 기술은 아래 ‘기술 추가’에서 찾아 넣을 수 있어요."
+              : "글에서 목록에 있는 기술을 찾지 못했어요. 아래 ‘기술 추가’에서 찾아 넣어 주세요."}
           </p>
         )}
 
@@ -209,37 +209,11 @@ export function LogReview({ initial, onBack, saveLabel = "저장", onSave, onDel
           </Card>
         ))}
 
-        {nameDraft === null ? (
-          <button
-            type="button"
-            onClick={() => setNameDraft("")}
-            className="flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border py-3 text-[15px] font-medium text-muted-foreground transition-colors hover:bg-muted"
-          >
-            <Plus className="size-4" strokeWidth={2} aria-hidden />
-            목록에 없는 기술 적기
-          </button>
-        ) : (
-          <form
-            className="flex gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const name = nameDraft.trim();
-              if (name && !customNames.includes(name)) setCustomNames((l) => [...l, name]);
-              setNameDraft(null);
-            }}
-          >
-            <input
-              autoFocus
-              value={nameDraft}
-              onChange={(e) => setNameDraft(e.target.value)}
-              placeholder="기술 이름 (예: 베림볼로)"
-              className="h-12 min-w-0 flex-1 rounded-xl border border-input bg-card px-3 text-base outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-            />
-            <Button type="submit" variant="secondary" className="h-12 rounded-full px-4">
-              추가
-            </Button>
-          </form>
-        )}
+        <TechniqueAdder
+          existing={techniques.map((t) => t.id)}
+          onPick={(t) => setTechniques((list) => (list.some((x) => x.id === t.id) ? list : [...list, t]))}
+          onCustom={(name) => setCustomNames((l) => (l.includes(name) ? l : [...l, name]))}
+        />
       </section>
 
       {/* 용어 */}
@@ -309,16 +283,9 @@ export function LogReview({ initial, onBack, saveLabel = "저장", onSave, onDel
           disabled={saving || organizing || deleting}
           onClick={() =>
             startSaving(() => {
-              // 고치는 중인 글 · 이름 칸에 적고 안 누른 것도 저장에 넣는다
+              // 고치는 중인 글도 저장에 넣는다
               const text = editing?.trim() || body;
-              const typed = nameDraft?.trim();
-              return onSave({
-                body: text,
-                techniques,
-                customNames: typed && !customNames.includes(typed) ? [...customNames, typed] : customNames,
-                terms,
-                aiStatus,
-              });
+              return onSave({ body: text, techniques, customNames, terms, aiStatus });
             })
           }
         >
