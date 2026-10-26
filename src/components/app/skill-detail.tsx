@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ChevronRight, Plus } from "lucide-react";
+import { ArrowLeft, ChevronRight, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,22 +15,25 @@ import { formatKoreanDate } from "@/lib/seoul-date";
 import type { Level } from "@/lib/mock/log-seed";
 import type { SkillDetail as Detail } from "@/lib/skill-detail-data";
 
-// 기술 상세 (T-10b, FLOW 4 · DESIGN 6) — 세팅 과정 · 내 숙련도(누르면 바로 저장) · 복습 상태 · 내 정리 모음.
+// 기술 상세 (T-10b, FLOW 4 · DESIGN 6) — 세팅 과정 · 내 숙련도(바꾸면 하단 "숙련도 저장", D-27) · 복습 상태 · 내 정리 모음.
 export function SkillDetail({ skill }: { skill: Detail }) {
   const router = useRouter();
-  const [level, setLevelState] = useState<Level | null>(skill.level);
+  const [saved, setSaved] = useState<Level | null>(skill.level); // DB 에 있는 값
+  const [level, setLevelState] = useState<Level | null>(skill.level); // 지금 고른 값
   const [saving, startSaving] = useTransition();
+  const dirty = level !== saved;
 
-  function changeLevel(next: Level) {
-    if (next === level) return;
-    const prev = level;
-    setLevelState(next); // 먼저 바꿔 보여 주고, 실패하면 되돌린다
+  // 바꾸면 하단에 "숙련도 저장"이 나타나고, 눌러야 저장 (D-27)
+  function save() {
+    if (!level || !dirty) return;
     startSaving(async () => {
-      const res = await setLevel(skill.slug, next).catch(() => null);
+      const res = await setLevel(skill.slug, level).catch(() => null);
       if (!res || !res.ok) {
-        setLevelState(prev);
         toast.error(res?.message ?? "저장 못 했어요 — 인터넷 연결을 확인하고 다시 눌러 주세요.");
+        return;
       }
+      setSaved(level);
+      toast.success("숙련도를 저장했어요");
     });
   }
 
@@ -74,7 +77,7 @@ export function SkillDetail({ skill }: { skill: Detail }) {
       {/* 내 숙련도 · 복습 상태 */}
       <section className="flex flex-col gap-2">
         <h2 className="text-[17px] font-semibold">내 숙련도</h2>
-        <LevelPicker label={`${skill.nameKo} 숙련도`} value={level} onChange={changeLevel} disabled={saving} />
+        <LevelPicker label={`${skill.nameKo} 숙련도`} value={level} onChange={setLevelState} disabled={saving} />
         <p className="text-[13px] font-medium text-muted-foreground">
           {skill.card
             ? `다음 복습 ${formatKoreanDate(skill.card.dueOn)} · 지금까지 ${skill.card.reviews}번 복습`
@@ -109,12 +112,29 @@ export function SkillDetail({ skill }: { skill: Detail }) {
       </section>
 
       <BottomAction>
-        <Button asChild variant="secondary" className="h-12 w-full rounded-full text-base shadow-none">
-          <Link href="/app/log">
-            <Plus data-icon="inline-start" aria-hidden />
-            이 기술 기록하기
-          </Link>
-        </Button>
+        {dirty ? (
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              className="h-12 flex-1 rounded-full text-base shadow-none"
+              disabled={saving}
+              onClick={() => setLevelState(saved)}
+            >
+              되돌리기
+            </Button>
+            <Button className="h-12 flex-[2] rounded-full text-base shadow-none" disabled={saving} onClick={save}>
+              {saving && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
+              {saving ? "저장 중…" : "숙련도 저장"}
+            </Button>
+          </div>
+        ) : (
+          <Button asChild variant="secondary" className="h-12 w-full rounded-full text-base shadow-none">
+            <Link href="/app/log">
+              <Plus data-icon="inline-start" aria-hidden />
+              이 기술 기록하기
+            </Link>
+          </Button>
+        )}
       </BottomAction>
     </div>
   );
