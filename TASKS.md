@@ -26,8 +26,8 @@
 - [x] T-12 시작하기 → `/app` — 완료 기준: 시작하기 버튼이 `/app` 으로 가고(로그인 안 됐으면 `/app/login`), "곧 열려요" 알림은 사라짐 (2026-10-26 화면 완료 · `/app` 임시 홈 + 하단 탭 연결. **로그인 안 됐을 때 `/app/login` 으로 보내기는 T-03 에서**)
 
 ### 화면 2 · 로그인 `/app/login`
-- [ ] T-00b Google 로그인 설정 — 완료 기준: Google Cloud OAuth 클라이언트 ID · 비밀이 Supabase Auth 에 등록됨(본인 클릭, 값은 채팅에 안 보냄), 리디렉트에 localhost 와 인터넷 주소 둘 다
-- [ ] T-03 로그인 화면 · 보호 — 완료 기준: Google 버튼 하나, 로그인 뒤 원래 가려던 곳으로. 로그인 없이 `/app/...` 열면 `/app/login` 으로. 본인 기록만 보임(RLS) (2026-10-26 **화면 완료 · 실제 연결 대기** — `/app/login` · `src/proxy.ts` 보호 · `/auth/callback` · `/auth/signout` 완료, 인터넷 주소에서 `/app` → 로그인 리디렉트 확인. 실제 Google 로그인은 T-00b 뒤 확인)
+- [x] T-00b Google 로그인 설정 — 완료 기준: Google Cloud OAuth 클라이언트 ID · 비밀이 Supabase Auth 에 등록됨(본인 클릭, 값은 채팅에 안 보냄), 리디렉트에 localhost 와 인터넷 주소 둘 다 (2026-10-26 완료 · Site URL = 인터넷 주소, Redirect URLs = 로컬 · 인터넷 `/auth/callback` 둘 다. Google 동의 화면용 `/privacy` · `/terms` · 로고 추가)
+- [x] T-03 로그인 화면 · 보호 — 완료 기준: Google 버튼 하나, 로그인 뒤 원래 가려던 곳으로. 로그인 없이 `/app/...` 열면 `/app/login` 으로. 본인 기록만 보임(RLS) (2026-10-26 완료 · `/app/login` · `src/proxy.ts` 보호 · `/auth/callback` · `/auth/signout`. 본인이 인터넷 주소에서 Google 로그인 → 홈 확인, auth.users 1명. "본인 기록만" 은 기록 기능이 생기는 T-08 에서 실제 확인)
 
 ### 화면 3 · 홈 `/app`
 - [ ] T-21 홈 — 완료 기준: 맨 위 "오늘 배운 것 기록하기" 버튼, 그 아래 "오늘 복습 N장 + 복습 시작", 최근 기록 3개, 하단 탭(홈 · 기록 · 복습 · 내 기술). 데이터 없을 때 빈 상태 안내, 로딩 스켈레톤, 오류 문구

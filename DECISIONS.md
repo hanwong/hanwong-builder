@@ -34,3 +34,5 @@
 
 ## D-17 (2026-10-26) 기술 연결 데이터(지도용)는 언제 → **M3 로 미룬다.** 지도를 그리려면 기술마다 도착 포지션(`to`) · 종류(`kind`)가 필요하다. 넣을 때는 BJJGraph 의 연결 데이터를 베끼지 않고(비상업 라이선스) 세팅 과정 마지막 줄을 근거로 우리가 직접 적는다 / 본인 선택 — 지금은 M1 화면(로그인 · 홈 · 기록 · 복습)에 집중 / 영향: PLAN M3, DB(techniques 에 to_position_id · kind 열 추가는 M3 마이그레이션)
 
+## D-18 (2026-10-26) 로그인 뒤 돌아갈 주소 → **Supabase Site URL 은 인터넷 주소(https://hanwong-builder.vercel.app), Redirect URLs 는 `http://localhost:3000/auth/callback` 과 `https://hanwong-builder.vercel.app/auth/callback` 둘 다.** 앱은 `redirectTo` 로 현재 주소의 `/auth/callback?next=…` 를 보내고, 허용 목록에 없으면 Supabase 가 Site URL 로 보내 버린다(첫 로그인이 localhost 로 튄 원인) / 영향: 새 도메인을 붙이면 Redirect URLs 에 그 주소의 `/auth/callback` 을 추가해야 함. Google 동의 화면 게시를 위해 `/privacy` · `/terms` · 로고를 만들었고, 두 문서의 문의 연락처는 비어 있음(미정 11)
+
