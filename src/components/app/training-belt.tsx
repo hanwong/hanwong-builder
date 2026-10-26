@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { setBelt } from "@/app/app/actions";
-import { BELTS, BELT_BG, BELT_ROWS, BELT_WEEKS, WEEK_SHADES, type Belt } from "@/lib/belt";
+import { BELTS, BELT_BG, BELT_BLACK_BAR, BELT_ROWS, BELT_WEEKS, BELT_WHITE_EDGE, WEEK_SHADES, type Belt } from "@/lib/belt";
 import { formatKoreanDate } from "@/lib/seoul-date";
 import { cn } from "@/lib/utils";
 
@@ -40,14 +40,20 @@ export function TrainingBelt({ weeks, belt: initialBelt }: { weeks: { start: str
       {/* 벨트: 바깥 = 벨트 색, 위아래는 높이의 약 1%(≈ 너비의 0.17%) */}
       <div
         className="rounded-[3px]"
-        style={{ backgroundColor: color, padding: "max(1px, 0.17%) 5%" }}
+        style={{
+          backgroundColor: color,
+          padding: "max(1px, 0.17%) 5%",
+          // 화이트는 크림 바탕에 묻혀서 벨트 전체에 테두리(D-35)
+          boxShadow: belt === "white" ? `0 0 0 1px ${BELT_WHITE_EDGE}` : undefined,
+        }}
         role="img"
         aria-label={`${label} 벨트, 최근 2년 동안 ${total}번 수련`}
       >
         <div
           className="grid gap-[2px] p-[3px]"
           style={{
-            backgroundColor: BELT_BG,
+            // 블랙은 칸지 랭크바처럼 가운데 바탕만 빨강, 칸 색은 그대로(D-35)
+            backgroundColor: belt === "black" ? BELT_BLACK_BAR : BELT_BG,
             gridTemplateColumns: `repeat(${BELT_WEEKS / BELT_ROWS}, minmax(0, 1fr))`,
             gridTemplateRows: `repeat(${BELT_ROWS}, auto)`,
             gridAutoFlow: "column",
