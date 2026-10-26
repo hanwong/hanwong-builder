@@ -6,16 +6,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatKoreanDate } from "@/lib/seoul-date";
 import { getHomeData, type HomeData } from "@/lib/home-data";
 import { TrainingBelt } from "@/components/app/training-belt";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 // 홈 ② 오늘 복습 · ③ 최근 기록 (FLOW 3 · DESIGN 6). 로그인 쿠키를 읽으므로 page 에서 Suspense 로 감싼다.
 export async function HomeSections() {
   // 쿠키 읽기는 try 밖에서 — 미리 만들기(prerender) 중에 Next 가 보내는 "요청 때까지 기다려" 신호를
   // 오류로 잡아 버리면 홈이 "불러오지 못했어요" 로 굳는다
-  const supabase = await createSupabaseServer();
+  await cookies();
   let data;
   try {
-    data = await getHomeData(supabase);
+    data = await getHomeData();
   } catch (e) {
     console.error("home failed:", e instanceof Error ? e.message : "unknown");
     return (
@@ -77,8 +77,10 @@ export function HomeView({ data }: { data: HomeData }) {
             {recent.map((r) => (
               <li key={r.id} className="min-w-0">
                 {/* 누르면 그 기록 보기 · 고치기 (D-25) */}
+                {/* 3개뿐이라 내용까지 미리 받아 둔다(prefetch) — 누르면 바로 열림 */}
                 <Link
                   href={`/app/log/${r.id}`}
+                  prefetch={true}
                   className="flex min-w-0 items-center gap-2 px-4 py-3 transition-colors hover:bg-muted"
                 >
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">

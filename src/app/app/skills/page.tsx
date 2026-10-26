@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SkillsList } from "@/components/app/skills-list";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import { getSkills } from "@/lib/skills-data";
 
 export const metadata: Metadata = {
@@ -19,10 +19,10 @@ export default function SkillsPage() {
 }
 
 async function Loader() {
-  const supabase = await createSupabaseServer(); // 쿠키 읽기는 try 밖에서 (home-sections 참고)
+  await cookies(); // 쿠키 읽기는 try 밖에서 (home-sections 참고)
   let groups;
   try {
-    groups = await getSkills(supabase);
+    groups = await getSkills();
   } catch (e) {
     console.error("skills failed:", e instanceof Error ? e.message : "unknown");
     return (

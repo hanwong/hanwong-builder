@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LogDetail } from "@/components/app/log-detail";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import { getLog } from "@/lib/log-data";
 
 export const metadata: Metadata = {
@@ -23,10 +23,10 @@ async function Loader({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   // uuid 모양이 아니면 DB 에 묻지 않고 "없음"
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const supabase = await createSupabaseServer(); // 쿠키 읽기는 try 밖에서 (home-sections 참고)
+  await cookies(); // 쿠키 읽기는 try 밖에서 (home-sections 참고)
   let log;
   try {
-    log = await getLog(supabase, id);
+    log = await getLog(id);
   } catch (e) {
     console.error("log detail failed:", e instanceof Error ? e.message : "unknown");
     return (

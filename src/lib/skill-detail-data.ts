@@ -1,5 +1,6 @@
 import "server-only";
-import type { createSupabaseServer } from "@/lib/supabase/server";
+import { cacheLife } from "next/cache";
+import { createSupabaseServer } from "@/lib/supabase/server";
 import type { Level } from "@/lib/mock/log-seed";
 
 // 기술 상세 (T-10b) — 기술 내용(공용) + 내 숙련도 · 복습 상태 · 그 기술이 나온 내 기록(본인 것만, RLS).
@@ -16,10 +17,11 @@ export type SkillDetail = {
   logs: { id: string; loggedOn: string; body: string }[]; // 날짜 최신순
 };
 
-export async function getSkill(
-  supabase: Awaited<ReturnType<typeof createSupabaseServer>>,
-  slug: string,
-): Promise<SkillDetail | null> {
+export async function getSkill(slug: string): Promise<SkillDetail | null> {
+  "use cache: private"; // 내 데이터 — 서버에 남기지 않고, 휴대폰 안에서만 30초 재사용 → 미리 불러오기(prefetch)에 들어감
+  cacheLife({ stale: 30 });
+  const supabase = await createSupabaseServer();
+
   const { data: t, error } = await supabase
     .from("techniques")
     .select("id, slug, name_ko, name_en, aliases, steps, is_reviewed, positions(name_ko)")

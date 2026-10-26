@@ -1,12 +1,17 @@
 import "server-only";
-import type { createSupabaseServer } from "@/lib/supabase/server";
+import { cacheLife } from "next/cache";
+import { createSupabaseServer } from "@/lib/supabase/server";
 import type { Level } from "@/lib/mock/log-seed";
 
 // 내 기술 (T-10) — 포지션 19개 × 기술 + 내 숙련도. 기술은 공용(로그인하면 초안 포함, D-24), 숙련도는 본인 것만(RLS).
 export type SkillRow = { slug: string; nameKo: string; level: Level | null; draft: boolean };
 export type PositionGroup = { slug: string; nameKo: string; skills: SkillRow[] };
 
-export async function getSkills(supabase: Awaited<ReturnType<typeof createSupabaseServer>>): Promise<PositionGroup[]> {
+export async function getSkills(): Promise<PositionGroup[]> {
+  "use cache: private"; // 내 데이터 — 서버에 남기지 않고, 휴대폰 안에서만 30초 재사용 → 미리 불러오기(prefetch)에 들어감
+  cacheLife({ stale: 30 });
+  const supabase = await createSupabaseServer();
+
   const [positions, techniques, levels] = await Promise.all([
     supabase.from("positions").select("id, slug, name_ko").order("sort_order"),
     supabase

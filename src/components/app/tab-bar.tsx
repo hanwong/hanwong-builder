@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { House, PenLine, Layers, Map } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -42,6 +42,7 @@ function TabBarView({ pathname }: { pathname: string }) {
             <>
               <Icon className="size-5" strokeWidth={active ? 2.25 : 1.75} aria-hidden />
               {label}
+              {ready && <PendingBar />}
             </>
           );
           return (
@@ -60,5 +61,18 @@ function TabBarView({ pathname }: { pathname: string }) {
         })}
       </ul>
     </nav>
+  );
+}
+
+// 탭을 눌렀는데 아직 넘어가는 중이면(미리 받기가 덜 끝났을 때) 글자 아래 짧은 막대 — 0.1초 넘게 걸릴 때만 보인다.
+// 자리는 늘 차지해서 글자가 흔들리지 않는다. <Link> 안에서만 쓸 수 있다(useLinkStatus).
+function PendingBar() {
+  const { pending } = useLinkStatus();
+  return (
+    <span
+      aria-hidden
+      className="h-0.5 w-4 rounded-full bg-foreground transition-opacity"
+      style={{ opacity: pending ? 1 : 0, transitionDelay: pending ? "100ms" : "0ms" }}
+    />
   );
 }

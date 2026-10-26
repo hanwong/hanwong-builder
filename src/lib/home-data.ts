@@ -1,5 +1,6 @@
 import "server-only";
-import type { createSupabaseServer } from "@/lib/supabase/server";
+import { cacheLife } from "next/cache";
+import { createSupabaseServer } from "@/lib/supabase/server";
 import { addDays, seoulToday } from "@/lib/seoul-date";
 import { BELT_WEEKS, isBelt, type Belt } from "@/lib/belt";
 
@@ -15,7 +16,11 @@ export type HomeData = {
 };
 
 // supabase 는 호출하는 쪽이 만든다(쿠키 읽기를 try 밖에 두기 위해 — home-sections 참고)
-export async function getHomeData(supabase: Awaited<ReturnType<typeof createSupabaseServer>>): Promise<HomeData> {
+export async function getHomeData(): Promise<HomeData> {
+  "use cache: private"; // 내 데이터 — 서버에 남기지 않고, 휴대폰 안에서만 30초 재사용 → 미리 불러오기(prefetch)에 들어감
+  cacheLife({ stale: 30 });
+  const supabase = await createSupabaseServer();
+
   const today = seoulToday();
 
   // 이번 주 월요일(서울)부터 거꾸로 104주

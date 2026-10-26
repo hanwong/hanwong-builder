@@ -193,7 +193,7 @@ export async function saveLog(input: SaveInput): Promise<SaveResult> {
   const r = await levelsAndCards(supabase, user.id, chosen, v.today);
   if (r.error) return undo(r.step, r.error);
 
-  revalidatePath("/app"); // 홈의 오늘 복습 · 최근 기록을 새로
+  revalidatePath("/app", "layout"); // /app 아래 화면 전부(홈 · 복습 · 내 기술 · 기록) 미리 불러온 내용까지 새로
   return { ok: true, newCards: r.newCards, linked: chosen.length };
 }
 
@@ -251,8 +251,7 @@ export async function updateLog(logId: string, input: SaveInput): Promise<SaveRe
     before.map((b) => b.technique_id).filter((id): id is string => !!id && !now.has(id)),
   );
 
-  revalidatePath("/app");
-  revalidatePath(`/app/log/${logId}`);
+  revalidatePath("/app", "layout"); // /app 아래 화면 전부(홈 · 복습 · 내 기술 · 기록) 미리 불러온 내용까지 새로
   return { ok: true, newCards: r.newCards, linked: chosen.length };
 }
 
@@ -307,8 +306,7 @@ export async function deleteLog(logId: string): Promise<DeleteResult> {
     log.class_log_techniques.map((l) => l.technique_id).filter((id): id is string => !!id),
   );
 
-  revalidatePath("/app");
-  revalidatePath("/app/review");
+  revalidatePath("/app", "layout"); // /app 아래 화면 전부(홈 · 복습 · 내 기술 · 기록) 미리 불러온 내용까지 새로
   return { ok: true };
 }
 

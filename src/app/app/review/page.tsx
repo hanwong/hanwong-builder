@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ReviewSession } from "@/components/app/review-session";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import { getReviewData } from "@/lib/review-data";
 
 export const metadata: Metadata = {
@@ -19,10 +19,10 @@ export default function ReviewPage() {
 }
 
 async function Loader() {
-  const supabase = await createSupabaseServer(); // 쿠키 읽기는 try 밖에서 (home-sections 참고)
+  await cookies(); // 쿠키 읽기는 try 밖에서 (home-sections 참고)
   let data;
   try {
-    data = await getReviewData(supabase);
+    data = await getReviewData();
   } catch (e) {
     console.error("review failed:", e instanceof Error ? e.message : "unknown");
     return (

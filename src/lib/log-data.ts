@@ -1,5 +1,6 @@
 import "server-only";
-import type { createSupabaseServer } from "@/lib/supabase/server";
+import { cacheLife } from "next/cache";
+import { createSupabaseServer } from "@/lib/supabase/server";
 import type { Level, MatchedTechnique, Term } from "@/lib/mock/log-seed";
 
 // 저장한 기록 하나를 정리 완료 화면(상태 C) 모양으로 읽는다 (D-25). RLS 로 본인 기록만 나온다.
@@ -13,10 +14,11 @@ export type SavedLog = {
   customNames: string[];
 };
 
-export async function getLog(
-  supabase: Awaited<ReturnType<typeof createSupabaseServer>>,
-  id: string,
-): Promise<SavedLog | null> {
+export async function getLog(id: string): Promise<SavedLog | null> {
+  "use cache: private"; // 내 데이터 — 서버에 남기지 않고, 휴대폰 안에서만 30초 재사용 → 미리 불러오기(prefetch)에 들어감
+  cacheLife({ stale: 30 });
+  const supabase = await createSupabaseServer();
+
   const { data, error } = await supabase
     .from("class_logs")
     .select(

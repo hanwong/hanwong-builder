@@ -17,6 +17,6 @@ export async function setBelt(belt: Belt): Promise<{ ok: boolean }> {
     console.error("setBelt failed:", error.code ?? "", (error.message ?? "").slice(0, 120));
     return { ok: false };
   }
-  revalidatePath("/app");
+  revalidatePath("/app", "layout"); // /app 아래 화면 전부(홈 · 복습 · 내 기술 · 기록) 미리 불러온 내용까지 새로
   return { ok: true };
 }

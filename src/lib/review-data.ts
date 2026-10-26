@@ -1,5 +1,6 @@
 import "server-only";
-import type { createSupabaseServer } from "@/lib/supabase/server";
+import { cacheLife } from "next/cache";
+import { createSupabaseServer } from "@/lib/supabase/server";
 import { seoulToday } from "@/lib/seoul-date";
 
 // 오늘 복습 (T-09) — 복습일이 오늘(서울) 이하인 내 카드. RLS 로 본인 것만.
@@ -16,7 +17,11 @@ export type DueCard = {
 
 export type ReviewData = { cards: DueCard[]; laterDue: string | null };
 
-export async function getReviewData(supabase: Awaited<ReturnType<typeof createSupabaseServer>>): Promise<ReviewData> {
+export async function getReviewData(): Promise<ReviewData> {
+  "use cache: private"; // 내 데이터 — 서버에 남기지 않고, 휴대폰 안에서만 30초 재사용 → 미리 불러오기(prefetch)에 들어감
+  cacheLife({ stale: 30 });
+  const supabase = await createSupabaseServer();
+
   const today = seoulToday();
   const [due, later] = await Promise.all([
     supabase

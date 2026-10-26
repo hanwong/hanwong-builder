@@ -6,6 +6,7 @@ import { ChevronDown, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LEVELS } from "@/lib/mock/log-seed";
+import { HoverPrefetchLink } from "@/components/app/hover-prefetch-link";
 import type { PositionGroup } from "@/lib/skills-data";
 import { cn } from "@/lib/utils";
 
@@ -76,7 +77,7 @@ export function SkillsList({ groups }: { groups: PositionGroup[] }) {
                 {g.skills.map((s) => (
                   <li key={s.slug} className="min-w-0">
                     {/* 누르면 기술 상세 (T-10b) */}
-                    <Link
+                    <HoverPrefetchLink
                       href={`/app/skills/${s.slug}`}
                       className={cn(
                         "flex min-w-0 items-center gap-2 px-4 py-2 transition-colors hover:bg-muted",
@@ -85,7 +86,7 @@ export function SkillsList({ groups }: { groups: PositionGroup[] }) {
                     >
                       <span className="min-w-0 flex-1 truncate text-[15px]">{s.nameKo}</span>
                       {s.level && <Badge variant="secondary">{LEVEL_LABEL.get(s.level)}</Badge>}
-                    </Link>
+                    </HoverPrefetchLink>
                   </li>
                 ))}
               </ul>

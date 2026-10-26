@@ -30,6 +30,6 @@ export async function setLevel(slug: string, level: Level): Promise<LevelResult>
     console.error("setLevel failed:", error.code ?? "", (error.message ?? "").slice(0, 120));
     return { ok: false, message: "저장 못 했어요 — 다시 눌러 주세요." };
   }
-  revalidatePath("/app/skills");
+  revalidatePath("/app", "layout"); // /app 아래 화면 전부(홈 · 복습 · 내 기술 · 기록) 미리 불러온 내용까지 새로
   return { ok: true };
 }

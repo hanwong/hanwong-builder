@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SkillDetail } from "@/components/app/skill-detail";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import { getSkill } from "@/lib/skill-detail-data";
 
 export const metadata: Metadata = {
@@ -22,10 +22,10 @@ export default function SkillPage({ params }: { params: Promise<{ slug: string }
 async function Loader({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   if (!/^[a-z0-9-]{1,100}$/.test(slug)) notFound();
-  const supabase = await createSupabaseServer(); // 쿠키 읽기는 try 밖에서 (home-sections 참고)
+  await cookies(); // 쿠키 읽기는 try 밖에서 (home-sections 참고)
   let skill;
   try {
-    skill = await getSkill(supabase, slug);
+    skill = await getSkill(slug);
   } catch (e) {
     console.error("skill detail failed:", e instanceof Error ? e.message : "unknown");
     return (
