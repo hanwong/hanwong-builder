@@ -1,10 +1,10 @@
-// 수련 벨트 (D-33, DESIGN 2) — 홈 그래픽과 서버가 함께 쓰는 값.
+// 수련 벨트 (D-33 · D-34, DESIGN 2) — 홈 그래픽과 서버가 함께 쓰는 값. 벨트 색은 칸지 에어 제품 사진에서 뽑음.
 export const BELTS = [
-  { value: "white", label: "화이트", color: "#EDEBE3" },
-  { value: "blue", label: "블루", color: "#2557C7" },
-  { value: "purple", label: "퍼플", color: "#6E3FC2" },
-  { value: "brown", label: "브라운", color: "#7A4B2A" },
-  { value: "black", label: "블랙", color: "#1F1F1F" },
+  { value: "white", label: "화이트", color: "#F1F2F0" },
+  { value: "blue", label: "블루", color: "#3571AB" },
+  { value: "purple", label: "퍼플", color: "#6B4C90" },
+  { value: "brown", label: "브라운", color: "#8E5F4B" },
+  { value: "black", label: "블랙", color: "#212121" },
 ] as const;
 export type Belt = (typeof BELTS)[number]["value"];
 export const isBelt = (v: unknown): v is Belt => BELTS.some((b) => b.value === v);
