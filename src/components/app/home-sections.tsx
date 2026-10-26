@@ -4,12 +4,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatKoreanDate } from "@/lib/seoul-date";
 import { getHomeData, type HomeData } from "@/lib/home-data";
+import { createSupabaseServer } from "@/lib/supabase/server";
 
 // 홈 ② 오늘 복습 · ③ 최근 기록 (FLOW 3 · DESIGN 6). 로그인 쿠키를 읽으므로 page 에서 Suspense 로 감싼다.
 export async function HomeSections() {
+  // 쿠키 읽기는 try 밖에서 — 미리 만들기(prerender) 중에 Next 가 보내는 "요청 때까지 기다려" 신호를
+  // 오류로 잡아 버리면 홈이 "불러오지 못했어요" 로 굳는다
+  const supabase = await createSupabaseServer();
   let data;
   try {
-    data = await getHomeData();
+    data = await getHomeData(supabase);
   } catch (e) {
     console.error("home failed:", e instanceof Error ? e.message : "unknown");
     return (

@@ -1,5 +1,5 @@
 import "server-only";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import type { createSupabaseServer } from "@/lib/supabase/server";
 import { seoulToday } from "@/lib/seoul-date";
 
 // 홈(T-21)에 필요한 것만 읽는다. RLS 로 본인 것만 나온다(DB.md 5).
@@ -11,8 +11,8 @@ export type HomeData = {
   recent: RecentLog[];
 };
 
-export async function getHomeData(): Promise<HomeData> {
-  const supabase = await createSupabaseServer();
+// supabase 는 호출하는 쪽이 만든다(쿠키 읽기를 try 밖에 두기 위해 — home-sections 참고)
+export async function getHomeData(supabase: Awaited<ReturnType<typeof createSupabaseServer>>): Promise<HomeData> {
   const today = seoulToday();
 
   const [due, total, next, logs] = await Promise.all([
