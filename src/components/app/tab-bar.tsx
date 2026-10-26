@@ -16,6 +16,15 @@ const tabs = [
 export function TabBar() {
   const pathname = usePathname();
   if (pathname === "/app/login") return null; // 로그인 화면은 탭 없이 카드 하나만
+  return <TabBarView pathname={pathname} />;
+}
+
+// 주소를 읽기 전(기록 보기처럼 주소가 요청마다 다른 화면) 잠깐 보여 줄 탭 — 선택 표시만 없다
+export function TabBarFallback() {
+  return <TabBarView pathname="" />;
+}
+
+function TabBarView({ pathname }: { pathname: string }) {
   return (
     <nav
       aria-label="주요 메뉴"
