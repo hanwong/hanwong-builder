@@ -195,7 +195,7 @@ export function LogReview({ initial, onBack, saveLabel = "저장", onSave, onDel
           <Card key={name} className="rounded-2xl ring-border" size="sm">
             <CardContent className="flex items-center gap-2">
               <span className="text-[17px] font-semibold">{name}</span>
-              <Badge variant="outline">미검수</Badge>
+              <Badge variant="outline">목록 추가 대기</Badge>
               <Button
                 variant="ghost"
                 size="icon-sm"

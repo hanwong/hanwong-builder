@@ -7,7 +7,7 @@ import { searchTechniques } from "@/app/app/log/actions";
 import type { MatchedTechnique } from "@/lib/mock/log-seed";
 
 // 정리 화면 "기술 추가" (D-31) — 우리 목록에서 이름 · 영어 이름 · 다른 이름으로 찾아 고르면 기술 카드로,
-// 없으면 이름만 직접 추가(카드 없음). 두 글자부터 찾는다.
+// 없으면 이름만 직접 추가 — 운영자 확인 후 라이브러리에 넣고 카드로 바꾼다(D-32). 두 글자부터 찾는다.
 export function TechniqueAdder({
   existing,
   onPick,
@@ -128,7 +128,7 @@ export function TechniqueAdder({
               className="flex w-full items-center gap-1.5 rounded-xl px-2 py-2.5 text-left text-[14px] text-muted-foreground transition-colors hover:bg-muted"
             >
               <Plus className="size-4 shrink-0" aria-hidden />
-              <span className="min-w-0 truncate">‘{text}’ 이름으로 직접 추가 (복습 카드 없음)</span>
+              <span className="min-w-0 truncate">‘{text}’ 이름으로 직접 추가 (확인 후 기술 카드가 돼요)</span>
             </button>
           </li>
         </ul>
