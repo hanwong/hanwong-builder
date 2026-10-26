@@ -13,6 +13,7 @@ import { MAX_BODY } from "@/lib/log-limits";
 import { organizeLog } from "@/app/app/log/actions";
 import { LevelPicker } from "@/components/app/level-picker";
 import { TechniqueAdder } from "@/components/app/technique-adder";
+import { YoutubeLink } from "@/components/app/youtube-link";
 import type { Level, MatchedTechnique, Term } from "@/lib/mock/log-seed";
 
 export type AiStatus = "ok" | "mock" | "none";
@@ -340,19 +341,22 @@ function TechniqueCard({
           </Button>
         </div>
 
-        <button
-          type="button"
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-          className="flex items-center gap-1.5 self-start text-[15px] font-medium"
-        >
-          <ChevronDown
-            className={cn("size-4 transition-transform", open && "rotate-180")}
-            strokeWidth={2}
-            aria-hidden
-          />
-          세팅 과정 {t.steps.length}줄
-        </button>
+        <div className="flex items-center justify-between gap-2">
+          <button
+            type="button"
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+            className="flex items-center gap-1.5 self-start text-[15px] font-medium"
+          >
+            <ChevronDown
+              className={cn("size-4 transition-transform", open && "rotate-180")}
+              strokeWidth={2}
+              aria-hidden
+            />
+            세팅 과정 {t.steps.length}줄
+          </button>
+          <YoutubeLink nameEn={t.nameEn} />
+        </div>
         {open && (
           <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-[15px] leading-relaxed">
             {t.steps.map((s) => (

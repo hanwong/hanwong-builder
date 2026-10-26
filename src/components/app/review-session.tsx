@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BottomAction } from "@/components/app/bottom-action";
+import { YoutubeLink } from "@/components/app/youtube-link";
 import { answerCard } from "@/app/app/review/actions";
 import { formatKoreanDate } from "@/lib/seoul-date";
 import { INTERVAL_DAYS, RATINGS, nextStep, type Rating } from "@/lib/review-rules";
@@ -99,6 +100,7 @@ export function ReviewSession({ cards, laterDue }: { cards: DueCard[]; laterDue:
                   <li key={s}>{s}</li>
                 ))}
               </ol>
+              <YoutubeLink nameEn={card.nameEn} />
               {card.lastNote && (
                 <div className="mt-auto rounded-xl bg-muted px-3 py-2.5">
                   <span className="text-[12px] font-medium text-muted-foreground">
