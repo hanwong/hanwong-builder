@@ -45,14 +45,12 @@ export function HomeView({ data }: { data: HomeData }) {
             </span>
           </div>
           {dueToday > 0 ? (
-            <>
-              {/* 복습 화면은 T-09 에서. 그 전엔 누를 수 없게 둔다 */}
-              <Button variant="secondary" disabled className="h-11 w-full rounded-full text-[15px]">
+            <Button asChild variant="secondary" className="h-11 w-full rounded-full text-[15px]">
+              <Link href="/app/review">
                 <Layers data-icon="inline-start" aria-hidden />
                 복습 시작
-              </Button>
-              <p className="text-[13px] font-medium text-muted-foreground">복습 화면은 곧 열려요.</p>
-            </>
+              </Link>
+            </Button>
           ) : (
             <p className="text-[15px] leading-relaxed text-muted-foreground">
               {totalCards === 0
