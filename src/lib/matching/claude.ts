@@ -64,6 +64,16 @@ export async function claudeMatch(body: string): Promise<RawMatch> {
     messages: [{ role: "user", content: `<log>\n${body}\n</log>` }],
   });
 
+  // 비용 확인용: 토큰 수만 남긴다(글 내용 · 키는 남기지 않음)
+  const u = res.usage;
+  console.info("claudeMatch usage", {
+    model: res.model,
+    input: u.input_tokens,
+    cacheWrite: u.cache_creation_input_tokens,
+    cacheRead: u.cache_read_input_tokens,
+    output: u.output_tokens,
+  });
+
   if (res.stop_reason === "refusal") throw new Error("refusal");
   if (res.stop_reason === "max_tokens") throw new Error("max_tokens");
   const text = res.content.find((b) => b.type === "text");
