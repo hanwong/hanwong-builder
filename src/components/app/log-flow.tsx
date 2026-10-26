@@ -24,8 +24,10 @@ type State =
   | { step: "failed"; draft: Draft; message: string }
   | { step: "review"; review: Review };
 
+const EMPTY: State = { step: "write", draft: { body: "", loggedOn: "" } };
+
 export function LogFlow() {
-  const [state, setState] = useState<State>({ step: "write", draft: { body: "", loggedOn: "" } });
+  const [state, setState] = useState<State>(EMPTY);
   const router = useRouter();
 
   async function organize(draft: Draft) {
@@ -77,6 +79,8 @@ export function LogFlow() {
                 : "기록을 저장했어요",
           );
           router.push("/app");
+          // 홈으로 간 뒤에도 이 화면 상태가 남아 있다(Next 가 지나간 화면을 숨겨 보관) — 다음 기록은 빈 글상자부터
+          setState(EMPTY);
         }}
       />
     );
