@@ -117,5 +117,5 @@ export async function mockMatch(body: string): Promise<RawMatch> {
     .slice(0, 6)
     .map(({ term, meaning }) => ({ term, meaning }));
 
-  return { slugs, terms };
+  return { slugs, guesses: [], terms }; // 연습용은 추측하지 않는다
 }

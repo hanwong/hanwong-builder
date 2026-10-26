@@ -71,6 +71,12 @@ export function LogReview({ initial, onBack }: Props) {
           </p>
         )}
 
+        {techniques.some((t) => t.guess) && (
+          <p className="text-[13px] leading-relaxed font-medium text-muted-foreground">
+            글에 포지션이 없어 포지션별로 추측한 기술도 넣었어요. 아닌 건 빼 주세요.
+          </p>
+        )}
+
         {techniques.map((t) => (
           <TechniqueCard key={t.id} technique={t} onLevel={setLevel} onRemove={remove} />
         ))}
@@ -189,10 +195,14 @@ function TechniqueCard({
             <span className="text-[13px] font-medium text-muted-foreground">
               {t.nameEn} · {t.position}
             </span>
-            {t.draft && (
-              <Badge variant="outline" className="self-start">
-                검수 전
-              </Badge>
+            {(t.guess || t.draft) && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {t.guess && <Badge variant="secondary">추측</Badge>}
+                {t.draft && <Badge variant="outline">검수 전</Badge>}
+                {t.guess && (
+                  <span className="text-[13px] font-medium text-foreground">{t.position}에서 배웠다면</span>
+                )}
+              </div>
             )}
           </div>
           <Button

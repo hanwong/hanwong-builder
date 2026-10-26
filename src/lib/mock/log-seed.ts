@@ -18,6 +18,7 @@ export type MatchedTechnique = {
   steps: string[];
   level: Level;
   draft?: boolean; // 검수 전 초안(D-21) — 카드에 "검수 전" 표시
+  guess?: boolean; // 포지션이 없어 추측한 기술(D-23) — "○○에서 배웠다면"
 };
 
 export type Term = { term: string; meaning: string };

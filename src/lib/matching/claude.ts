@@ -20,10 +20,16 @@ const SYSTEM = `너는 브라질리안 주짓수 수련 기록을 정리하는 �
 
 고르는 법:
 - 목록에 있는 slug 만 쓴다. 목록에 없는 기술은 고르지 않는다(사용자가 따로 적는다).
-- 이름을 정확히 몰라 동작으로 설명한 경우도, 설명이 한 기술을 분명히 가리키면 고른다. 둘 이상으로 갈리면 더 기본적인 쪽 하나만.
+- 이름을 정확히 몰라 동작으로 설명한 경우도, 설명이 한 기술을 분명히 가리키면 고른다.
 - 글에 이름만 스치듯 나온 것(예: "~에 당했다")도 배운 · 겪은 기술이면 고른다.
 - 같은 기술의 상황별 변형이 여러 개면 글의 상황(포지션 · 상대 가드)에 맞는 하나만 고른다. 상황이 없으면 괄호 없는 기본 이름을 고른다.
-- 최대 8개, 글에 나온 순서대로.
+- 최대 8개, 글에 나온 순서대로. 이것이 techniques.
+
+추측(guesses) — 글에 포지션이 없어서 기술을 하나로 정할 수 없을 때만 쓴다:
+- 글에 포지션(하프가드 · 클로즈드 가드 · 서서 · 마운트 등)이 적혀 있으면 추측하지 않는다. 그 포지션 안에서 설명에 가장 맞는 기술 하나를 techniques 에 넣고 guesses 는 비운다.
+- 포지션이 없고 설명이 여러 포지션의 기술로 갈리면, techniques 에 넣지 말고 guesses 에 포지션마다 가장 그럴듯한 기술을 하나씩 넣는다. 한 포지션에 하나, 최대 4개, 그럴듯한 순서대로.
+  예: "한쪽 다리 잡고 깃 · 소매 잡고 겨드랑이 판다" → 하프가드에서라면 하프가드 언더훅 잡기, 서서라면 싱글 레그 테이크다운.
+- 아무 기술과도 이어지지 않으면 비워 둔다. techniques 에 넣은 기술은 guesses 에 다시 넣지 않는다.
 
 용어:
 - 기술 이름이 아닌 주짓수 용어(언더훅 · 프레임 · 베이스 · 그립 등) 중 글에 나온 것을 최대 6개.
@@ -39,6 +45,7 @@ const SCHEMA = {
   type: "object",
   properties: {
     techniques: { type: "array", items: { type: "string" } },
+    guesses: { type: "array", items: { type: "string" } },
     terms: {
       type: "array",
       items: {
@@ -49,7 +56,7 @@ const SCHEMA = {
       },
     },
   },
-  required: ["techniques", "terms"],
+  required: ["techniques", "guesses", "terms"],
   additionalProperties: false,
 };
 
@@ -79,10 +86,10 @@ export async function claudeMatch(body: string): Promise<RawMatch> {
   const text = res.content.find((b) => b.type === "text");
   if (!text || text.type !== "text") throw new Error("no text");
 
-  const parsed = JSON.parse(text.text) as { techniques: unknown; terms: unknown };
-  const slugs = Array.isArray(parsed.techniques)
-    ? parsed.techniques.filter((s): s is string => typeof s === "string")
-    : [];
+  const parsed = JSON.parse(text.text) as { techniques: unknown; guesses: unknown; terms: unknown };
+  const strings = (v: unknown) => (Array.isArray(v) ? v.filter((s): s is string => typeof s === "string") : []);
+  const slugs = strings(parsed.techniques);
+  const guesses = strings(parsed.guesses);
   const terms = Array.isArray(parsed.terms)
     ? parsed.terms
         .filter(
@@ -91,5 +98,5 @@ export async function claudeMatch(body: string): Promise<RawMatch> {
         )
         .map(({ term, meaning }) => ({ term: term.slice(0, 30), meaning: meaning.slice(0, 80) }))
     : [];
-  return { slugs, terms };
+  return { slugs, guesses, terms };
 }
