@@ -1,41 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Mic, MicOff, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useSpeechInput } from "@/lib/use-speech-input";
 
 // 오늘 배운 것 기록 — 상태 A 쓰기 (FLOW.md 4 · D-03 · D-12).
 // 쓰는 동안은 아무것도 추천하지 않는다. 마이크는 브라우저 내장 음성 인식(녹음 저장 없음).
 
 export const MAX_BODY = 5000; // DB class_logs_body_len 과 같게
-
-// 브라우저 음성 인식 최소 타입 (표준 lib 에 없음)
-type SpeechResultEvent = {
-  resultIndex: number;
-  results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }>;
-};
-type Recognition = {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  onresult: ((e: SpeechResultEvent) => void) | null;
-  onerror: ((e: { error: string }) => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-};
-type RecognitionCtor = new () => Recognition;
-
-function getRecognitionCtor(): RecognitionCtor | null {
-  const w = window as unknown as {
-    SpeechRecognition?: RecognitionCtor;
-    webkitSpeechRecognition?: RecognitionCtor;
-  };
-  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
-}
 
 // 서울 기준 오늘 (YYYY-MM-DD). 렌더 중이 아니라 effect 안에서만 부른다(cacheComponents).
 function seoulToday(): string {
@@ -65,66 +41,20 @@ export function LogEditor({ initialBody = "", initialDate, onSubmit }: Props) {
   const [body, setBody] = useState(initialBody);
   const [date, setDate] = useState(initialDate ?? "");
   const [today, setToday] = useState("");
-  const [supported, setSupported] = useState(false);
-  const [listening, setListening] = useState(false);
-  const [interim, setInterim] = useState("");
-  const recRef = useRef<Recognition | null>(null);
+  const { supported, listening, interim, start, stop } = useSpeechInput({
+    onText: (text) =>
+      setBody((prev) => {
+        const sep = prev && !/\s$/.test(prev) ? " " : "";
+        return (prev + sep + text).slice(0, MAX_BODY);
+      }),
+    onProblem: (message) => toast.error(message),
+  });
 
   useEffect(() => {
     const t = seoulToday();
     setToday(t);
     setDate((d) => d || t);
-    setSupported(getRecognitionCtor() !== null);
-    return () => recRef.current?.stop();
   }, []);
-
-  const stop = useCallback(() => {
-    recRef.current?.stop();
-  }, []);
-
-  function start() {
-    const Ctor = getRecognitionCtor();
-    if (!Ctor) return;
-    const rec = new Ctor();
-    rec.lang = "ko-KR";
-    rec.continuous = true;
-    rec.interimResults = true;
-    rec.onresult = (e) => {
-      let finalText = "";
-      let interimText = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const r = e.results[i];
-        if (r.isFinal) finalText += r[0].transcript;
-        else interimText += r[0].transcript;
-      }
-      if (finalText) {
-        setBody((prev) => {
-          const sep = prev && !/\s$/.test(prev) ? " " : "";
-          return (prev + sep + finalText.trim()).slice(0, MAX_BODY);
-        });
-      }
-      setInterim(interimText);
-    };
-    rec.onerror = (e) => {
-      if (e.error === "not-allowed" || e.error === "service-not-allowed") {
-        toast.error("마이크를 쓸 수 없어요. 브라우저 설정에서 마이크를 허용해 주세요.");
-      } else if (e.error !== "no-speech" && e.error !== "aborted") {
-        toast.error("음성 인식이 멈췄어요. 다시 눌러 주세요.");
-      }
-    };
-    rec.onend = () => {
-      setListening(false);
-      setInterim("");
-      recRef.current = null;
-    };
-    recRef.current = rec;
-    try {
-      rec.start();
-      setListening(true);
-    } catch {
-      setListening(false);
-    }
-  }
 
   const trimmed = body.trim();
   const canSubmit = trimmed.length > 0;
@@ -158,7 +88,7 @@ export function LogEditor({ initialBody = "", initialDate, onSubmit }: Props) {
           <Textarea
             value={shown}
             onChange={(e) => {
-              setInterim("");
+              if (listening) stop(); // 직접 고치기 시작하면 음성 입력은 멈춘다
               setBody(e.target.value.slice(0, MAX_BODY));
             }}
             maxLength={MAX_BODY}
