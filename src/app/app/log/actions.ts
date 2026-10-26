@@ -22,6 +22,6 @@ export async function organizeLog(body: string): Promise<OrganizeResult> {
   } catch (e) {
     // 원인(오류 종류)만 서버 로그에 남긴다. 글 내용 · 키는 남기지 않는다.
     console.error("organizeLog failed:", e instanceof Error ? e.name + " " + e.message.slice(0, 120) : "unknown");
-    return { ok: false, message: "정리하지 못했어요. 잠시 뒤 다시 눌러 주세요." };
+    return { ok: false, message: "잠시 뒤 다시 시도해 주세요." };
   }
 }

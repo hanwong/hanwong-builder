@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Loader2, Mic, MicOff, Sparkles } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { Mic, MicOff, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -32,11 +32,13 @@ export function formatKoreanDate(iso: string): string {
 type Props = {
   initialBody?: string;
   initialDate?: string;
-  pending?: boolean; // 정리 중(서버 매칭 기다리는 중)
+  locked?: boolean; // 상태 B(정리 중 · 실패) — 글은 그대로 보이고 고칠 수 없다
+  below?: ReactNode; // 글상자 아래(정리 중 스켈레톤 · 오류 안내)
+  footer?: ReactNode; // 하단 고정 버튼 자리. 없으면 "정리하기"
   onSubmit: (value: { body: string; loggedOn: string }) => void;
 };
 
-export function LogEditor({ initialBody = "", initialDate, pending = false, onSubmit }: Props) {
+export function LogEditor({ initialBody = "", initialDate, locked = false, below, footer, onSubmit }: Props) {
   const [body, setBody] = useState(initialBody);
   const [date, setDate] = useState(initialDate ?? "");
   const [today, setToday] = useState("");
@@ -59,7 +61,7 @@ export function LogEditor({ initialBody = "", initialDate, pending = false, onSu
   const shown = interim ? `${body}${body && !/\s$/.test(body) ? " " : ""}${interim}` : body;
 
   function submit() {
-    if (!canSubmit || pending) return;
+    if (!canSubmit || locked) return;
     stop();
     onSubmit({ body: trimmed, loggedOn: date || today });
   }
@@ -74,6 +76,7 @@ export function LogEditor({ initialBody = "", initialDate, pending = false, onSu
             type="date"
             value={date}
             max={today || undefined}
+            disabled={locked}
             onChange={(e) => setDate(e.target.value)}
             aria-label="수업 날짜"
             className="h-9 rounded-full border border-input bg-card px-3 text-[13px] font-medium text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
@@ -90,11 +93,12 @@ export function LogEditor({ initialBody = "", initialDate, pending = false, onSu
               setBody(e.target.value.slice(0, MAX_BODY));
             }}
             maxLength={MAX_BODY}
+            readOnly={locked}
             placeholder="오늘 배운 걸 아는 대로 적어 주세요. 이름 몰라도 돼요."
             aria-label="오늘 배운 것"
             className="min-h-[40dvh] resize-none rounded-2xl bg-card px-4 py-3 pb-16 text-base leading-relaxed"
           />
-          {supported && (
+          {supported && !locked && (
             <div className="absolute right-3 bottom-3 flex items-center gap-2">
               {listening && (
                 <span role="status" className="text-[13px] font-medium">
@@ -119,7 +123,7 @@ export function LogEditor({ initialBody = "", initialDate, pending = false, onSu
             </div>
           )}
         </div>
-        <p className="text-[13px] font-medium text-muted-foreground">
+        <p className={cn("text-[13px] font-medium text-muted-foreground", locked && "hidden")}>
           {supported
             ? "마이크 버튼을 누르고 말해도 돼요. 상대 이름은 적지 않아도 돼요."
             : "키보드의 마이크로 말해도 돼요. 상대 이름은 적지 않아도 돼요."}
@@ -136,6 +140,8 @@ export function LogEditor({ initialBody = "", initialDate, pending = false, onSu
         )}
       </div>
 
+      {below}
+
       {debugLines.length > 0 && (
         <pre className="overflow-x-auto rounded-xl bg-secondary p-3 text-[12px] leading-relaxed whitespace-pre-wrap">
           {debugLines.join("\n")}
@@ -146,19 +152,17 @@ export function LogEditor({ initialBody = "", initialDate, pending = false, onSu
       <div className="h-16" aria-hidden />
       <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-10 px-4">
         <div className="mx-auto max-w-md">
-          <Button
-            type="button"
-            onClick={submit}
-            disabled={!canSubmit || pending}
-            className="h-12 w-full rounded-full text-base shadow-none"
-          >
-            {pending ? (
-              <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />
-            ) : (
+          {footer ?? (
+            <Button
+              type="button"
+              onClick={submit}
+              disabled={!canSubmit}
+              className="h-12 w-full rounded-full text-base shadow-none"
+            >
               <Sparkles data-icon="inline-start" aria-hidden />
-            )}
-            {pending ? "정리 중…" : "정리하기"}
-          </Button>
+              정리하기
+            </Button>
+          )}
         </div>
       </div>
     </div>

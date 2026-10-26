@@ -16,6 +16,7 @@ type Props = {
     isMock: boolean;
     techniques: MatchedTechnique[];
     terms: Term[];
+    skipped?: boolean; // 정리 실패 뒤 "그냥 저장" — 기술 없이 글만
   };
   onBack?: () => void;
 };
@@ -67,7 +68,9 @@ export function LogReview({ initial, onBack }: Props) {
 
         {techniques.length === 0 && customNames.length === 0 && (
           <p className="text-[15px] leading-relaxed text-muted-foreground">
-            글에서 목록에 있는 기술을 찾지 못했어요. 아래에서 이름을 직접 적어 주세요.
+            {initial.skipped
+              ? "정리 없이 글만 저장해요. 배운 기술 이름을 알면 아래에 직접 적어도 돼요."
+              : "글에서 목록에 있는 기술을 찾지 못했어요. 아래에서 이름을 직접 적어 주세요."}
           </p>
         )}
 
@@ -159,11 +162,8 @@ export function LogReview({ initial, onBack }: Props) {
         <div className="mx-auto max-w-md">
           <Button
             className="h-12 w-full rounded-full text-base shadow-none"
-            onClick={() =>
-              toast.success(
-                cardCount > 0 ? `복습 카드 ${cardCount}장 생겼어요. 내일부터 물어볼게요` : "기록을 저장했어요",
-              )
-            }
+            // 실제 저장 · 복습 카드 만들기는 T-08. 그 전까지는 저장됐다고 말하지 않는다.
+            onClick={() => toast("아직 저장되지 않아요. 저장은 다음 단계(T-08)에서 연결돼요.")}
           >
             저장
           </Button>
