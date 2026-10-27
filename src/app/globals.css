@@ -152,3 +152,9 @@
   -webkit-box-decoration-break: clone;
   padding: 0 0.08em;
 }
+
+/* 팝업(dialog) 뒤 어두운 막: 손가락으로 밀어도 뒤 화면이 움직이지 않게 (T-35) */
+[data-slot="dialog-overlay"] {
+  touch-action: none;
+  overscroll-behavior: contain;
+}

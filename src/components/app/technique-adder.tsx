@@ -9,8 +9,8 @@ import type { MatchedTechnique } from "@/lib/mock/log-seed";
 
 // 정리 화면 "기술 추가" (D-31) — 우리 목록에서 이름 · 영어 이름 · 다른 이름으로 찾아 고르면 기술 카드로,
 // 없으면 이름만 직접 추가 — 운영자 확인 후 라이브러리에 넣고 카드로 바꾼다(D-32). 두 글자부터 찾는다.
-// 팝업으로 연다(T-35). 휴대폰(폭 640 미만)에서는 화면 전체 시트 — 뒤 화면이 보이지도 움직이지도 않고,
-// 결과를 스크롤하기 시작하면 키보드를 내려 목록이 끝까지 자연스럽게 움직이게 한다(아이폰 키보드 + 떠 있는 팝업 문제).
+// 떠 있는 팝업으로 연다(T-35). 뒤 화면은 붙잡아 두고(position: fixed), 팝업은 키보드 위 보이는 영역 안에 맞추며,
+// 결과를 손대는 순간 키보드를 내려 아이폰이 화면을 밀어 올리지 않게 한다 → 뒤는 고정, 안은 자연스러운 스크롤.
 export function TechniqueAdder({
   existing,
   onPick,
@@ -23,7 +23,8 @@ export function TechniqueAdder({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<{ q: string; list: MatchedTechnique[] }>({ q: "", list: [] });
-  const [phone, setPhone] = useState(false); // 폭 640 미만 → 전체 화면 시트
+  // 지금 눈에 보이는 영역(휴대폰 키보드 위). 팝업 높이 · 위치를 여기에 맞춘다
+  const [visible, setVisible] = useState<{ top: number; height: number } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const text = query.trim();
@@ -50,14 +51,17 @@ export function TechniqueAdder({
   }, [open]);
 
   useEffect(() => {
-    if (!open) return;
-    const mq = window.matchMedia("(max-width: 639px)");
-    const update = () => setPhone(mq.matches);
+    const vv = window.visualViewport;
+    if (!open || !vv) return;
+    const update = () => setVisible({ top: vv.offsetTop, height: vv.height });
     const raf = requestAnimationFrame(update);
-    mq.addEventListener("change", update);
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
     return () => {
       cancelAnimationFrame(raf);
-      mq.removeEventListener("change", update);
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+      setVisible(null);
     };
   }, [open]);
 
@@ -99,33 +103,17 @@ export function TechniqueAdder({
         <DialogContent
           showCloseButton={false}
           className="sm:max-w-md"
-          style={
-            phone
-              ? {
-                  // 휴대폰: 화면 전체(뒤 화면이 보이지 않게), 위쪽 노치 자리만큼 띄움
-                  inset: 0,
-                  translate: "none",
-                  width: "100%",
-                  maxWidth: "none",
-                  height: "100%",
-                  borderRadius: 0,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "10px",
-                  padding: "max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom))",
-                  overscrollBehavior: "contain",
-                }
-              : {
-                  top: "max(1rem, 5dvh)",
-                  translate: "-50% 0", // 가운데 정렬은 유지하고 세로 가운데 이동만 끈다(위쪽에 띄움)
-                  maxHeight: "min(75dvh, 600px)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "10px",
-                  padding: "14px",
-                  overscrollBehavior: "contain",
-                }
-          }
+          style={{
+            // 보이는 영역 맨 위에서 조금 띄우고, 높이는 그 안으로(키보드가 올라와도 제목 · 검색 칸이 안 가림)
+            top: visible ? `${visible.top + 12}px` : "max(1rem, 5dvh)",
+            translate: "-50% 0", // 가운데 정렬은 유지하고 세로 가운데 이동만 끈다(위쪽에 띄움)
+            maxHeight: visible ? `${Math.min(600, visible.height - 24)}px` : "min(75dvh, 600px)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+            padding: "14px",
+            overscrollBehavior: "contain",
+          }}
         >
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[17px] font-semibold">기술 추가</DialogTitle>
@@ -162,8 +150,8 @@ export function TechniqueAdder({
           ) : (
             <ul
               className="-mx-1 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain"
-              // 결과를 밀기 시작하면 키보드를 내린다 → 목록이 화면 끝까지, 스크롤이 자연스럽게
-              onTouchMove={() => {
+              // 결과에 손대면 키보드를 먼저 내린다 → 아이폰이 화면을 밀어 올리지 않아 스크롤이 자연스럽다
+              onTouchStart={() => {
                 if (document.activeElement === inputRef.current) inputRef.current?.blur();
               }}
             >
