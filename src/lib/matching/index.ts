@@ -7,6 +7,7 @@ import type { OrganizeResult } from "./types";
 // ★ 실제 키로 바꾸는 지점은 여기 하나 ★
 // ANTHROPIC_API_KEY 가 .env.local(내 컴퓨터) · Vercel 환경변수(인터넷 주소)에 있으면 Claude, 없으면 연습용 예시.
 const LIVE = Boolean(process.env.ANTHROPIC_API_KEY);
+export const isLive = () => LIVE; // 실제 Claude 인가(연습용 예시면 false) — 호출 횟수 한도(D-43)에 쓴다
 
 export async function matchLog(body: string): Promise<Extract<OrganizeResult, { ok: true }>> {
   const raw = LIVE ? await claudeMatch(body) : await mockMatch(body);

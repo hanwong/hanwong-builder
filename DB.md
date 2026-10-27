@@ -12,7 +12,7 @@
 - 운영자(본인): 앱에 운영자 역할은 없다. 기술 콘텐츠는 마이그레이션 · 시드 파일로 넣고, 필요하면 Supabase 대시보드에서 본다(앱 밖).
 - 참고: Google 로그인은 Google Cloud 에서 OAuth 클라이언트를 만들어 Supabase 에 넣어야 한다(T-00b). 메일 발송 한도 문제는 없다.
 
-## 2. 표 목록 (7개)
+## 2. 표 목록 (8개)
 | 표 | 한 줄 설명 | 누구 데이터 |
 |---|---|---|
 | `positions` | 포지션 8개(스탠딩 · 클로즈드 가드 · 오픈 가드 · 하프가드 · 패스 · 사이드 · 마운트 · 백). 기술을 묶는 상자 | 콘텐츠(공용) |
@@ -22,6 +22,7 @@
 | `technique_levels` | 기술별 내 숙련도(비기너 · 초보 · 중급 · 고급 · 프로) | 사용자 |
 | `review_cards` | 기술당 복습 카드 1장 — 간격 단계 · 다음 복습일 | 사용자 |
 | `review_logs` | 카드를 풀 때마다 남는 응답(다시 · 어려움 · 보통 · 쉬움) | 사용자 |
+| `ai_calls` | 정리하기(Claude 호출)를 언제 했나 — 사람당 **일주일 3번** 한도를 세는 용도(D-43, 2026-10-27 추가) | 사용자 |
 
 ## 3. 표별 칸
 공통: 모든 표에 `id uuid 기본키(자동)`, `created_at timestamptz 기본값 now()`. 사용자 표에는 `user_id uuid → auth.users(id)` 필수.
@@ -106,6 +107,16 @@
 | reviewed_at | timestamptz | ✓ | now() | |
 | created_at | timestamptz | ✓ | now() | |
 
+### `ai_calls` (D-43)
+| 칸 | 종류 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|
+| id | uuid | ✓ | 자동 | |
+| user_id | uuid → auth.users | ✓ | | 누가 |
+| kind | text | ✓ | `'organize'` | 무엇을(지금은 정리하기 하나) |
+| called_at | timestamptz | ✓ | now() | 언제. 월요일 00:00(서울)부터 세어 3번이면 그 주는 막는다 |
+| created_at | timestamptz | ✓ | now() | |
+- 글 내용 · 결과는 넣지 않는다(횟수만). 연습용 예시(mock)일 때는 기록하지 않는다. 실패한 호출도 세지 않는다.
+
 ## 4. 관계
 - `techniques.position_id → positions.id` — 포지션은 지우지 않는다(기술이 있으면 막음).
 - `class_log_techniques.class_log_id → class_logs.id` — **기록을 지우면 연결도 같이 지움**(cascade).
@@ -124,6 +135,7 @@
 | technique_levels | ✗ | 보기 · 추가 · 수정 · 삭제 (자기 것만) | ✗ | ✗ |
 | review_cards | ✗ | 보기 · 추가 · 수정 · 삭제 (자기 것만) | ✗ | ✗ |
 | review_logs | ✗ | 보기 · 추가 (자기 것만) | ✗ | ✗ |
+| ai_calls | ✗ | 보기 · 추가 (자기 것만, 수정 · 삭제 없음) | ✗ | ✗ |
 - "자기 것만" = `user_id = auth.uid()`. 운영자 역할은 앱에 없다 — 본인도 앱에서는 자기 기록만 본다. 다른 사람 기록은 Supabase 대시보드(관리자)에서만 보이고, 그건 사용자 테스트 전에 "볼 사람 · 삭제 시점" 을 안내한다(PLAN 미정 10).
 - 한 줄 답: **이 표대로면 다른 사용자가 내 데이터를 볼 수 없다.** 공용인 건 기술 콘텐츠뿐이다.
 
@@ -133,7 +145,7 @@
 - `class_log_techniques (class_log_id, technique_id)` 유일(technique_id 가 있을 때) + `technique_id 또는 custom_name 중 하나는 반드시` 체크.
 - `techniques.slug`, `positions.slug` 유일.
 - `review_cards.interval_step` 0~4, `technique_levels.level` 5개 값, `review_logs.rating` 4개 값, `class_logs.ai_status` 4개 값 — 체크 제약.
-- 인덱스: `review_cards (user_id, due_on)` — "오늘 복습" 조회. `class_logs (user_id, logged_on desc)` — 최근 기록. `class_log_techniques (user_id, technique_id)` — 기술 상세의 "내 기록 모음". `techniques (position_id, sort_order)`.
+- 인덱스: `ai_calls (user_id, called_at)` — 이번 주 횟수. `review_cards (user_id, due_on)` — "오늘 복습" 조회. `class_logs (user_id, logged_on desc)` — 최근 기록. `class_log_techniques (user_id, technique_id)` — 기술 상세의 "내 기록 모음". `techniques (position_id, sort_order)`.
 - **날짜는 전부 Asia/Seoul** — `logged_on`, `due_on` 은 서버 코드에서 서울 기준 날짜를 계산해 넣는다(DB 기본값 `current_date` 는 UTC 라 쓰지 않음). 밤 9시 이후 기록이 하루 어긋나지 않게.
 - **매칭 결과는 `techniques.id` 만** — 서버가 Claude 에서 slug(고유 키) 배열을 받아 후보에 있는 것만 남기고(없는 건 버림), 저장할 때 id 로 바꾼다. 후보는 `is_reviewed = true` 인 것, 단 검수된 기술이 20개 전이면 초안 포함(D-21). 초안 기술도 저장 · 복습 카드가 된다(D-24). 이름 문자열은 저장하지 않는다(custom_name 은 사용자가 직접 적은 것만).
 - **복습 간격 규칙(D-09, 안키식)**: 단계 `[1, 3, 7, 14, 30]`일. 새 카드 = 단계 0, 다음 복습 = 내일. `again` → 단계 0 · 내일 / `hard` → 단계 유지 / `good` → +1 / `easy` → +2 (최대 4). 다음 복습일 = 오늘(서울) + 그 단계의 일수. 계산은 서버 코드(DB 함수 아님).

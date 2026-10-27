@@ -2,12 +2,20 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import { matchLog } from "@/lib/matching";
+import { isLive, matchLog } from "@/lib/matching";
 import { searchLibrary } from "@/lib/matching/search";
 import type { OrganizeResult } from "@/lib/matching/types";
 import { MAX_BODY } from "@/lib/log-limits";
 import { LEVELS, type Level, type MatchedTechnique, type Term } from "@/lib/mock/log-seed";
 import { addDays, isIsoDate, seoulToday } from "@/lib/seoul-date";
+
+// 정리하기(Claude 호출) 한도 — 사람당 일주일 3번(D-43). 월요일 00:00(서울)부터 센다. 연습용 예시 · 실패는 안 센다.
+const WEEKLY_LIMIT = 3;
+function seoulWeekStart(today: string): string {
+  const [y, m, d] = today.split("-").map(Number);
+  const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+  return `${addDays(today, -((dow + 6) % 7))}T00:00:00+09:00`;
+}
 
 // "정리하기" — 글에서 기술 · 용어를 찾는다(T-06). 저장은 하지 않는다.
 // 이미 숙련도를 정해 둔 기술은 그 값을 기본값으로 돌려준다(FLOW 상태 C, T-08).
@@ -22,6 +30,20 @@ export async function organizeLog(body: string): Promise<OrganizeResult> {
   if (!text) return { ok: false, message: "글을 먼저 적어 주세요." };
   if (text.length > MAX_BODY) return { ok: false, message: `글은 ${MAX_BODY}자까지 정리할 수 있어요.` };
 
+  if (isLive()) {
+    const { count } = await supabase
+      .from("ai_calls")
+      .select("id", { count: "exact", head: true })
+      .gte("called_at", seoulWeekStart(seoulToday()));
+    if ((count ?? 0) >= WEEKLY_LIMIT) {
+      return {
+        ok: false,
+        limit: true,
+        message: `이번 주 정리하기 ${WEEKLY_LIMIT}번을 다 썼어요. 월요일에 다시 열려요. 지금은 '그냥 저장'을 누른 뒤 '기술 추가'로 직접 넣을 수 있어요.`,
+      };
+    }
+  }
+
   let result: Extract<OrganizeResult, { ok: true }>;
   try {
     result = await matchLog(text);
@@ -29,6 +51,11 @@ export async function organizeLog(body: string): Promise<OrganizeResult> {
     // 원인(오류 종류)만 서버 로그에 남긴다. 글 내용 · 키는 남기지 않는다.
     console.error("organizeLog failed:", e instanceof Error ? e.name + " " + e.message.slice(0, 120) : "unknown");
     return { ok: false, message: "잠시 뒤 다시 시도해 주세요." };
+  }
+  if (!result.isMock) {
+    // 성공한 실제 호출만 센다. 기록에 실패해도 결과는 그대로 준다(한 번 더 쓸 수 있게 되는 쪽이 낫다)
+    const { error } = await supabase.from("ai_calls").insert({ user_id: user.id, kind: "organize" });
+    if (error) console.error("ai_calls insert failed:", error.code ?? "", (error.message ?? "").slice(0, 80));
   }
 
   // 이전 숙련도 — 없거나 못 읽으면 비기너 그대로

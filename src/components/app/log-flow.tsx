@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { Loader2, PencilLine, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,7 +22,7 @@ type Review = Draft & { isMock: boolean; techniques: MatchedTechnique[]; terms: 
 type State =
   | { step: "write"; draft: Draft }
   | { step: "organizing"; draft: Draft }
-  | { step: "failed"; draft: Draft; message: string }
+  | { step: "failed"; draft: Draft; message: string; limit?: boolean }
   | { step: "review"; review: Review };
 
 const EMPTY: State = { step: "write", draft: { body: "", loggedOn: "" } };
@@ -38,6 +39,7 @@ export function LogFlow() {
         step: "failed",
         draft,
         message: res?.message ?? "인터넷 연결을 확인하고 다시 시도해 주세요.",
+        limit: res?.ok === false && res.limit === true,
       });
       return;
     }
@@ -102,8 +104,14 @@ export function LogFlow() {
           <OrganizingSkeleton />
         ) : state.step === "failed" ? (
           <div className="flex flex-col items-start gap-1">
-            <p role="alert" className="text-[15px] leading-relaxed font-medium text-destructive">
-              정리에 실패했어요. {state.message}
+            <p
+              role="alert"
+              className={cn(
+                "text-[15px] leading-relaxed font-medium",
+                state.limit ? "text-foreground" : "text-destructive",
+              )}
+            >
+              {state.limit ? state.message : `정리에 실패했어요. ${state.message}`}
             </p>
             <Button
               variant="ghost"
@@ -137,10 +145,12 @@ export function LogFlow() {
             >
               그냥 저장
             </Button>
-            <Button className="h-12 flex-1 rounded-full text-base shadow-none" onClick={() => organize(draft)}>
-              <RotateCcw data-icon="inline-start" aria-hidden />
-              다시 시도
-            </Button>
+            {!state.limit && (
+              <Button className="h-12 flex-1 rounded-full text-base shadow-none" onClick={() => organize(draft)}>
+                <RotateCcw data-icon="inline-start" aria-hidden />
+                다시 시도
+              </Button>
+            )}
           </div>
         ) : undefined
       }

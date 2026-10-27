@@ -6,4 +6,4 @@ export type RawMatch = { slugs: string[]; guesses: string[]; terms: Term[] };
 
 export type OrganizeResult =
   | { ok: true; isMock: boolean; techniques: MatchedTechnique[]; terms: Term[] }
-  | { ok: false; message: string };
+  | { ok: false; message: string; limit?: true }; // limit = 이번 주 정리하기 한도 초과(D-43) — 실패가 아니라 안내
