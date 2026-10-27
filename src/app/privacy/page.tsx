@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 // 시행일은 고정 글자 (cacheComponents: 렌더 중 new Date() 금지)
-const EFFECTIVE = "2026년 10월 26일";
+const EFFECTIVE = "2026년 10월 27일"; // 10/27: 운영자 열람 · 벨트 색 추가(T-29)
 
 const sections: { title: string; body: React.ReactNode }[] = [
   {
@@ -32,6 +32,9 @@ const sections: { title: string; body: React.ReactNode }[] = [
           이 서비스의 기능 자체예요.
         </li>
         <li>
+          <strong>화면 설정</strong> — 홈 수련 벨트에 고른 벨트 색. 로그인 계정 정보에 함께 저장돼요.
+        </li>
+        <li>
           <strong>자동으로 남는 것</strong> — 접속 시각 같은 서버 기록. 장애를 고칠 때만 봐요.
         </li>
       </ul>
@@ -40,11 +43,18 @@ const sections: { title: string; body: React.ReactNode }[] = [
   {
     title: "3. 어디에 두나",
     body: (
-      <p>
-        로그인 정보와 기록은 Supabase(클라우드 데이터베이스)에 저장돼요. 서비스 화면은 Vercel 에서
-        운영해요. 기록은 <strong>본인 계정으로만</strong> 읽고 쓸 수 있도록 데이터베이스 규칙(RLS)으로
-        막아 두었어요. 운영자도 앱 화면에서는 남의 기록을 볼 수 없어요.
-      </p>
+      <>
+        <p>
+          로그인 정보와 기록은 Supabase(클라우드 데이터베이스)에 저장돼요. 서비스 화면은 Vercel 에서
+          운영해요. 기록은 <strong>본인 계정으로만</strong> 읽고 쓸 수 있도록 데이터베이스 규칙(RLS)으로
+          막아 두었어요. 다른 사용자는 내 기록을 볼 수 없고, 운영자도 앱 화면에서는 볼 수 없어요.
+        </p>
+        <p className="mt-2">
+          다만 <strong>운영자(김한웅)는 데이터베이스 관리 화면에서 기록을 볼 수 있어요.</strong> 이 권한은
+          운영에 필요할 때만 써요 — 기술 목록에 없어 직접 적은 기술 이름을 목록에 추가할 때, 오류를 고칠 때,
+          삭제 요청을 처리할 때. 그 밖의 목적으로 기록을 읽거나 다른 곳에 넘기지 않아요.
+        </p>
+      </>
     ),
   },
   {
@@ -98,8 +108,8 @@ export default function PrivacyPage() {
         <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">개인정보처리방침</h1>
         <p className="text-[13px] font-medium text-muted-foreground">시행일 {EFFECTIVE}</p>
         <p className="text-[15px] leading-relaxed text-muted-foreground">
-          쉽게 쓴 버전이에요. 받는 정보는 Google 로그인 정보와 본인이 적는 기록뿐이고, 본인만 볼 수
-          있어요.
+          쉽게 쓴 버전이에요. 받는 정보는 Google 로그인 정보와 본인이 적는 기록뿐이에요. 앱에서는 본인만 볼
+          수 있고, 운영자는 운영에 필요할 때만 데이터베이스에서 봐요(3번).
         </p>
       </div>
       <div className="mt-10 space-y-8">
