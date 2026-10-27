@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { isLive, matchLog } from "@/lib/matching";
+import { getLibrary } from "@/lib/matching/library";
 import { searchLibrary } from "@/lib/matching/search";
 import type { OrganizeResult } from "@/lib/matching/types";
 import { MAX_BODY } from "@/lib/log-limits";
@@ -63,7 +64,7 @@ export async function organizeLog(body: string, opts?: { keywordOnly?: boolean }
 
   let result: Extract<OrganizeResult, { ok: true }>;
   try {
-    result = await matchLog(text, keywordOnly ? "keyword" : "auto");
+    result = await matchLog(text, await getLibrary(supabase), keywordOnly ? "keyword" : "auto");
     if (limitReached) result.limitReached = true;
   } catch (e) {
     // 원인(오류 종류)만 서버 로그에 남긴다. 글 내용 · 키는 남기지 않는다.
@@ -97,7 +98,7 @@ export async function searchTechniques(query: string): Promise<MatchedTechnique[
   } = await supabase.auth.getUser();
   if (!user || typeof query !== "string") return [];
 
-  const found = searchLibrary(query.slice(0, 40));
+  const found = searchLibrary(await getLibrary(supabase), query.slice(0, 40));
   if (!found.length) return [];
   const { data } = await supabase
     .from("technique_levels")

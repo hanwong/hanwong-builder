@@ -135,6 +135,56 @@ export type Database = {
         }
         Relationships: []
       }
+      notices: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          read_at: string | null
+          technique_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          read_at?: string | null
+          technique_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          read_at?: string | null
+          technique_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notices_technique_id_fkey"
+            columns: ["technique_id"]
+            isOneToOne: false
+            referencedRelation: "techniques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operators: {
+        Row: {
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       positions: {
         Row: {
           created_at: string
@@ -244,6 +294,85 @@ export type Database = {
           },
         ]
       }
+      technique_drafts: {
+        Row: {
+          alias_of: string | null
+          aliases: string[]
+          created_at: string
+          custom_name: string
+          decided_at: string | null
+          id: string
+          kind: string
+          name_en: string | null
+          name_key: string
+          name_ko: string | null
+          note: string | null
+          position_id: string | null
+          slug: string | null
+          status: string
+          steps: string[]
+          technique_id: string | null
+        }
+        Insert: {
+          alias_of?: string | null
+          aliases?: string[]
+          created_at?: string
+          custom_name: string
+          decided_at?: string | null
+          id?: string
+          kind?: string
+          name_en?: string | null
+          name_key: string
+          name_ko?: string | null
+          note?: string | null
+          position_id?: string | null
+          slug?: string | null
+          status?: string
+          steps?: string[]
+          technique_id?: string | null
+        }
+        Update: {
+          alias_of?: string | null
+          aliases?: string[]
+          created_at?: string
+          custom_name?: string
+          decided_at?: string | null
+          id?: string
+          kind?: string
+          name_en?: string | null
+          name_key?: string
+          name_ko?: string | null
+          note?: string | null
+          position_id?: string | null
+          slug?: string | null
+          status?: string
+          steps?: string[]
+          technique_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technique_drafts_alias_of_fkey"
+            columns: ["alias_of"]
+            isOneToOne: false
+            referencedRelation: "techniques"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technique_drafts_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technique_drafts_technique_id_fkey"
+            columns: ["technique_id"]
+            isOneToOne: false
+            referencedRelation: "techniques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       technique_levels: {
         Row: {
           created_at: string
@@ -334,7 +463,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      approve_technique_draft: {
+        Args: { p_draft: string; p_due: string }
+        Returns: Json
+      }
+      custom_name_counts: {
+        Args: { keys: string[] }
+        Returns: {
+          name_key: string
+          people: number
+          times: number
+        }[]
+      }
+      is_operator: { Args: never; Returns: boolean }
+      name_key: { Args: { t: string }; Returns: string }
+      pending_custom_names: {
+        Args: never
+        Returns: {
+          custom_name: string
+          last_seen: string
+          name_key: string
+          people: number
+          times: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

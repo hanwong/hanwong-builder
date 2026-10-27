@@ -4,8 +4,9 @@ import Link from "next/link";
 import { LogOut, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HomeSections, HomeSkeleton } from "@/components/app/home-sections";
+import { HomeNotices } from "@/components/app/home-notices";
 
-// 홈 (T-21, FLOW 3): ① 기록하기 버튼(항상 맨 위, D-08) ② 오늘 복습 ③ 최근 기록 ④ 하단 탭(레이아웃).
+// 홈 (T-21, FLOW 3): ⓪ 알림(있을 때만, D-47) ① 기록하기 버튼(D-08) ② 오늘 복습 ③ 최근 기록 ④ 하단 탭(레이아웃).
 // ② · ③ 은 로그인한 사람 데이터라 요청 때 읽는다 — 그동안 스켈레톤.
 export default function AppHome() {
   return (
@@ -22,6 +23,11 @@ export default function AppHome() {
           </Button>
         </form>
       </header>
+
+      {/* 알림 · 운영자 "목록 추가 대기" (D-47) — 없으면 안 보인다 */}
+      <Suspense fallback={null}>
+        <HomeNotices />
+      </Suspense>
 
       <Button asChild className="h-12 w-full rounded-full text-base">
         <Link href="/app/log">

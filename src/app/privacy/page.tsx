@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 // 시행일은 고정 글자 (cacheComponents: 렌더 중 new Date() 금지)
-const EFFECTIVE = "2026년 10월 27일"; // 10/27: 운영자 열람 · 벨트 색 추가(T-29)
+const EFFECTIVE = "2026년 10월 28일"; // 10/27: 운영자 열람 · 벨트 색 추가(T-29) / 10/28: 직접 적은 기술 이름 AI 초안(D-47)
 
 const sections: { title: string; body: React.ReactNode }[] = [
   {
@@ -60,11 +60,18 @@ const sections: { title: string; body: React.ReactNode }[] = [
   {
     title: "4. AI 에 보내는 것",
     body: (
-      <p>
-        ‘정리하기’를 누르면 <strong>그 글 한 편만</strong> AI(Anthropic Claude)에 보내 기술 이름을
-        찾아요. 이름 · 이메일 · 다른 날의 기록은 보내지 않아요. AI 연결이 아직 안 된 동안은 아무것도
-        보내지 않고 화면에 ‘연습용 예시’라고 표시돼요.
-      </p>
+      <>
+        <p>
+          ‘정리하기’를 누르면 <strong>그 글 한 편만</strong> AI(Anthropic Claude)에 보내 기술 이름을
+          찾아요. 이름 · 이메일 · 다른 날의 기록은 보내지 않아요. AI 연결이 아직 안 된 동안은 아무것도
+          보내지 않고 화면에 ‘연습용 예시’라고 표시돼요.
+        </p>
+        <p className="mt-2">
+          기술 목록에 없어 <strong>직접 적은 기술 이름</strong>은, 운영자가 목록에 넣을지 검토할 때{" "}
+          <strong>그 이름만</strong> AI 에 보내 기술 카드 초안을 만들어요. 누가 적었는지 · 글 원문은
+          보내지 않아요. 그래서 기술 이름 칸에는 사람 이름을 적지 말아 주세요.
+        </p>
+      </>
     ),
   },
   {

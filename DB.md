@@ -9,10 +9,10 @@
 - 누가: **수련자**만. 랜딩(`/`)은 로그인 없이, `/app/...` 전부 로그인 필요(D-07).
 - 벨트 색(홈 수련 벨트, D-33)은 표를 만들지 않고 `auth.users` 의 `user_metadata.belt`(white · blue · purple · brown · black)에 둔다. 본인만 바꾼다(supabase.auth.updateUser).
 - 방식: **Supabase Auth + Google**(D-05). 이메일 · 매직링크 없음. 사용자 식별은 `auth.users.id`(uuid) — 아래 표의 `user_id` 가 이것을 가리킨다.
-- 운영자(본인): 앱에 운영자 역할은 없다. 기술 콘텐츠는 마이그레이션 · 시드 파일로 넣고, 필요하면 Supabase 대시보드에서 본다(앱 밖).
+- 운영자(본인): `operators` 표에 한웅 님 계정 하나(D-47). 운영 화면 `/app/admin` 에서 목록 밖 기술 초안을 승인 · 버림. 그 밖의 기술 콘텐츠는 마이그레이션으로 넣는다.
 - 참고: Google 로그인은 Google Cloud 에서 OAuth 클라이언트를 만들어 Supabase 에 넣어야 한다(T-00b). 메일 발송 한도 문제는 없다.
 
-## 2. 표 목록 (8개)
+## 2. 표 목록 (11개)
 | 표 | 한 줄 설명 | 누구 데이터 |
 |---|---|---|
 | `positions` | 포지션 8개(스탠딩 · 클로즈드 가드 · 오픈 가드 · 하프가드 · 패스 · 사이드 · 마운트 · 백). 기술을 묶는 상자 | 콘텐츠(공용) |
@@ -23,6 +23,9 @@
 | `review_cards` | 기술당 복습 카드 1장 — 간격 단계 · 다음 복습일 | 사용자 |
 | `review_logs` | 카드를 풀 때마다 남는 응답(다시 · 어려움 · 보통 · 쉬움) | 사용자 |
 | `ai_calls` | 정리하기(Claude 호출)를 언제 했나 — 사람당 **일주일 3번** 한도를 세는 용도(D-43, 2026-10-27 추가) | 사용자 |
+| `operators` | 운영자 계정(한웅 님 하나, D-47) | 운영 |
+| `technique_drafts` | 기록에 직접 적힌 이름 → AI 초안(새 기술 · 다른 이름 · 기술 아님) · 승인 대기/승인/버림(D-47) | 운영 |
+| `notices` | 사용자 알림 — "○○ 이(가) 기술 목록에 추가됐어요"(D-47) | 사용자 |
 
 ## 3. 표별 칸
 공통: 모든 표에 `id uuid 기본키(자동)`, `created_at timestamptz 기본값 now()`. 사용자 표에는 `user_id uuid → auth.users(id)` 필수.
@@ -117,6 +120,39 @@
 | created_at | timestamptz | ✓ | now() | |
 - 글 내용 · 결과는 넣지 않는다(횟수만). 연습용 예시(mock)일 때는 기록하지 않는다. 실패한 호출도 세지 않는다.
 
+### `operators` (D-47)
+| 칸 | 종류 | 필수 | 설명 |
+|---|---|---|---|
+| user_id | uuid → auth.users (기본키) | ✓ | 운영자 계정. 마이그레이션으로만 넣는다 |
+| created_at | timestamptz | ✓ | |
+
+### `technique_drafts` (D-47)
+| 칸 | 종류 | 필수 | 설명 |
+|---|---|---|---|
+| id | uuid | ✓ | |
+| name_key | text 유일 | ✓ | 적힌 이름에서 띄어쓰기 지우고 소문자(`public.name_key()`) — 같은 이름은 초안 하나 |
+| custom_name | text | ✓ | 사용자가 적은 이름(대표 하나, 1~100자) |
+| kind | text | ✓ | `new` 새 기술 · `alias` 있는 기술의 다른 이름 · `unclear` 기술 아님 같음 |
+| alias_of | uuid → techniques | | kind=alias 일 때 붙일 기술 |
+| position_id | uuid → positions | | |
+| slug · name_ko · name_en | text | | 새 기술 칸(승인 때 필수) |
+| aliases · steps | text[] | ✓ | 다른 이름 · 세팅 과정(승인 때 3~5줄) |
+| note | text | | AI 가 그렇게 본 이유 한 줄 |
+| status | text | ✓ | `pending` · `approved` · `rejected` |
+| technique_id | uuid → techniques | | 승인 뒤 연결된 기술 |
+| decided_at · created_at | timestamptz | | |
+- Claude 에는 이름만 보낸다(글 원문 · 누가 적었는지 없음). 하루 20개까지(오늘 만든 초안 수로 센다).
+
+### `notices` (D-47)
+| 칸 | 종류 | 필수 | 설명 |
+|---|---|---|---|
+| id | uuid | ✓ | |
+| user_id | uuid → auth.users | ✓ | 받는 사람. 계정 지우면 같이 지움 |
+| message | text | ✓ | 1~200자 |
+| technique_id | uuid → techniques | | 누르면 그 기술 상세로 |
+| read_at | timestamptz | | "확인" 누른 때. 비었으면 홈에 보인다 |
+| created_at | timestamptz | ✓ | |
+
 ## 4. 관계
 - `techniques.position_id → positions.id` — 포지션은 지우지 않는다(기술이 있으면 막음).
 - `class_log_techniques.class_log_id → class_logs.id` — **기록을 지우면 연결도 같이 지움**(cascade).
@@ -136,8 +172,12 @@
 | review_cards | ✗ | 보기 · 추가 · 수정 · 삭제 (자기 것만) | ✗ | ✗ |
 | review_logs | ✗ | 보기 · 추가 (자기 것만) | ✗ | ✗ |
 | ai_calls | ✗ | 보기 · 추가 (자기 것만, 수정 · 삭제 없음) | ✗ | ✗ |
+| operators | ✗ | 자기 줄만 보기 | ✗ | 자기 줄만 보기 (추가는 마이그레이션으로만) |
+| technique_drafts | ✗ | ✗ | ✗ | 보기 · 추가 · 수정 (삭제 없음) |
+| notices | ✗ | 보기 · 확인(read_at 수정) (자기 것만) | ✗ | ✗ (추가는 승인 함수만) |
 - "자기 것만" = `user_id = auth.uid()`. 운영자 역할은 앱에 없다 — 본인도 앱에서는 자기 기록만 본다. 다른 사람 기록은 Supabase 대시보드(관리자)에서만 보이고, 그건 사용자 테스트 전에 "볼 사람 · 삭제 시점" 을 안내한다(PLAN 미정 10).
 - 한 줄 답: **이 표대로면 다른 사용자가 내 데이터를 볼 수 없다.** 공용인 건 기술 콘텐츠뿐이다.
+- **운영자 DB 함수(D-47, security definer — 함수 안에서 운영자인지 먼저 확인, 아니면 거부 42501)**: `is_operator()` 운영자인가 · `pending_custom_names()` 초안 없는 적힌 이름과 횟수 · 사람 수(글 원문 · 사람 정보 없음) · `custom_name_counts(keys)` 초안별 횟수 · `approve_technique_draft(draft, due)` 승인 → 기술 추가(또는 다른 이름 추가) · 그 이름으로 적힌 모든 기록 연결 · 숙련도(비기너) · 카드(due) · 알림. 운영자도 다른 사람의 기록 표를 직접 읽지는 못한다(점검 2026-10-28: 0건). Supabase 보안 점검이 이 4개 함수를 "로그인 사용자가 실행 가능"으로 경고하지만 의도된 것 — 비운영자 · 로그인 안 한 사람 호출은 모두 막힘 확인.
 
 ## 6. 제약 · 인덱스 (함정 대비)
 - `review_cards (user_id, technique_id)` **유일** — 같은 기술을 두 번 기록해도 카드 1장.
@@ -162,7 +202,7 @@
 
 ## 9. 시드 데이터
 - `positions` 8개: 스탠딩, 클로즈드 가드, 오픈 가드, 하프가드, 패스, 사이드 컨트롤, 마운트, 백 컨트롤.
-- `techniques` 10개(예시 · **전부 `is_reviewed = false` 초안**, 세팅 과정은 AI 초안 — 본인 검수 전엔 앱에서 숨김): 데라히바 가드 · 클로즈드 가드 암바 · 트라이앵글 초크 · 시저 스윕 · 니슬라이스 패스 · 토레안도 패스 · 사이드 이스케이프(힙 이스케이프) · 마운트 이스케이프(업파) · 리어 네이키드 초크 · 하프가드 언더훅 스윕. 이름 · 별칭 · 과정은 마이그레이션 시드 SQL 로, 이후 `data/techniques.json`(원본) → `scripts/techniques-to-sql.mjs` 가 positions · techniques upsert SQL 을 만들어 새 마이그레이션으로 적용한다. 2026-10-27 현재 **포지션 19개 · 기술 573개**(2차 검토 D-46 · 케이 가드 D-32), 전부 세팅 과정 3~4줄 · `is_reviewed=true`(D-14 · D-15 · D-29 — 본인 결정으로 전부 검수됨 처리). 기술마다 `source` 에 참고 자료 위치를 적는다.
+- `techniques` 10개(예시 · **전부 `is_reviewed = false` 초안**, 세팅 과정은 AI 초안 — 본인 검수 전엔 앱에서 숨김): 데라히바 가드 · 클로즈드 가드 암바 · 트라이앵글 초크 · 시저 스윕 · 니슬라이스 패스 · 토레안도 패스 · 사이드 이스케이프(힙 이스케이프) · 마운트 이스케이프(업파) · 리어 네이키드 초크 · 하프가드 언더훅 스윕. 이름 · 별칭 · 과정은 마이그레이션 시드 SQL 로, 이후 `data/techniques.json`(원본) → `scripts/techniques-to-sql.mjs` 가 positions · techniques upsert SQL 을 만들어 새 마이그레이션으로 적용한다. 2026-10-27 현재 **포지션 19개 · 기술 573개**(2차 검토 D-46 · 케이 가드 D-32). **2026-10-28 부터 원본은 DB**(D-47) — 운영 화면에서 승인한 기술이 DB 에 바로 들어가므로, JSON 을 고치기 전에 `scripts/techniques-from-db.mjs` 로 받아 온다, 전부 세팅 과정 3~4줄 · `is_reviewed=true`(D-14 · D-15 · D-29 — 본인 결정으로 전부 검수됨 처리). 기술마다 `source` 에 참고 자료 위치를 적는다.
 - 사용자 데이터(기록 · 카드)는 시드하지 않는다 — 개발 계정에 앱으로 직접 넣는다(T-13). 가짜 사람 정보 없음.
 
 ## 10. 접근 점검 결과 (2026-10-26)

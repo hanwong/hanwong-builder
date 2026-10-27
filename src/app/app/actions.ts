@@ -20,3 +20,16 @@ export async function setBelt(belt: Belt): Promise<{ ok: boolean }> {
   revalidatePath("/app"); // 벨트 색은 홈에만 보인다 — 홈만 새로(D-45)
   return { ok: true };
 }
+
+// 홈 알림 "확인" (D-47) — 내 알림만 읽음으로(RLS: 자기 것만 수정)
+export async function markNoticesRead(ids: string[]): Promise<{ ok: boolean }> {
+  if (!Array.isArray(ids) || !ids.length || ids.length > 20 || !ids.every((i) => typeof i === "string")) return { ok: false };
+  const supabase = await createSupabaseServer();
+  const { error } = await supabase.from("notices").update({ read_at: new Date().toISOString() }).in("id", ids).is("read_at", null);
+  if (error) {
+    console.error("markNoticesRead failed:", error.code ?? "", (error.message ?? "").slice(0, 120));
+    return { ok: false };
+  }
+  revalidatePath("/app"); // 알림은 홈에만 보인다
+  return { ok: true };
+}

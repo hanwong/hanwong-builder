@@ -1,5 +1,5 @@
 import "server-only";
-import { candidates, positionNames, type Candidate } from "./library";
+import type { Candidate, Library } from "./library";
 import type { RawMatch } from "./types";
 
 // 연습용 예시 매칭 — Claude 키가 없을 때. 글 속에 기술 이름 · 별칭이 그대로 나오면 찾는다.
@@ -27,11 +27,10 @@ function prepare(body: string) {
 }
 
 const GENERIC_TAIL = ["패스", "가드", "스윕", "초크"];
-const POSITIONS = new Set(positionNames.map(norm));
 
 type Key = { text: string; full: boolean };
 
-function keysOf(t: Candidate): Key[] {
+function keysOf(t: Candidate, POSITIONS: Set<string>): Key[] {
   const keys: Key[] = [{ text: norm(t.nameKo), full: true }];
   const base = t.nameKo.split(" (")[0];
   if (base !== t.nameKo) keys.push({ text: norm(base), full: false });
@@ -58,7 +57,17 @@ function contextWords(t: Candidate): string[] {
     .map(norm);
 }
 
-const index = candidates.map((t) => ({ t, keys: keysOf(t), ctx: contextWords(t) }));
+// 목록이 바뀔 때(D-47)만 다시 만든다
+const indexes = new WeakMap<Library, { t: Candidate; keys: Key[]; ctx: string[] }[]>();
+function indexOf(lib: Library) {
+  let index = indexes.get(lib);
+  if (!index) {
+    const positions = new Set(lib.positionNames.map(norm));
+    index = lib.candidates.map((t) => ({ t, keys: keysOf(t, positions), ctx: contextWords(t) }));
+    indexes.set(lib, index);
+  }
+  return index;
+}
 
 const GLOSSARY: { term: string; keys: string[]; meaning: string }[] = [
   { term: "언더훅", keys: ["언더훅"], meaning: "상대 겨드랑이 밑으로 팔을 넣어 감는 것" },
@@ -78,7 +87,7 @@ const GLOSSARY: { term: string; keys: string[]; meaning: string }[] = [
   { term: "훅", keys: ["훅"], meaning: "발등 · 발목을 상대 다리에 걸어 조종하는 것" },
 ];
 
-export async function mockMatch(body: string): Promise<RawMatch> {
+export async function mockMatch(body: string, lib: Library): Promise<RawMatch> {
   const { text, wordStart } = prepare(body);
   const find = (key: string) => {
     for (let i = text.indexOf(key); i >= 0; i = text.indexOf(key, i + 1)) if (wordStart[i]) return i;
@@ -87,7 +96,7 @@ export async function mockMatch(body: string): Promise<RawMatch> {
 
   type Hit = { slug: string; score: number; start: number; end: number };
   const hits: Hit[] = [];
-  for (const { t, keys, ctx } of index) {
+  for (const { t, keys, ctx } of indexOf(lib)) {
     let best: Hit | null = null;
     for (const k of keys) {
       const start = find(k.text);
