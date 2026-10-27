@@ -4,9 +4,9 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { isLive } from "@/lib/matching";
 import { forgetLibrary, getLibrary } from "@/lib/matching/library";
-import { DAILY_DRAFT_LIMIT, draftNames, nameKey, type DraftKind } from "@/lib/admin/drafter";
+import { DAILY_DRAFT_LIMIT, draftNames, nameKey, type Draft, type DraftKind } from "@/lib/admin/drafter";
 import { addDays, seoulToday } from "@/lib/seoul-date";
-import { draftedToday } from "@/lib/admin/admin-data";
+import { draftedToday, type AdminDraft } from "@/lib/admin/admin-data";
 
 // 운영 화면 (D-47, T-39). 모든 동작은 운영자인지 DB 로 먼저 확인한다 — 표 · 함수도 운영자만 통과(RLS).
 
@@ -75,6 +75,94 @@ export async function generateDrafts(): Promise<AdminResult & { made?: number }>
   }
   revalidatePath("/app/admin");
   return { ok: true, made: rows.length };
+}
+
+// 다시 추천 (D-48) — 카드 하나를 이전 초안 + 운영자 메모와 함께 다시 만든다. 하루 한도 1개로 센다.
+export type RedraftResult =
+  | { ok: true; draft: Omit<AdminDraft, "id" | "name" | "times" | "people"> }
+  | { ok: false; message: string };
+
+export async function redraftDraft(id: string, hint: string, current: DraftEdit): Promise<RedraftResult> {
+  const supabase = await operator();
+  if (!supabase) return { ok: false, message: "운영자만 쓸 수 있어요." };
+  if (!isLive()) return { ok: false, message: "Claude 키가 없어 다시 추천할 수 없어요." };
+  if ((await draftedToday(supabase)) >= DAILY_DRAFT_LIMIT)
+    return { ok: false, message: `오늘 초안 ${DAILY_DRAFT_LIMIT}개를 다 써서 내일 다시 추천할 수 있어요.` };
+
+  const { data: row } = await supabase
+    .from("technique_drafts")
+    .select("custom_name")
+    .eq("id", id)
+    .eq("status", "pending")
+    .maybeSingle();
+  if (!row) return { ok: false, message: "이미 처리된 초안이에요." };
+
+  // 이전 초안 = 운영자가 지금 화면에서 보고 있는 칸(고친 것 포함)
+  const previous: Omit<Draft, "name"> = {
+    kind: current?.kind === "alias" || current?.kind === "new" ? current.kind : "unclear",
+    aliasOf: clean(current?.aliasOf, 80) || null,
+    position: clean(current?.position, 40) || null,
+    slug: clean(current?.slug, 60) || null,
+    nameKo: clean(current?.nameKo, 60),
+    nameEn: clean(current?.nameEn, 80),
+    aliases: [],
+    steps: (Array.isArray(current?.steps) ? current.steps : []).map((x) => clean(x, 120)).filter(Boolean).slice(0, 5),
+    note: "",
+  };
+
+  const lib = await getLibrary(supabase);
+  let d: Draft;
+  try {
+    [d] = await draftNames([row.custom_name], lib, { previous, hint: clean(hint, 200) });
+  } catch (e) {
+    console.error("redraft failed:", e instanceof Error ? e.name + " " + e.message.slice(0, 120) : "unknown");
+    return { ok: false, message: "다시 추천하지 못했어요 — 잠시 뒤 다시 눌러 주세요." };
+  }
+  // 성공한 호출만 센다(정리하기와 같은 규칙)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    const { error } = await supabase.from("ai_calls").insert({ user_id: user.id, kind: "redraft" });
+    if (error) console.error("ai_calls redraft insert failed:", error.code ?? "", (error.message ?? "").slice(0, 80));
+  }
+
+  const [pos, tech] = await Promise.all([
+    d.position ? supabase.from("positions").select("id").eq("slug", d.position).maybeSingle() : null,
+    d.aliasOf ? supabase.from("techniques").select("id, name_ko").eq("slug", d.aliasOf).maybeSingle() : null,
+  ]);
+  const { error } = await supabase
+    .from("technique_drafts")
+    .update({
+      kind: d.kind,
+      alias_of: tech?.data?.id ?? null,
+      position_id: pos?.data?.id ?? null,
+      slug: d.slug,
+      name_ko: d.nameKo || null,
+      name_en: d.nameEn || null,
+      aliases: d.aliases,
+      steps: d.steps,
+      note: d.note || null,
+    })
+    .eq("id", id)
+    .eq("status", "pending");
+  if (error) return { ok: false, message: "새 초안을 저장하지 못했어요." };
+
+  revalidatePath("/app/admin");
+  return {
+    ok: true,
+    draft: {
+      kind: d.kind,
+      aliasOf: d.aliasOf && tech?.data ? { slug: d.aliasOf, nameKo: tech.data.name_ko } : null,
+      position: d.position,
+      slug: d.slug ?? "",
+      nameKo: d.nameKo,
+      nameEn: d.nameEn,
+      aliases: d.aliases,
+      steps: d.steps,
+      note: d.note,
+    },
+  };
 }
 
 export type DraftEdit = {

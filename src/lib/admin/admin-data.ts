@@ -32,13 +32,14 @@ export type AdminData = {
   positions: { slug: string; nameKo: string }[];
 };
 
-// 오늘(서울) 만든 초안 수 — 하루 20개 한도
+// 오늘(서울) 만든 초안 수 + 다시 추천 수 — 하루 20개 한도(D-47 · D-48)
 export async function draftedToday(supabase: Supa): Promise<number> {
-  const { count } = await supabase
-    .from("technique_drafts")
-    .select("id", { count: "exact", head: true })
-    .gte("created_at", `${seoulToday()}T00:00:00+09:00`);
-  return count ?? 0;
+  const since = `${seoulToday()}T00:00:00+09:00`;
+  const [made, redrafts] = await Promise.all([
+    supabase.from("technique_drafts").select("id", { count: "exact", head: true }).gte("created_at", since),
+    supabase.from("ai_calls").select("id", { count: "exact", head: true }).eq("kind", "redraft").gte("called_at", since),
+  ]);
+  return (made.count ?? 0) + (redrafts.count ?? 0);
 }
 
 export async function isOperator(supabase: Supa): Promise<boolean> {

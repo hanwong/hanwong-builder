@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
-import { approveDraft, generateDrafts, rejectDraft } from "@/app/app/admin/actions";
+import { approveDraft, generateDrafts, redraftDraft, rejectDraft, type DraftEdit } from "@/app/app/admin/actions";
 import { searchTechniques } from "@/app/app/log/actions";
 import type { AdminData, AdminDraft } from "@/lib/admin/admin-data";
 import type { DraftKind } from "@/lib/admin/drafter";
@@ -90,7 +90,44 @@ function DraftCard({ draft, positions }: { draft: AdminDraft; positions: AdminDa
   const [nameEn, setNameEn] = useState(draft.nameEn);
   const [aliases, setAliases] = useState(draft.aliases.join(", "));
   const [steps, setSteps] = useState(draft.steps.join("\n"));
+  const [note, setNote] = useState(draft.note);
+  const [hint, setHint] = useState("");
+  const [redrafting, startRedraft] = useTransition();
   const id = (k: string) => `${draft.id}-${k}`;
+  const locked = busy || redrafting;
+
+  const edit = (): DraftEdit => ({
+    kind,
+    aliasOf: aliasOf?.slug ?? null,
+    position: position || null,
+    slug,
+    nameKo,
+    nameEn,
+    aliases: aliases.split(/[,，]/),
+    steps: steps.split("\n"),
+  });
+
+  // 다시 추천 (D-48) — 지금 칸 + 메모를 보내고, 새 초안으로 칸을 바꾼다
+  const redraft = () =>
+    startRedraft(async () => {
+      const r = await redraftDraft(draft.id, hint, edit());
+      if (!r.ok) {
+        toast.error(r.message);
+        return;
+      }
+      const d = r.draft;
+      setKind(d.kind);
+      setAliasOf(d.aliasOf);
+      setPosition(d.position ?? "");
+      setSlug(d.slug);
+      setNameKo(d.nameKo);
+      setNameEn(d.nameEn);
+      setAliases(d.aliases.join(", "));
+      setSteps(d.steps.join("\n"));
+      setNote(d.note);
+      setHint("");
+      toast.success("새 초안으로 바꿨어요.");
+    });
 
   function act(fn: () => Promise<{ ok: boolean; message?: string }>) {
     start(async () => {
@@ -102,19 +139,7 @@ function DraftCard({ draft, positions }: { draft: AdminDraft; positions: AdminDa
     });
   }
 
-  const approve = () =>
-    act(() =>
-      approveDraft(draft.id, {
-        kind,
-        aliasOf: aliasOf?.slug ?? null,
-        position: position || null,
-        slug,
-        nameKo,
-        nameEn,
-        aliases: aliases.split(/[,，]/),
-        steps: steps.split("\n"),
-      }),
-    );
+  const approve = () => act(() => approveDraft(draft.id, edit()));
 
   return (
     <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4" aria-labelledby={id("title")}>
@@ -126,7 +151,7 @@ function DraftCard({ draft, positions }: { draft: AdminDraft; positions: AdminDa
           {draft.times}번 · {draft.people}명
         </span>
       </div>
-      {draft.note && <p className="text-[13px] text-muted-foreground">AI: {draft.note}</p>}
+      {note && <p className="text-[13px] text-muted-foreground">AI: {note}</p>}
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={id("kind")}>종류</Label>
@@ -175,16 +200,37 @@ function DraftCard({ draft, positions }: { draft: AdminDraft; positions: AdminDa
         </>
       )}
 
+      <div className="flex flex-col gap-1.5 border-t border-border pt-3">
+        <Label htmlFor={id("hint")}>초안이 별로면 — 다시 추천 메모 (선택)</Label>
+        <div className="flex gap-2">
+          <Input
+            id={id("hint")}
+            value={hint}
+            onChange={(e) => setHint(e.target.value.slice(0, 200))}
+            placeholder="예: 하프가드 아래에서 하는 스윕이야"
+            disabled={locked}
+          />
+          <Button variant="outline" className="shrink-0 rounded-full" disabled={locked} onClick={redraft}>
+            {redrafting ? (
+              <Loader2 className="animate-spin" data-icon="inline-start" aria-hidden />
+            ) : (
+              <RefreshCw data-icon="inline-start" aria-hidden />
+            )}
+            다시 추천
+          </Button>
+        </div>
+      </div>
+
       <div className="flex gap-2 pt-1">
         <Button
           variant="outline"
           className="flex-1 rounded-full"
-          disabled={busy}
+          disabled={locked}
           onClick={() => act(() => rejectDraft(draft.id))}
         >
           버림
         </Button>
-        <Button className="flex-1 rounded-full" disabled={busy || kind === "unclear"} onClick={approve}>
+        <Button className="flex-1 rounded-full" disabled={locked || kind === "unclear"} onClick={approve}>
           {busy && <Loader2 className="animate-spin" data-icon="inline-start" aria-hidden />}
           승인
         </Button>

@@ -23,6 +23,7 @@ async function usedThisWeek(supabase: Supa): Promise<number> {
   const { count } = await supabase
     .from("ai_calls")
     .select("id", { count: "exact", head: true })
+    .eq("kind", "organize") // 운영 화면 "다시 추천"(redraft, D-48)은 세지 않는다
     .gte("called_at", seoulWeekStart(seoulToday()));
   return count ?? 0;
 }

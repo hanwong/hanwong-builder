@@ -128,7 +128,32 @@ export function sanitize(raw: unknown, name: string, lib: Library, taken: Set<st
   };
 }
 
-export async function draftNames(names: string[], lib: Library): Promise<Draft[]> {
+// 다시 추천(D-48): 이전 초안과 운영자 메모를 같이 보낸다 — 시스템 글(캐시)은 그대로 두고 사용자 글에만 붙인다
+export type Redo = { previous: Omit<Draft, "name">; hint: string };
+
+function userMessage(names: string[], redo?: Redo): string {
+  const list = `<names>\n${names.join("\n")}\n</names>`;
+  if (!redo) return list;
+  const p = redo.previous;
+  const prev = [
+    `종류: ${p.kind}`,
+    p.aliasOf ? `다른 이름으로 붙인 기술: ${p.aliasOf}` : "",
+    p.position ? `포지션: ${p.position}` : "",
+    p.nameKo ? `이름: ${p.nameKo} / ${p.nameEn}` : "",
+    p.steps.length ? `세팅 과정: ${p.steps.join(" / ")}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  return `${list}
+
+운영자가 아래 이전 초안을 마음에 들어하지 않아 다시 만든다. 운영자 메모(<hint>)가 있으면 그것을 가장 먼저 따르고, 없으면 이전과 다른 판단(종류 · 포지션 · 기술)을 진지하게 검토한다. 이전 초안이 맞다고 보면 같은 판단도 괜찮지만 세팅 과정은 더 정확하게 고쳐 쓴다.
+<previous>
+${prev}
+</previous>
+<hint>${redo.hint || "(메모 없음)"}</hint>`;
+}
+
+export async function draftNames(names: string[], lib: Library, redo?: Redo): Promise<Draft[]> {
   if (!names.length) return [];
   const res = await client.beta.messages.create({
     model: MODEL,
@@ -137,7 +162,7 @@ export async function draftNames(names: string[], lib: Library): Promise<Draft[]
     fallbacks: "default",
     output_config: { effort: "medium", format: { type: "json_schema", schema: SCHEMA } },
     system: [{ type: "text", text: systemOf(lib), cache_control: { type: "ephemeral" } }],
-    messages: [{ role: "user", content: `<names>\n${names.join("\n")}\n</names>` }],
+    messages: [{ role: "user", content: userMessage(names, redo) }],
   });
 
   // 비용 확인용: 토큰 수만 남긴다(이름 · 키는 남기지 않음)
