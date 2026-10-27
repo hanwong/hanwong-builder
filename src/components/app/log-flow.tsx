@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -10,14 +10,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LogEditor } from "@/components/app/log-editor";
 import { formatKoreanDate } from "@/lib/seoul-date";
 import { LogReview } from "@/components/app/log-review";
-import { organizeLog, saveLog } from "@/app/app/log/actions";
+import { getOrganizeQuota, organizeLog, saveLog, type OrganizeQuota } from "@/app/app/log/actions";
 import type { MatchedTechnique, Term } from "@/lib/mock/log-seed";
 
 // 오늘 배운 것 기록 — 한 화면 3상태 (FLOW 4).
 // A 쓰기 → "정리하기" → B 정리 중(글 그대로 + 아래 스켈레톤) → C 확인.
 // B 에서 실패하면 "다시 시도 / 그냥 저장"(그냥 저장 = 기술 없이 C 로, 이름은 직접 적을 수 있음).
 type Draft = { body: string; loggedOn: string };
-type Review = Draft & { isMock: boolean; techniques: MatchedTechnique[]; terms: Term[]; skipped?: boolean };
+type Review = Draft & {
+  isMock: boolean;
+  keywordOnly?: boolean; // Claude 없이 이름만 찾음(D-44)
+  limitReached?: boolean;
+  techniques: MatchedTechnique[];
+  terms: Term[];
+  skipped?: boolean;
+};
 
 type State =
   | { step: "write"; draft: Draft }
@@ -30,10 +37,20 @@ const EMPTY: State = { step: "write", draft: { body: "", loggedOn: "" } };
 export function LogFlow() {
   const [state, setState] = useState<State>(EMPTY);
   const router = useRouter();
+  const [quota, setQuota] = useState<OrganizeQuota | null>(null);
+  useEffect(() => {
+    let alive = true;
+    getOrganizeQuota()
+      .then((q) => alive && setQuota(q))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
-  async function organize(draft: Draft) {
+  async function organize(draft: Draft, keywordOnly = false) {
     setState({ step: "organizing", draft });
-    const res = await organizeLog(draft.body).catch(() => null);
+    const res = await organizeLog(draft.body, keywordOnly ? { keywordOnly: true } : undefined).catch(() => null);
     if (!res || !res.ok) {
       setState({
         step: "failed",
@@ -43,7 +60,19 @@ export function LogFlow() {
       });
       return;
     }
-    setState({ step: "review", review: { ...draft, isMock: res.isMock, techniques: res.techniques, terms: res.terms } });
+    if (!res.isMock && !res.keywordOnly) setQuota((q) => (q ? { ...q, used: q.used + 1 } : q)); // 실제 호출 1번 씀
+    setState({
+      step: "review",
+      review: {
+        ...draft,
+        isMock: res.isMock,
+        keywordOnly: res.keywordOnly,
+        limitReached: res.limitReached,
+        techniques: res.techniques,
+        terms: res.terms,
+        skipped: keywordOnly,
+      },
+    });
   }
 
   if (state.step === "review") {
@@ -56,8 +85,10 @@ export function LogFlow() {
           techniques: review.techniques,
           customNames: [],
           terms: review.terms,
-          aiStatus: review.skipped ? "none" : review.isMock ? "mock" : "ok",
+          aiStatus: review.skipped || review.keywordOnly ? "none" : review.isMock ? "mock" : "ok",
           skipped: review.skipped,
+          keywordOnly: review.keywordOnly,
+          limitReached: review.limitReached,
         }}
         onBack={() => setState({ step: "write", draft: { body: review.body, loggedOn: review.loggedOn } })}
         onSave={async (value) => {
@@ -97,6 +128,7 @@ export function LogFlow() {
       key={locked ? "locked" : "write"}
       initialBody={draft.body}
       initialDate={draft.loggedOn || undefined}
+      quota={quota}
       locked={locked}
       onSubmit={organize}
       below={
@@ -136,12 +168,7 @@ export function LogFlow() {
             <Button
               variant="secondary"
               className="h-12 flex-1 rounded-full text-base shadow-none"
-              onClick={() =>
-                setState({
-                  step: "review",
-                  review: { ...draft, isMock: false, techniques: [], terms: [], skipped: true },
-                })
-              }
+              onClick={() => organize(draft, true)} // Claude 없이 글 속 기술 이름만 찾아서(D-44)
             >
               그냥 저장
             </Button>

@@ -17,9 +17,32 @@ function seoulWeekStart(today: string): string {
   return `${addDays(today, -((dow + 6) % 7))}T00:00:00+09:00`;
 }
 
+type Supa = Awaited<ReturnType<typeof createSupabaseServer>>;
+async function usedThisWeek(supabase: Supa): Promise<number> {
+  const { count } = await supabase
+    .from("ai_calls")
+    .select("id", { count: "exact", head: true })
+    .gte("called_at", seoulWeekStart(seoulToday()));
+  return count ?? 0;
+}
+
+export type OrganizeQuota = { live: boolean; limit: number; used: number };
+
+// 쓰기 화면 안내용 — "일주일 3번 · 이번 주 N번 남음" (D-44). 연습용 예시(키 없음)면 live=false.
+export async function getOrganizeQuota(): Promise<OrganizeQuota> {
+  if (!isLive()) return { live: false, limit: WEEKLY_LIMIT, used: 0 };
+  const supabase = await createSupabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { live: true, limit: WEEKLY_LIMIT, used: 0 };
+  return { live: true, limit: WEEKLY_LIMIT, used: await usedThisWeek(supabase) };
+}
+
 // "정리하기" — 글에서 기술 · 용어를 찾는다(T-06). 저장은 하지 않는다.
 // 이미 숙련도를 정해 둔 기술은 그 값을 기본값으로 돌려준다(FLOW 상태 C, T-08).
-export async function organizeLog(body: string): Promise<OrganizeResult> {
+// keywordOnly: Claude 없이 글 속 기술 이름만 찾는다('그냥 저장', D-44). 한도를 다 썼을 때도 이 길로 간다.
+export async function organizeLog(body: string, opts?: { keywordOnly?: boolean }): Promise<OrganizeResult> {
   const supabase = await createSupabaseServer();
   const {
     data: { user },
@@ -30,29 +53,24 @@ export async function organizeLog(body: string): Promise<OrganizeResult> {
   if (!text) return { ok: false, message: "글을 먼저 적어 주세요." };
   if (text.length > MAX_BODY) return { ok: false, message: `글은 ${MAX_BODY}자까지 정리할 수 있어요.` };
 
-  if (isLive()) {
-    const { count } = await supabase
-      .from("ai_calls")
-      .select("id", { count: "exact", head: true })
-      .gte("called_at", seoulWeekStart(seoulToday()));
-    if ((count ?? 0) >= WEEKLY_LIMIT) {
-      return {
-        ok: false,
-        limit: true,
-        message: `이번 주 정리하기 ${WEEKLY_LIMIT}번을 다 썼어요. 월요일에 다시 열려요. 지금은 '그냥 저장'을 누른 뒤 '기술 추가'로 직접 넣을 수 있어요.`,
-      };
-    }
+  // 이름만 찾기(비용 0): 그냥 저장이거나, 실제 Claude 인데 이번 주 한도를 다 썼을 때
+  let keywordOnly = opts?.keywordOnly === true;
+  let limitReached = false;
+  if (!keywordOnly && isLive() && (await usedThisWeek(supabase)) >= WEEKLY_LIMIT) {
+    keywordOnly = true;
+    limitReached = true;
   }
 
   let result: Extract<OrganizeResult, { ok: true }>;
   try {
-    result = await matchLog(text);
+    result = await matchLog(text, keywordOnly ? "keyword" : "auto");
+    if (limitReached) result.limitReached = true;
   } catch (e) {
     // 원인(오류 종류)만 서버 로그에 남긴다. 글 내용 · 키는 남기지 않는다.
     console.error("organizeLog failed:", e instanceof Error ? e.name + " " + e.message.slice(0, 120) : "unknown");
     return { ok: false, message: "잠시 뒤 다시 시도해 주세요." };
   }
-  if (!result.isMock) {
+  if (!result.isMock && !result.keywordOnly) {
     // 성공한 실제 호출만 센다. 기록에 실패해도 결과는 그대로 준다(한 번 더 쓸 수 있게 되는 쪽이 낫다)
     const { error } = await supabase.from("ai_calls").insert({ user_id: user.id, kind: "organize" });
     if (error) console.error("ai_calls insert failed:", error.code ?? "", (error.message ?? "").slice(0, 80));

@@ -5,5 +5,12 @@ import type { MatchedTechnique, Term } from "@/lib/mock/log-seed";
 export type RawMatch = { slugs: string[]; guesses: string[]; terms: Term[] };
 
 export type OrganizeResult =
-  | { ok: true; isMock: boolean; techniques: MatchedTechnique[]; terms: Term[] }
+  | {
+      ok: true;
+      isMock: boolean; // 키 없음 → 연습용 예시
+      keywordOnly?: boolean; // Claude 없이 이름만 찾음(그냥 저장 · 한도 뒤, D-44)
+      limitReached?: boolean; // 이번 주 한도를 다 써서 이름만 찾았다
+      techniques: MatchedTechnique[];
+      terms: Term[];
+    }
   | { ok: false; message: string; limit?: true }; // limit = 이번 주 정리하기 한도 초과(D-43) — 실패가 아니라 안내

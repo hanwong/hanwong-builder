@@ -29,7 +29,9 @@ export type ReviewValue = {
 type Props = {
   initial: ReviewValue & {
     loggedOn: string; // 화면 표시용 "10월 26일 (월)"
-    skipped?: boolean; // 정리 실패 뒤 "그냥 저장" — 기술 없이 글만
+    skipped?: boolean; // 정리 실패 뒤 "그냥 저장"
+    keywordOnly?: boolean; // Claude 없이 글 속 기술 이름만 찾음(D-44)
+    limitReached?: boolean; // 이번 주 한도를 다 써서 이름만 찾음
   };
   onBack?: () => void;
   saveLabel?: string; // 새 기록 "저장", 저장한 기록 고치기 "고친 내용 저장"
@@ -81,7 +83,8 @@ export function LogReview({ initial, onBack, saveLabel = "저장", onSave, onDel
       setEditing(null);
       setTechniques(res.techniques.map((t) => ({ ...t, level: chosen.get(t.id) ?? t.level })));
       setTerms(res.terms);
-      setAiStatus(res.isMock ? "mock" : "ok");
+      setAiStatus(res.isMock ? "mock" : res.keywordOnly ? "none" : "ok");
+      if (res.keywordOnly) toast.message(res.limitReached ? "이번 주 정리하기를 다 써서 이름만 찾았어요" : "이름만 찾았어요");
       toast.success("고친 글로 다시 정리했어요");
     });
   }
@@ -169,14 +172,23 @@ export function LogReview({ initial, onBack, saveLabel = "저장", onSave, onDel
               연습용 예시
             </Badge>
           )}
+          {initial.keywordOnly && aiStatus === "none" && <Badge variant="outline">이름으로만 찾음</Badge>}
           <span className="ml-auto text-[13px] font-medium text-muted-foreground tabular-nums">
             {cardCount}개
           </span>
         </div>
 
+        {initial.keywordOnly && aiStatus === "none" && (
+          <p className="text-[13px] leading-relaxed font-medium text-muted-foreground">
+            {initial.limitReached
+              ? "이번 주 정리하기(AI)를 다 써서 글에 적힌 기술 이름만 찾았어요. 월요일에 다시 열려요."
+              : "AI 없이 글에 적힌 기술 이름만 찾았어요. 빠진 건 아래 ‘기술 추가’로 넣어 주세요."}
+          </p>
+        )}
+
         {techniques.length === 0 && customNames.length === 0 && (
           <p className="text-[15px] leading-relaxed text-muted-foreground">
-            {skipped
+            {skipped && !initial.keywordOnly
               ? "정리 없이 글만 저장해요. 배운 기술은 아래 ‘기술 추가’에서 찾아 넣을 수 있어요."
               : "글에서 목록에 있는 기술을 찾지 못했어요. 아래 ‘기술 추가’에서 찾아 넣어 주세요."}
           </p>
