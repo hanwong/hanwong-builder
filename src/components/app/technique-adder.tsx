@@ -27,6 +27,19 @@ export function TechniqueAdder({
   const ready = text.replace(/\s/g, "").length >= 2;
   const loading = ready && results.q !== text;
 
+  // 팝업이 열려 있는 동안 뒤 화면은 고정(T-35). 닫으면 원래대로
+  useEffect(() => {
+    if (!open) return;
+    const html = document.documentElement;
+    const prev = { html: html.style.overflow, body: document.body.style.overflow };
+    html.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    return () => {
+      html.style.overflow = prev.html;
+      document.body.style.overflow = prev.body;
+    };
+  }, [open]);
+
   useEffect(() => {
     if (!ready) return;
     let alive = true;
@@ -73,6 +86,7 @@ export function TechniqueAdder({
             flexDirection: "column",
             gap: "10px",
             padding: "14px",
+            overscrollBehavior: "contain",
           }}
         >
           <div className="flex items-center justify-between">
@@ -107,7 +121,7 @@ export function TechniqueAdder({
               찾는 중…
             </p>
           ) : (
-            <ul className="-mx-1 flex min-h-0 flex-1 flex-col overflow-y-auto">
+            <ul className="-mx-1 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
               {list.map((t) => {
                 const already = existing.includes(t.id);
                 return (
