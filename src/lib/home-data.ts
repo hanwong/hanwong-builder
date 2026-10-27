@@ -16,8 +16,8 @@ export type HomeData = {
 };
 
 export async function getHomeData(): Promise<HomeData> {
-  "use cache: private"; // 내 데이터 — 서버에 남기지 않고, 휴대폰 안에서만 30초 재사용 → 미리 불러오기(prefetch)에 들어감
-  cacheLife({ stale: 30 });
+  "use cache: private"; // 내 데이터 — 서버에 남기지 않고 휴대폰 안에서만 재사용. stale 5분 이상이어야 미리 받기(prefetch)에 포함된다(D-45)
+  cacheLife({ stale: 300 }); // 5분 — 이보다 짧으면 탭을 눌러야 그때 불러와서 로딩이 보인다
   const supabase = await createSupabaseServer();
 
   const today = seoulToday();

@@ -48,7 +48,10 @@ export async function answerCard(cardId: string, rating: Rating): Promise<Answer
     .insert({ user_id: user.id, review_card_id: cardId, rating, prev_step: prev, next_step: next });
   if (logError) return fail("review_logs", logError); // 카드는 이미 넘어갔다 — 응답 기록만 빠진다
 
-  revalidatePath("/app", "layout"); // /app 아래 화면 전부(홈 · 복습 · 내 기술 · 기록) 미리 불러온 내용까지 새로
+  // 복습 답은 홈(오늘 복습 수) · 복습 · 기술 상세(다음 복습일)에 보인다 — 기록 화면은 그대로(D-45)
+  revalidatePath("/app");
+  revalidatePath("/app/review");
+  revalidatePath("/app/skills", "layout");
   return { ok: true, dueOn };
 }
 

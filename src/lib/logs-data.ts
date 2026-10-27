@@ -27,8 +27,8 @@ export const LOGS_PAGE = 30; // 30개씩 더 보기
 
 // 기록 목록 (D-40) — 최신순(수업 날짜 → 쓴 시각) 앞에서 limit 개 + 전체 개수
 export async function getLogs(limit: number): Promise<{ rows: LogRow[]; total: number }> {
-  "use cache: private"; // 내 데이터 — 휴대폰 안에서만 30초 재사용(prefetch, D-39)
-  cacheLife({ stale: 30 });
+  "use cache: private"; // 내 데이터 — 휴대폰 안에서만 재사용. stale 5분 이상이어야 미리 받기에 포함(D-45)
+  cacheLife({ stale: 300 }); // 5분 — 이보다 짧으면 탭을 눌러야 그때 불러와서 로딩이 보인다
   const supabase = await createSupabaseServer();
   const { data, count, error } = await supabase
     .from("class_logs")
