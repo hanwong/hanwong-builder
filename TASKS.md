@@ -59,7 +59,7 @@
 
 ## 6단계 점검에서 나온 고칠 것 (CHECK.md, 2026-10-26)
 - [ ] T-27 Claude API 키 교체 — 완료 기준: 새 키 발급(본인) → `.env.local` · Vercel(Production · Preview) 교체 → 옛 키 콘솔에서 삭제 → 재배포 뒤 정리하기 동작. 이유: 점검 중 비밀값 검색 명령이 키 값을 작업 기록에 출력함(git · 사이트에는 없음)
-- [ ] T-28 Supabase 이메일 가입 끄기 — 완료 기준: Email provider 꺼짐, Google 로그인만(D-05). 관리 API 로 바꾸고 설정값으로 확인
+- [x] T-28 Supabase 이메일 가입 끄기 — 완료 기준: Email provider 꺼짐, Google 로그인만(D-05). 관리 API 로 바꾸고 설정값으로 확인 (2026-10-27 **완료** — 관리 API 로 external_email_enabled=false, Google 은 켜짐. 확인: 공개 키로 이메일 가입 시도 → 400 "Email signups are disabled", 계정 안 생김)
 - [ ] T-29 개인정보처리방침에 운영자 열람 적기 — 완료 기준: /privacy 3 에 "운영자는 데이터베이스 관리 화면에서 기록을 볼 수 있고, 목록에 없는 기술 이름 확인 등 운영에만 쓴다" 를 쉬운 말로
 - [ ] T-30 문의 연락처 — 완료 기준: 본인이 정한 이메일(또는 인스타)을 /privacy 7 · /terms 8 에 넣음(PLAN 미정 11)
 - [ ] T-31 코드 검사 오류 정리 — 완료 기준: `npx eslint src` 오류 0 (따옴표 6 · effect 3), 음성 입력 · 쓰기 화면 동작 그대로
