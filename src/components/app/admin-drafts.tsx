@@ -10,9 +10,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
-import { approveDraft, draftName, redraftDraft, rejectDraft, type DraftEdit } from "@/app/app/admin/actions";
+import {
+  approveDraft,
+  approveSuggestion,
+  draftName,
+  redraftDraft,
+  rejectDraft,
+  rejectSuggestion,
+  type DraftEdit,
+} from "@/app/app/admin/actions";
 import { searchTechniques } from "@/app/app/log/actions";
-import type { AdminData, AdminDraft, AdminItem } from "@/lib/admin/admin-data";
+import type { AdminData, AdminDraft, AdminItem, AdminSuggestion } from "@/lib/admin/admin-data";
 import type { DraftKind } from "@/lib/admin/drafter";
 
 const KIND_LABEL: Record<DraftKind, string> = {
@@ -31,32 +39,59 @@ export function AdminDrafts({ data }: { data: AdminData }) {
       <header className="flex flex-col gap-1">
         <h1 className="text-[22px] font-bold tracking-tight">목록 추가 대기</h1>
         <p className="text-[14px] text-muted-foreground">
-          기록에 직접 적힌 이름이에요. 누르면 AI 가 초안을 만들고, 확인하고 승인하면 그 이름으로 적은 기록이 기술
-          카드가 돼요.
+          적힌 이름은 누르면 AI 가 초안을 만들어요. 승인하면 그 이름으로 적은 기록이 기술 카드가 돼요. 보완 제안은
+          사용자가 고쳐 보낸 세팅 과정 · 다른 이름이에요.
         </p>
         <p className="text-[13px] text-muted-foreground">
-          {data.items.length}개 · 오늘 AI 초안 {data.leftToday}개 더 만들 수 있어요
+          오늘 AI 초안 {data.leftToday}개 더 만들 수 있어요
           {!data.live && " (Claude 키 없음 — 초안을 만들 수 없어요)"}
         </p>
       </header>
 
-      {data.items.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-[15px] text-muted-foreground">
-          대기 중인 이름이 없어요.
-        </p>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {data.items.map((item) => (
-            <ItemRow
-              key={item.key}
-              item={item}
-              open={open === item.key}
-              onToggle={() => setOpen(open === item.key ? null : item.key)}
-              positions={data.positions}
-            />
-          ))}
-        </ul>
-      )}
+      <section className="flex flex-col gap-2" aria-labelledby="names-title">
+        <h2 id="names-title" className="text-[17px] font-semibold">
+          적힌 이름 <span className="text-muted-foreground tabular-nums">{data.items.length}</span>
+        </h2>
+        {data.items.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-border px-4 py-5 text-center text-[15px] text-muted-foreground">
+            대기 중인 이름이 없어요.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {data.items.map((item) => (
+              <ItemRow
+                key={item.key}
+                item={item}
+                open={open === item.key}
+                onToggle={() => setOpen(open === item.key ? null : item.key)}
+                positions={data.positions}
+              />
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-2" aria-labelledby="suggestions-title">
+        <h2 id="suggestions-title" className="text-[17px] font-semibold">
+          보완 제안 <span className="text-muted-foreground tabular-nums">{data.suggestions.length}</span>
+        </h2>
+        {data.suggestions.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-border px-4 py-5 text-center text-[15px] text-muted-foreground">
+            대기 중인 보완 제안이 없어요.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {data.suggestions.map((sg) => (
+              <SuggestionRow
+                key={sg.id}
+                suggestion={sg}
+                open={open === sg.id}
+                onToggle={() => setOpen(open === sg.id ? null : sg.id)}
+              />
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }
@@ -363,5 +398,110 @@ function AliasPicker({
         </ul>
       )}
     </div>
+  );
+}
+
+// 보완 제안 (D-50) — 지금 · 제안 줄 비교, 운영자가 최종으로 고쳐 승인 · 버림. 누가 보냈는지는 안 보인다.
+function SuggestionRow({
+  suggestion: sg,
+  open,
+  onToggle,
+}: {
+  suggestion: AdminSuggestion;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  const router = useRouter();
+  const [busy, start] = useTransition();
+  const [steps, setSteps] = useState(sg.steps.join("\n"));
+  const [aliases, setAliases] = useState(sg.addAliases.join(", "));
+  const id = (k: string) => `${sg.id}-${k}`;
+  const rows = Array.from({ length: Math.max(sg.currentSteps.length, sg.steps.length) }, (_, i) => ({
+    now: sg.currentSteps[i] ?? "",
+    next: sg.steps[i] ?? "",
+  }));
+  const changed = rows.filter((r) => r.now !== r.next).length;
+
+  function act(fn: () => Promise<{ ok: boolean; message?: string }>) {
+    start(async () => {
+      const r = await fn();
+      if (r.ok) {
+        toast.success(r.message ?? "처리했어요.");
+        router.refresh();
+      } else toast.error(r.message ?? "처리하지 못했어요.");
+    });
+  }
+
+  return (
+    <li className="rounded-2xl border border-border bg-card">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
+      >
+        <span className="min-w-0">
+          <span className="block truncate text-[16px] font-semibold">{sg.nameKo}</span>
+          <span className="block text-[13px] text-muted-foreground">
+            {changed ? `세팅 과정 ${changed}줄` : "세팅 과정 그대로"}
+            {sg.addAliases.length > 0 && ` · 다른 이름 +${sg.addAliases.length}`}
+          </span>
+        </span>
+        <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+      </button>
+
+      {open && (
+        <div className="flex flex-col gap-3 border-t border-border p-4 pt-3">
+          {sg.reason && <p className="text-[14px]">이유: {sg.reason}</p>}
+          <ol className="flex flex-col gap-2 text-[14px] leading-relaxed">
+            {rows.map((r, i) =>
+              r.now === r.next ? (
+                <li key={i} className="text-muted-foreground">
+                  {i + 1}. {r.now} <span className="text-[12px]">(같음)</span>
+                </li>
+              ) : (
+                <li key={i} className="flex flex-col gap-0.5">
+                  {r.now && (
+                    <span className="text-muted-foreground line-through">
+                      {i + 1}. {r.now}
+                    </span>
+                  )}
+                  {r.next && (
+                    <span className="font-medium">
+                      {i + 1}. {r.next}
+                    </span>
+                  )}
+                </li>
+              ),
+            )}
+          </ol>
+          {sg.addAliases.length > 0 && (
+            <p className="text-[13px] text-muted-foreground">
+              지금 다른 이름: {sg.currentAliases.join(", ") || "없음"}
+            </p>
+          )}
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={id("steps")}>최종 세팅 과정 (한 줄에 하나, 3~5줄)</Label>
+            <Textarea id={id("steps")} value={steps} onChange={(e) => setSteps(e.target.value)} rows={5} />
+          </div>
+          <Field id={id("aliases")} label="더할 다른 이름 (쉼표로 구분, 비워도 됨)" value={aliases} onChange={setAliases} />
+
+          <div className="flex gap-2 pt-1">
+            <Button variant="outline" className="flex-1 rounded-full" disabled={busy} onClick={() => act(() => rejectSuggestion(sg.id))}>
+              버림
+            </Button>
+            <Button
+              className="flex-1 rounded-full"
+              disabled={busy}
+              onClick={() => act(() => approveSuggestion(sg.id, steps.split("\n"), aliases.split(/[,，]/)))}
+            >
+              {busy && <Loader2 className="animate-spin" data-icon="inline-start" aria-hidden />}
+              승인
+            </Button>
+          </div>
+        </div>
+      )}
+    </li>
   );
 }

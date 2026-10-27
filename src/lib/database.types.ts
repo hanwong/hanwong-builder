@@ -408,6 +408,50 @@ export type Database = {
           },
         ]
       }
+      technique_suggestions: {
+        Row: {
+          add_aliases: string[]
+          created_at: string
+          decided_at: string | null
+          id: string
+          reason: string | null
+          status: string
+          steps: string[]
+          technique_id: string
+          user_id: string
+        }
+        Insert: {
+          add_aliases?: string[]
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          reason?: string | null
+          status?: string
+          steps: string[]
+          technique_id: string
+          user_id: string
+        }
+        Update: {
+          add_aliases?: string[]
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          reason?: string | null
+          status?: string
+          steps?: string[]
+          technique_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technique_suggestions_technique_id_fkey"
+            columns: ["technique_id"]
+            isOneToOne: false
+            referencedRelation: "techniques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       techniques: {
         Row: {
           aliases: string[]
@@ -467,6 +511,10 @@ export type Database = {
         Args: { p_draft: string; p_due: string }
         Returns: Json
       }
+      approve_technique_suggestion: {
+        Args: { p_aliases: string[]; p_id: string; p_steps: string[] }
+        Returns: Json
+      }
       custom_name_counts: {
         Args: { keys: string[] }
         Returns: {
@@ -476,6 +524,7 @@ export type Database = {
         }[]
       }
       is_operator: { Args: never; Returns: boolean }
+      my_pending_suggestions: { Args: never; Returns: number }
       name_key: { Args: { t: string }; Returns: string }
       pending_custom_names: {
         Args: never

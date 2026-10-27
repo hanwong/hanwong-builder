@@ -277,3 +277,36 @@ export async function rejectDraft(id: string): Promise<AdminResult> {
   revalidatePath("/app");
   return { ok: true, message: "버렸어요. 그 이름은 직접 적은 이름으로 남아요." };
 }
+
+// 보완 제안 (D-50) — 운영자가 최종으로 고친 세팅 과정 · 더할 다른 이름으로 승인하거나 버린다
+export async function approveSuggestion(id: string, steps: string[], aliases: string[]): Promise<AdminResult> {
+  const supabase = await operator();
+  if (!supabase) return { ok: false, message: "운영자만 쓸 수 있어요." };
+  const lines = (Array.isArray(steps) ? steps : []).map((x) => clean(x, 120)).filter(Boolean);
+  if (lines.length < 3 || lines.length > 5) return { ok: false, message: "세팅 과정은 3~5줄이 필요해요." };
+  const add = [...new Set((Array.isArray(aliases) ? aliases : []).map((x) => clean(x, 40)).filter(Boolean))].slice(0, 5);
+
+  const { data, error } = await supabase.rpc("approve_technique_suggestion", { p_id: id, p_steps: lines, p_aliases: add });
+  if (error) {
+    console.error("approveSuggestion failed:", error.code ?? "", (error.message ?? "").slice(0, 120));
+    return { ok: false, message: "승인하지 못했어요 — 이미 처리됐을 수 있어요." };
+  }
+  forgetLibrary(); // 다른 이름이 바뀌면 검색 · 정리하기 목록도 바뀐다
+  revalidatePath("/app", "layout"); // 기술 상세 · 복습 뒷면 · 보낸 사람 홈 알림
+  const added = (data as { aliases_added?: number } | null)?.aliases_added ?? 0;
+  return { ok: true, message: added ? `반영했어요(다른 이름 ${added}개 추가).` : "반영했어요." };
+}
+
+export async function rejectSuggestion(id: string): Promise<AdminResult> {
+  const supabase = await operator();
+  if (!supabase) return { ok: false, message: "운영자만 쓸 수 있어요." };
+  const { data, error } = await supabase
+    .from("technique_suggestions")
+    .update({ status: "rejected", decided_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("status", "pending")
+    .select("id");
+  if (error || !data?.length) return { ok: false, message: "이미 처리됐거나 저장하지 못했어요." };
+  revalidatePath("/app", "layout"); // 보낸 사람의 "확인 대기 중" 표시가 풀린다
+  return { ok: true, message: "버렸어요." };
+}

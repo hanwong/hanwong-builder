@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { BottomAction } from "@/components/app/bottom-action";
 import { LevelPicker } from "@/components/app/level-picker";
 import { YoutubeLink } from "@/components/app/youtube-link";
+import { SuggestEdit } from "@/components/app/suggest-edit";
 import { setLevel } from "@/app/app/skills/actions";
 import { formatKoreanDate } from "@/lib/seoul-date";
 import type { Level } from "@/lib/mock/log-seed";
@@ -73,6 +74,7 @@ export function SkillDetail({ skill }: { skill: Detail }) {
             ))}
           </ol>
           <YoutubeLink nameEn={skill.nameEn} />
+          <SuggestEdit slug={skill.slug} steps={skill.steps} pending={skill.suggestionPending} />
         </CardContent>
       </Card>
 

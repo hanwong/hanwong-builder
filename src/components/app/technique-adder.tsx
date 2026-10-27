@@ -5,6 +5,7 @@ import { Loader2, Plus, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { searchTechniques } from "@/app/app/log/actions";
+import { useFloatingDialog } from "@/lib/use-floating-dialog";
 import type { MatchedTechnique } from "@/lib/mock/log-seed";
 
 // 정리 화면 "기술 추가" (D-31) — 우리 목록에서 이름 · 영어 이름 · 다른 이름으로 찾아 고르면 기술 카드로,
@@ -23,47 +24,12 @@ export function TechniqueAdder({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<{ q: string; list: MatchedTechnique[] }>({ q: "", list: [] });
-  // 지금 눈에 보이는 영역(휴대폰 키보드 위). 팝업 높이 · 위치를 여기에 맞춘다
-  const [visible, setVisible] = useState<{ top: number; height: number } | null>(null);
+  const floating = useFloatingDialog(open); // 뒤 화면 고정 · 키보드 위 보이는 영역에 맞춤(T-35)
   const inputRef = useRef<HTMLInputElement>(null);
 
   const text = query.trim();
   const ready = text.replace(/\s/g, "").length >= 2;
   const loading = ready && results.q !== text;
-
-  // 팝업이 열려 있는 동안 뒤 화면은 고정(T-35). 아이폰 사파리는 overflow 를 막아도 손가락 스크롤이 뒤로
-  // 넘어가서, 페이지를 지금 위치 그대로 position: fixed 로 붙잡아 두었다가 닫을 때 같은 위치로 되돌린다.
-  useEffect(() => {
-    if (!open) return;
-    const body = document.body;
-    const y = window.scrollY;
-    const prev = body.getAttribute("style") ?? "";
-    body.style.position = "fixed";
-    body.style.top = `-${y}px`;
-    body.style.left = "0";
-    body.style.right = "0";
-    body.style.width = "100%";
-    body.style.overflow = "hidden";
-    return () => {
-      body.setAttribute("style", prev);
-      window.scrollTo(0, y);
-    };
-  }, [open]);
-
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!open || !vv) return;
-    const update = () => setVisible({ top: vv.offsetTop, height: vv.height });
-    const raf = requestAnimationFrame(update);
-    vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update);
-    return () => {
-      cancelAnimationFrame(raf);
-      vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
-      setVisible(null);
-    };
-  }, [open]);
 
   useEffect(() => {
     if (!ready) return;
@@ -104,10 +70,7 @@ export function TechniqueAdder({
           showCloseButton={false}
           className="sm:max-w-md"
           style={{
-            // 보이는 영역 맨 위에서 조금 띄우고, 높이는 그 안으로(키보드가 올라와도 제목 · 검색 칸이 안 가림)
-            top: visible ? `${visible.top + 12}px` : "max(1rem, 5dvh)",
-            translate: "-50% 0", // 가운데 정렬은 유지하고 세로 가운데 이동만 끈다(위쪽에 띄움)
-            maxHeight: visible ? `${Math.min(600, visible.height - 24)}px` : "min(75dvh, 600px)",
+            ...floating,
             display: "flex",
             flexDirection: "column",
             gap: "10px",

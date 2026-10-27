@@ -33,8 +33,21 @@ export type AdminItem = {
   draft: AdminDraft | null;
 };
 
+// 사용자 보완 제안(D-50) — 누가 보냈는지는 담지 않는다
+export type AdminSuggestion = {
+  id: string;
+  slug: string;
+  nameKo: string;
+  currentSteps: string[];
+  currentAliases: string[];
+  steps: string[]; // 제안한 세팅 과정
+  addAliases: string[];
+  reason: string;
+};
+
 export type AdminData = {
   items: AdminItem[]; // 제한 없이 전부, 많이 적힌 순
+  suggestions: AdminSuggestion[]; // 오래된 것부터
   leftToday: number; // 오늘 더 만들 수 있는 초안 수
   live: boolean; // Claude 키가 있나
   positions: { slug: string; nameKo: string }[];
@@ -95,13 +108,18 @@ export async function getAdminData(): Promise<AdminData | null> {
   const supabase = await createSupabaseServer();
   if (!(await isOperator(supabase))) return null;
 
-  const [drafts, pending, made, lib] = await Promise.all([
+  const [drafts, pending, made, lib, suggestions] = await Promise.all([
     supabase.from("technique_drafts").select(DRAFT_SELECT).eq("status", "pending").order("created_at"),
     supabase.rpc("pending_custom_names"),
     draftedToday(supabase),
     getLibrary(supabase),
+    supabase
+      .from("technique_suggestions")
+      .select("id, steps, add_aliases, reason, techniques(slug, name_ko, steps, aliases)")
+      .eq("status", "pending")
+      .order("created_at"),
   ]);
-  if (drafts.error || pending.error) throw new Error("admin read failed");
+  if (drafts.error || pending.error || suggestions.error) throw new Error("admin read failed");
 
   const keys = drafts.data.map((d) => d.name_key);
   const { data: counts } = keys.length
@@ -126,18 +144,31 @@ export async function getAdminData(): Promise<AdminData | null> {
 
   return {
     items,
+    suggestions: suggestions.data
+      .filter((x) => x.techniques)
+      .map((x) => ({
+        id: x.id,
+        slug: x.techniques!.slug,
+        nameKo: x.techniques!.name_ko,
+        currentSteps: x.techniques!.steps,
+        currentAliases: x.techniques!.aliases ?? [],
+        steps: x.steps,
+        addAliases: x.add_aliases ?? [],
+        reason: x.reason ?? "",
+      })),
     leftToday: Math.max(0, DAILY_DRAFT_LIMIT - made),
     live: isLive(),
     positions: lib.positions,
   };
 }
 
-// 홈 알림 줄: 운영자에게만 "목록 추가 대기 N개" (초안 대기 + 초안 전 이름)
+// 홈 알림 줄: 운영자에게만 "목록 추가 대기 N개" (초안 대기 + 초안 전 이름 + 보완 제안, D-50)
 export async function waitingCount(supabase: Supa): Promise<number | null> {
   if (!(await isOperator(supabase))) return null;
-  const [drafts, pending] = await Promise.all([
+  const [drafts, pending, suggestions] = await Promise.all([
     supabase.from("technique_drafts").select("id", { count: "exact", head: true }).eq("status", "pending"),
     supabase.rpc("pending_custom_names"),
+    supabase.from("technique_suggestions").select("id", { count: "exact", head: true }).eq("status", "pending"),
   ]);
-  return (drafts.count ?? 0) + (pending.data?.length ?? 0);
+  return (drafts.count ?? 0) + (pending.data?.length ?? 0) + (suggestions.count ?? 0);
 }

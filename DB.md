@@ -12,7 +12,7 @@
 - 운영자(본인): `operators` 표에 한웅 님 계정 하나(D-47). 운영 화면 `/app/admin` 에서 목록 밖 기술 초안을 승인 · 버림. 그 밖의 기술 콘텐츠는 마이그레이션으로 넣는다.
 - 참고: Google 로그인은 Google Cloud 에서 OAuth 클라이언트를 만들어 Supabase 에 넣어야 한다(T-00b). 메일 발송 한도 문제는 없다.
 
-## 2. 표 목록 (11개)
+## 2. 표 목록 (12개)
 | 표 | 한 줄 설명 | 누구 데이터 |
 |---|---|---|
 | `positions` | 포지션 8개(스탠딩 · 클로즈드 가드 · 오픈 가드 · 하프가드 · 패스 · 사이드 · 마운트 · 백). 기술을 묶는 상자 | 콘텐츠(공용) |
@@ -26,6 +26,7 @@
 | `operators` | 운영자 계정(한웅 님 하나, D-47) | 운영 |
 | `technique_drafts` | 기록에 직접 적힌 이름 → AI 초안(새 기술 · 다른 이름 · 기술 아님) · 승인 대기/승인/버림(D-47) | 운영 |
 | `notices` | 사용자 알림 — "○○ 이(가) 기술 목록에 추가됐어요"(D-47) | 사용자 |
+| `technique_suggestions` | 사용자가 보낸 기술 내용 보완 제안(세팅 과정 · 다른 이름 · 이유) → 운영자 승인(D-50) | 사용자 · 운영 |
 
 ## 3. 표별 칸
 공통: 모든 표에 `id uuid 기본키(자동)`, `created_at timestamptz 기본값 now()`. 사용자 표에는 `user_id uuid → auth.users(id)` 필수.
@@ -143,6 +144,19 @@
 | decided_at · created_at | timestamptz | | |
 - 운영자가 이름을 누를 때 그 이름 하나만 초안을 만든다(D-49). Claude 에는 이름만 보낸다(글 원문 · 누가 적었는지 없음). 하루 20개까지(오늘 만든 초안 + `ai_calls` 의 redraft 로 센다, D-48).
 
+### `technique_suggestions` (D-50)
+| 칸 | 종류 | 필수 | 설명 |
+|---|---|---|---|
+| id | uuid | ✓ | |
+| user_id | uuid → auth.users | ✓ | 보낸 사람(알림 · 계정 삭제용). 운영 화면에는 안 보임. 계정 지우면 같이 지움 |
+| technique_id | uuid → techniques | ✓ | 어느 기술 |
+| steps | text[] | ✓ | 제안한 세팅 과정 전체 3~5줄 |
+| add_aliases | text[] | ✓ | 더할 다른 이름(최대 5) |
+| reason | text | | 이유 한 줄(최대 200자) |
+| status | text | ✓ | `pending` · `approved` · `rejected` |
+| decided_at · created_at | timestamptz | | |
+- 한 사람 · 한 기술에 대기 제안 1개(유일 인덱스), 한 사람 대기 10개까지(정책 + `my_pending_suggestions()`). 승인은 `approve_technique_suggestion(id, 최종 steps, 더할 aliases)` — 운영자 확인 후 기술에 반영(다른 이름은 더하기만) · 보낸 사람 알림.
+
 ### `notices` (D-47)
 | 칸 | 종류 | 필수 | 설명 |
 |---|---|---|---|
@@ -175,6 +189,7 @@
 | operators | ✗ | 자기 줄만 보기 | ✗ | 자기 줄만 보기 (추가는 마이그레이션으로만) |
 | technique_drafts | ✗ | ✗ | ✗ | 보기 · 추가 · 수정 (삭제 없음) |
 | notices | ✗ | 보기 · 확인(read_at 수정) (자기 것만) | ✗ | ✗ (추가는 승인 함수만) |
+| technique_suggestions | ✗ | 보기 · 보내기 (자기 것만, 대기 10개까지 · 수정 · 삭제 없음) | ✗ | 보기 · 버림(status 수정), 승인은 함수로 |
 - "자기 것만" = `user_id = auth.uid()`. 운영자 역할은 앱에 없다 — 본인도 앱에서는 자기 기록만 본다. 다른 사람 기록은 Supabase 대시보드(관리자)에서만 보이고, 그건 사용자 테스트 전에 "볼 사람 · 삭제 시점" 을 안내한다(PLAN 미정 10).
 - 한 줄 답: **이 표대로면 다른 사용자가 내 데이터를 볼 수 없다.** 공용인 건 기술 콘텐츠뿐이다.
 - **운영자 DB 함수(D-47, security definer — 함수 안에서 운영자인지 먼저 확인, 아니면 거부 42501)**: `is_operator()` 운영자인가 · `pending_custom_names()` 초안 없는 적힌 이름과 횟수 · 사람 수(글 원문 · 사람 정보 없음) · `custom_name_counts(keys)` 초안별 횟수 · `approve_technique_draft(draft, due)` 승인 → 기술 추가(또는 다른 이름 추가) · 그 이름으로 적힌 모든 기록 연결 · 숙련도(비기너) · 카드(due) · 알림. 운영자도 다른 사람의 기록 표를 직접 읽지는 못한다(점검 2026-10-28: 0건). Supabase 보안 점검이 이 4개 함수를 "로그인 사용자가 실행 가능"으로 경고하지만 의도된 것 — 비운영자 · 로그인 안 한 사람 호출은 모두 막힘 확인.

@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 // 시행일은 고정 글자 (cacheComponents: 렌더 중 new Date() 금지)
-const EFFECTIVE = "2026년 10월 28일"; // 10/27: 운영자 열람 · 벨트 색 추가(T-29) / 10/28: 직접 적은 기술 이름 AI 초안(D-47)
+const EFFECTIVE = "2026년 10월 28일"; // 10/27: 운영자 열람 · 벨트 색 추가(T-29) / 10/28: 직접 적은 기술 이름 AI 초안(D-47) · 보완 제안(D-50)
 
 const sections: { title: string; body: React.ReactNode }[] = [
   {
@@ -53,6 +53,11 @@ const sections: { title: string; body: React.ReactNode }[] = [
           다만 <strong>운영자(김한웅)는 데이터베이스 관리 화면에서 기록을 볼 수 있어요.</strong> 이 권한은
           운영에 필요할 때만 써요 — 기술 목록에 없어 직접 적은 기술 이름을 목록에 추가할 때, 오류를 고칠 때,
           삭제 요청을 처리할 때. 그 밖의 목적으로 기록을 읽거나 다른 곳에 넘기지 않아요.
+        </p>
+        <p className="mt-2">
+          기술 상세에서 보낸 <strong>내용 보완 제안</strong>(고친 세팅 과정 · 다른 이름 · 이유)은 운영자가 앱의 운영
+          화면에서 읽고 반영 여부를 정해요. 운영 화면에는 누가 보냈는지 보이지 않고, 반영되면 보낸 사람에게만
+          알림이 가요.
         </p>
       </>
     ),

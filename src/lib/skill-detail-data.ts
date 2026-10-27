@@ -15,6 +15,7 @@ export type SkillDetail = {
   level: Level | null;
   card: { dueOn: string; reviews: number } | null;
   logs: { id: string; loggedOn: string; body: string }[]; // 날짜 최신순
+  suggestionPending: boolean; // 내 보완 제안이 확인 대기 중(D-50)
 };
 
 export async function getSkill(slug: string): Promise<SkillDetail | null> {
@@ -30,10 +31,15 @@ export async function getSkill(slug: string): Promise<SkillDetail | null> {
   if (error) throw new Error(`skill: ${error.code ?? ""} ${error.message.slice(0, 80)}`);
   if (!t) return null;
 
-  const [level, card, links] = await Promise.all([
+  const [level, card, links, suggestion] = await Promise.all([
     supabase.from("technique_levels").select("level").eq("technique_id", t.id).maybeSingle(),
     supabase.from("review_cards").select("due_on, reviews_count").eq("technique_id", t.id).maybeSingle(),
     supabase.from("class_log_techniques").select("class_logs(id, logged_on, body, created_at)").eq("technique_id", t.id),
+    supabase
+      .from("technique_suggestions")
+      .select("id", { count: "exact", head: true })
+      .eq("technique_id", t.id)
+      .eq("status", "pending"),
   ]);
   const err = level.error ?? card.error ?? links.error;
   if (err) throw new Error(`skill mine: ${err.code ?? ""} ${err.message.slice(0, 80)}`);
@@ -55,5 +61,6 @@ export async function getSkill(slug: string): Promise<SkillDetail | null> {
     level: (level.data?.level as Level | undefined) ?? null,
     card: card.data ? { dueOn: card.data.due_on, reviews: card.data.reviews_count } : null,
     logs,
+    suggestionPending: (suggestion.count ?? 0) > 0,
   };
 }
