@@ -27,16 +27,22 @@ export function TechniqueAdder({
   const ready = text.replace(/\s/g, "").length >= 2;
   const loading = ready && results.q !== text;
 
-  // 팝업이 열려 있는 동안 뒤 화면은 고정(T-35). 닫으면 원래대로
+  // 팝업이 열려 있는 동안 뒤 화면은 고정(T-35). 아이폰 사파리는 overflow 를 막아도 손가락 스크롤이 뒤로
+  // 넘어가서, 페이지를 지금 위치 그대로 position: fixed 로 붙잡아 두었다가 닫을 때 같은 위치로 되돌린다.
   useEffect(() => {
     if (!open) return;
-    const html = document.documentElement;
-    const prev = { html: html.style.overflow, body: document.body.style.overflow };
-    html.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
+    const body = document.body;
+    const y = window.scrollY;
+    const prev = body.getAttribute("style") ?? "";
+    body.style.position = "fixed";
+    body.style.top = `-${y}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
     return () => {
-      html.style.overflow = prev.html;
-      document.body.style.overflow = prev.body;
+      body.setAttribute("style", prev);
+      window.scrollTo(0, y);
     };
   }, [open]);
 
