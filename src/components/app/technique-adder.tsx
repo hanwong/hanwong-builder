@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Plus, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -9,7 +9,8 @@ import type { MatchedTechnique } from "@/lib/mock/log-seed";
 
 // 정리 화면 "기술 추가" (D-31) — 우리 목록에서 이름 · 영어 이름 · 다른 이름으로 찾아 고르면 기술 카드로,
 // 없으면 이름만 직접 추가 — 운영자 확인 후 라이브러리에 넣고 카드로 바꾼다(D-32). 두 글자부터 찾는다.
-// 좁은 화면에서도 보기 쉽게 팝업 창으로 연다(T-35). 휴대폰 키보드에 가리지 않게 화면 위쪽에 띄운다.
+// 팝업으로 연다(T-35). 휴대폰(폭 640 미만)에서는 화면 전체 시트 — 뒤 화면이 보이지도 움직이지도 않고,
+// 결과를 스크롤하기 시작하면 키보드를 내려 목록이 끝까지 자연스럽게 움직이게 한다(아이폰 키보드 + 떠 있는 팝업 문제).
 export function TechniqueAdder({
   existing,
   onPick,
@@ -22,9 +23,8 @@ export function TechniqueAdder({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<{ q: string; list: MatchedTechnique[] }>({ q: "", list: [] });
-  // 지금 눈에 보이는 영역(휴대폰 키보드 위). 아이폰은 키보드가 올라오면 화면을 밀어 올려서 팝업 위쪽이 가려진다 →
-  // 팝업을 늘 이 영역 안에 맞춰 띄운다(T-35)
-  const [visible, setVisible] = useState<{ top: number; height: number } | null>(null);
+  const [phone, setPhone] = useState(false); // 폭 640 미만 → 전체 화면 시트
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const text = query.trim();
   const ready = text.replace(/\s/g, "").length >= 2;
@@ -50,16 +50,14 @@ export function TechniqueAdder({
   }, [open]);
 
   useEffect(() => {
-    const vv = window.visualViewport;
-    if (!open || !vv) return;
-    const update = () => setVisible({ top: vv.offsetTop, height: vv.height });
+    if (!open) return;
+    const mq = window.matchMedia("(max-width: 639px)");
+    const update = () => setPhone(mq.matches);
     const raf = requestAnimationFrame(update);
-    vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update);
+    mq.addEventListener("change", update);
     return () => {
       cancelAnimationFrame(raf);
-      vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
+      mq.removeEventListener("change", update);
     };
   }, [open]);
 
@@ -101,17 +99,33 @@ export function TechniqueAdder({
         <DialogContent
           showCloseButton={false}
           className="sm:max-w-md"
-          style={{
-            // 보이는 영역 맨 위에서 조금 띄우고, 높이는 보이는 영역 안으로(키보드에 안 가림)
-            top: visible ? `${visible.top + 12}px` : "max(1rem, 5dvh)",
-            translate: "-50% 0", // 가운데 정렬은 유지하고 세로 가운데 이동만 끈다(위쪽에 띄움)
-            maxHeight: visible ? `${Math.min(600, visible.height - 24)}px` : "min(75dvh, 600px)",
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px",
-            padding: "14px",
-            overscrollBehavior: "contain",
-          }}
+          style={
+            phone
+              ? {
+                  // 휴대폰: 화면 전체(뒤 화면이 보이지 않게), 위쪽 노치 자리만큼 띄움
+                  inset: 0,
+                  translate: "none",
+                  width: "100%",
+                  maxWidth: "none",
+                  height: "100%",
+                  borderRadius: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                  padding: "max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom))",
+                  overscrollBehavior: "contain",
+                }
+              : {
+                  top: "max(1rem, 5dvh)",
+                  translate: "-50% 0", // 가운데 정렬은 유지하고 세로 가운데 이동만 끈다(위쪽에 띄움)
+                  maxHeight: "min(75dvh, 600px)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                  padding: "14px",
+                  overscrollBehavior: "contain",
+                }
+          }
         >
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[17px] font-semibold">기술 추가</DialogTitle>
@@ -127,6 +141,7 @@ export function TechniqueAdder({
                 aria-hidden
               />
               <input
+                ref={inputRef}
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value.slice(0, 40))}
@@ -145,7 +160,13 @@ export function TechniqueAdder({
               찾는 중…
             </p>
           ) : (
-            <ul className="-mx-1 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
+            <ul
+              className="-mx-1 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain"
+              // 결과를 밀기 시작하면 키보드를 내린다 → 목록이 화면 끝까지, 스크롤이 자연스럽게
+              onTouchMove={() => {
+                if (document.activeElement === inputRef.current) inputRef.current?.blur();
+              }}
+            >
               {list.map((t) => {
                 const already = existing.includes(t.id);
                 return (
