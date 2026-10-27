@@ -52,9 +52,9 @@
 | 연결 | 설정 파일 | 실제 연결 확인 |
 |---|---|---|
 | GitHub | origin = hanwong/hanwong-builder | ✓ gh 로그인 확인됨 |
-| Vercel | .vercel/project.json · vercel.json | ✓ vercel whoami 확인됨, 자동 배포 1주차에 확인 |
-| Supabase | supabase/config.toml · project-ref · .env.local(URL · 공개 키 · DB 비밀번호 있음) | ✓ CLI 로그인 확인됨, 프로젝트 ACTIVE_HEALTHY |
-| Claude API | ANTHROPIC_API_KEY **없음** | ✗ — T-00 에서 발급 안내, 그 전엔 mock |
+| Vercel | .vercel/project.json · vercel.json · 도메인 rereroll.xyz(D-36, 예전 hanwong-builder.vercel.app 도 열림) | ✓ 자동 배포, 환경변수 ANTHROPIC_API_KEY · NEXT_PUBLIC_SUPABASE_* (Production · Preview) |
+| Supabase | supabase/config.toml · project-ref · .env.local(URL · 공개 키 · DB 비밀번호 있음) | ✓ CLI 로그인, 표 7개 RLS, Google 로그인만(이메일 가입 끔 T-28), Site URL rereroll.xyz |
+| Claude API | ANTHROPIC_API_KEY — .env.local · Vercel 에 있음(값은 어디에도 안 적음) | ✓ T-00(10/26) 등록, 정리하기는 실제 Claude Sonnet 5.5. 키 교체는 T-27 미정 |
 
 ## 마일스톤
 - **M1 (2주차 목표)** — 위 "넣을 것" 1~6. 가짜 기록으로 개발 · 확인. 동료의 실제 기록은 볼 사람(본인만) · Claude 로 보내는 내용(설명 글만) · 삭제 시점을 정한 뒤 받는다.

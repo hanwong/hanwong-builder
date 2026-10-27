@@ -25,7 +25,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
       <ul className="list-disc space-y-1 pl-5">
         <li>
           <strong>Google 로그인 정보</strong> — 이메일 주소, 이름, 프로필 사진 주소, Google 계정 ID.
-          로그인과 "이 기록이 누구 것인지"를 구분하는 데만 써요. 비밀번호는 받지도 저장하지도 않아요.
+          로그인과 ‘이 기록이 누구 것인지’를 구분하는 데만 써요. 비밀번호는 받지도 저장하지도 않아요.
         </li>
         <li>
           <strong>직접 적는 기록</strong> — 오늘 배운 것 글, 거기서 고른 기술과 숙련도, 복습 카드 결과.
@@ -61,9 +61,9 @@ const sections: { title: string; body: React.ReactNode }[] = [
     title: "4. AI 에 보내는 것",
     body: (
       <p>
-        "정리하기"를 누르면 <strong>그 글 한 편만</strong> AI(Anthropic Claude)에 보내 기술 이름을
+        ‘정리하기’를 누르면 <strong>그 글 한 편만</strong> AI(Anthropic Claude)에 보내 기술 이름을
         찾아요. 이름 · 이메일 · 다른 날의 기록은 보내지 않아요. AI 연결이 아직 안 된 동안은 아무것도
-        보내지 않고 화면에 "연습용 예시"라고 표시돼요.
+        보내지 않고 화면에 ‘연습용 예시’라고 표시돼요.
       </p>
     ),
   },

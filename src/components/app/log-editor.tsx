@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { Mic, MicOff, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BottomAction } from "@/components/app/bottom-action";
@@ -13,6 +13,8 @@ import { seoulToday } from "@/lib/seoul-date";
 // 오늘 배운 것 기록 — 상태 A 쓰기 (FLOW.md 4 · D-03 · D-12).
 // 쓰는 동안은 아무것도 추천하지 않는다. 마이크는 브라우저 내장 음성 인식(녹음 저장 없음).
 
+const noSubscribe = () => () => {};
+
 type Props = {
   initialBody?: string;
   initialDate?: string;
@@ -24,8 +26,10 @@ type Props = {
 
 export function LogEditor({ initialBody = "", initialDate, locked = false, below, footer, onSubmit }: Props) {
   const [body, setBody] = useState(initialBody);
-  const [date, setDate] = useState(initialDate ?? "");
-  const [today, setToday] = useState("");
+  const [date, setDate] = useState(initialDate ?? ""); // 비어 있으면 오늘
+  // 서울 기준 오늘 — 서버(미리 만들기)에서는 빈 값, 브라우저에서 날짜로 바뀐다(cacheComponents: 렌더 중 new Date() 금지)
+  const today = useSyncExternalStore(noSubscribe, seoulToday, () => "");
+  const dateValue = date || today;
   const { supported, listening, interim, problem, start, stop, debugLines } = useSpeechInput({
     onText: (text) =>
       setBody((prev) => {
@@ -34,12 +38,6 @@ export function LogEditor({ initialBody = "", initialDate, locked = false, below
       }),
   });
 
-  useEffect(() => {
-    const t = seoulToday();
-    setToday(t);
-    setDate((d) => d || t);
-  }, []);
-
   const trimmed = body.trim();
   const canSubmit = trimmed.length > 0;
   const shown = interim ? `${body}${body && !/\s$/.test(body) ? " " : ""}${interim}` : body;
@@ -47,7 +45,7 @@ export function LogEditor({ initialBody = "", initialDate, locked = false, below
   function submit() {
     if (!canSubmit || locked) return;
     stop();
-    onSubmit({ body: trimmed, loggedOn: date || today });
+    onSubmit({ body: trimmed, loggedOn: dateValue });
   }
 
   return (
@@ -58,7 +56,7 @@ export function LogEditor({ initialBody = "", initialDate, locked = false, below
           <span className="sr-only">수업 날짜</span>
           <input
             type="date"
-            value={date}
+            value={dateValue}
             max={today || undefined}
             disabled={locked}
             onChange={(e) => setDate(e.target.value)}

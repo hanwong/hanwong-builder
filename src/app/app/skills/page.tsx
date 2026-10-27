@@ -28,6 +28,8 @@ async function Loader() {
     return (
       <p role="alert" className="text-[15px] font-medium text-destructive">
         불러오지 못했어요 —{" "}
+        {/* 새로고침은 화면 전체를 다시 읽어야 해서 일부러 <a> */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a href="/app/skills" className="underline underline-offset-4">
           새로고침
         </a>

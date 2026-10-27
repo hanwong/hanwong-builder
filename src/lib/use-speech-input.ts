@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 // 브라우저 내장 음성 인식(Web Speech API) 훅 — D-12. 녹음은 저장하지 않고 글만 받는다.
 // 브라우저 음성 인식은 불안정하다: 말이 끝나거나 조용하면 스스로 끝나고, 끝난 직후 너무 빨리
@@ -63,6 +63,24 @@ function isIOS(ua: string): boolean {
   );
 }
 
+// 브라우저 환경(한 번만 계산) — 서버(미리 만들기)에서는 "지원 안 함"으로 두었다가 브라우저에서 진짜 값으로 바뀐다
+type Env = { supported: boolean; inApp: boolean; ios: boolean; debug: boolean };
+const SERVER_ENV: Env = { supported: false, inApp: false, ios: false, debug: false };
+let envCache: Env | null = null;
+function readEnv(): Env {
+  if (envCache) return envCache;
+  const ua = navigator.userAgent;
+  const inApp = isInAppBrowser(ua);
+  envCache = {
+    supported: !inApp && getCtor() !== null,
+    inApp,
+    ios: isIOS(ua),
+    debug: new URLSearchParams(window.location.search).get("debug") === "1",
+  };
+  return envCache;
+}
+const noSubscribe = () => () => {};
+
 const RESTART_MS = 600; // 끝난 직후 바로 켜면 모바일에서 실패한다
 const QUICK_MS = 1000; // 이보다 빨리 꺼지고 아무 신호도 없으면 "바로 꺼짐"
 const MAX_QUICK_ENDS = 3;
@@ -70,8 +88,11 @@ const MAX_NO_SPEECH = 3;
 const MAX_ABORTED = 6;
 
 export function useSpeechInput({ onText }: { onText: (finalText: string) => void }) {
-  const [supported, setSupported] = useState(false);
-  const [problem, setProblem] = useState<string | null>(null); // 화면에 계속 남기는 안내
+  const env = useSyncExternalStore(noSubscribe, readEnv, () => SERVER_ENV);
+  const [gaveUp, setGaveUp] = useState(false); // 첫 시도부터 못 쓰는 오류 → 마이크 버튼을 접는다
+  const supported = env.supported && !gaveUp;
+  const [problemState, setProblem] = useState<string | null>(null); // 화면에 계속 남기는 안내
+  const problem = problemState ?? (env.inApp ? IN_APP_MESSAGE : null);
   const [listening, setListening] = useState(false);
   const [interim, setInterim] = useState("");
   const [debugLines, setDebugLines] = useState<string[]>([]);
@@ -90,8 +111,11 @@ export function useSpeechInput({ onText }: { onText: (finalText: string) => void
   const t0Ref = useRef(0);
   const onTextRef = useRef(onText);
   const iosRef = useRef(false);
+  const beginRef = useRef<() => void>(() => {}); // begin 이 자기 자신을 다시 켤 때 쓴다(아래에서 채움)
   useEffect(() => {
     onTextRef.current = onText;
+    debugRef.current = env.debug;
+    iosRef.current = env.ios;
   });
 
   const note = useCallback((text: string) => {
@@ -101,15 +125,7 @@ export function useSpeechInput({ onText }: { onText: (finalText: string) => void
   }, []);
 
   useEffect(() => {
-    debugRef.current = new URLSearchParams(window.location.search).get("debug") === "1";
-    const ua = navigator.userAgent;
-    iosRef.current = isIOS(ua);
-    if (isInAppBrowser(ua)) {
-      setSupported(false);
-      setProblem(IN_APP_MESSAGE);
-    } else {
-      setSupported(getCtor() !== null);
-    }
+    // 화면을 떠날 때 인식기 정리
     return () => {
       wantRef.current = false;
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -180,7 +196,7 @@ export function useSpeechInput({ onText }: { onText: (finalText: string) => void
       } else if (fatal) {
         const first = !workedRef.current;
         finish(`${fatal} (오류: ${e.error})`);
-        if (first && GIVE_UP_BUTTON.has(e.error)) setSupported(false);
+        if (first && GIVE_UP_BUTTON.has(e.error)) setGaveUp(true);
       } else if (e.error === "no-speech") {
         noSpeechRef.current += 1;
       } else if (e.error === "aborted") {
@@ -218,7 +234,7 @@ export function useSpeechInput({ onText }: { onText: (finalText: string) => void
       }
       // 사용자가 아직 끄지 않았으니 간격을 두고 다시 켠다
       note(`${RESTART_MS}ms 뒤 다시 켬`);
-      timerRef.current = setTimeout(begin, RESTART_MS);
+      timerRef.current = setTimeout(() => beginRef.current(), RESTART_MS);
     };
 
     recRef.current = rec;
@@ -228,9 +244,12 @@ export function useSpeechInput({ onText }: { onText: (finalText: string) => void
     } catch {
       recRef.current = null;
       note("start() 실패 — 다시 시도");
-      timerRef.current = setTimeout(begin, RESTART_MS);
+      timerRef.current = setTimeout(() => beginRef.current(), RESTART_MS);
     }
   }, [finish, note]);
+  useEffect(() => {
+    beginRef.current = begin;
+  }, [begin]);
 
   const start = useCallback(() => {
     if (!getCtor()) return;
