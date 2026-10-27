@@ -141,7 +141,7 @@
 | status | text | ✓ | `pending` · `approved` · `rejected` |
 | technique_id | uuid → techniques | | 승인 뒤 연결된 기술 |
 | decided_at · created_at | timestamptz | | |
-- Claude 에는 이름만 보낸다(글 원문 · 누가 적었는지 없음). 하루 20개까지(오늘 만든 초안 수로 센다).
+- 운영자가 이름을 누를 때 그 이름 하나만 초안을 만든다(D-49). Claude 에는 이름만 보낸다(글 원문 · 누가 적었는지 없음). 하루 20개까지(오늘 만든 초안 + `ai_calls` 의 redraft 로 센다, D-48).
 
 ### `notices` (D-47)
 | 칸 | 종류 | 필수 | 설명 |

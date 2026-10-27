@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, RefreshCw, Search } from "lucide-react";
+import { ChevronDown, Loader2, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,9 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
-import { approveDraft, generateDrafts, redraftDraft, rejectDraft, type DraftEdit } from "@/app/app/admin/actions";
+import { approveDraft, draftName, redraftDraft, rejectDraft, type DraftEdit } from "@/app/app/admin/actions";
 import { searchTechniques } from "@/app/app/log/actions";
-import type { AdminData, AdminDraft } from "@/lib/admin/admin-data";
+import type { AdminData, AdminDraft, AdminItem } from "@/lib/admin/admin-data";
 import type { DraftKind } from "@/lib/admin/drafter";
 
 const KIND_LABEL: Record<DraftKind, string> = {
@@ -21,61 +21,113 @@ const KIND_LABEL: Record<DraftKind, string> = {
   unclear: "기술 아님 같음",
 };
 
-// 운영 화면 (D-47, FLOW /app/admin). 열면 초안 없는 새 이름을 AI 가 바로 초안으로 만들고(하루 20개),
-// 운영자는 카드마다 고쳐서 승인 · 버림.
+// 운영 화면 (D-47 · D-49, FLOW /app/admin). 적힌 이름을 전부 목록으로 보여 주고,
+// 이름을 누르면 그때 그 이름 하나만 AI 가 초안을 만든다(하루 20개). 만든 초안은 저장돼 다시 열어도 비용 0.
 export function AdminDrafts({ data }: { data: AdminData }) {
-  const router = useRouter();
-  const [generating, startGenerate] = useTransition();
-  const [problem, setProblem] = useState<string | null>(null);
-  const started = useRef(false);
-  const auto = data.live && data.waiting > 0 && data.leftToday > 0;
-
-  useEffect(() => {
-    if (!auto || started.current) return;
-    started.current = true;
-    startGenerate(async () => {
-      const r = await generateDrafts();
-      if (!r.ok) setProblem(r.message);
-      router.refresh();
-    });
-  }, [auto, router]);
+  const [open, setOpen] = useState<string | null>(null);
 
   return (
     <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-1">
         <h1 className="text-[22px] font-bold tracking-tight">목록 추가 대기</h1>
         <p className="text-[14px] text-muted-foreground">
-          기록에 직접 적힌 이름 → AI 초안 → 확인하고 승인하면 그 이름으로 적은 기록이 기술 카드가 돼요.
+          기록에 직접 적힌 이름이에요. 누르면 AI 가 초안을 만들고, 확인하고 승인하면 그 이름으로 적은 기록이 기술
+          카드가 돼요.
+        </p>
+        <p className="text-[13px] text-muted-foreground">
+          {data.items.length}개 · 오늘 AI 초안 {data.leftToday}개 더 만들 수 있어요
+          {!data.live && " (Claude 키 없음 — 초안을 만들 수 없어요)"}
         </p>
       </header>
 
-      {generating ? (
-        <p className="flex items-center gap-1.5 text-[14px] font-medium text-muted-foreground" role="status">
-          <Loader2 className="size-4 animate-spin" aria-hidden />새 이름 {Math.min(data.waiting, data.leftToday)}개 초안
-          만드는 중…
-        </p>
-      ) : problem ? (
-        <p role="alert" className="text-[14px] font-medium text-destructive">
-          {problem}
-        </p>
-      ) : data.waiting > 0 && !data.live ? (
-        <p className="text-[14px] text-muted-foreground">초안 전 이름 {data.waiting}개 — Claude 키가 없어 초안을 못 만들어요.</p>
-      ) : data.waiting > 0 && data.leftToday === 0 ? (
-        <p className="text-[14px] text-muted-foreground">
-          초안 전 이름 {data.waiting}개 — 오늘 만들 수 있는 초안을 다 써서 내일 열면 만들어요.
-        </p>
-      ) : null}
-
-      {data.drafts.length === 0 && !generating && (
+      {data.items.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-[15px] text-muted-foreground">
           대기 중인 이름이 없어요.
         </p>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {data.items.map((item) => (
+            <ItemRow
+              key={item.key}
+              item={item}
+              open={open === item.key}
+              onToggle={() => setOpen(open === item.key ? null : item.key)}
+              positions={data.positions}
+            />
+          ))}
+        </ul>
       )}
-
-      {data.drafts.map((d) => (
-        <DraftCard key={d.id} draft={d} positions={data.positions} />
-      ))}
     </div>
+  );
+}
+
+function ItemRow({
+  item,
+  open,
+  onToggle,
+  positions,
+}: {
+  item: AdminItem;
+  open: boolean;
+  onToggle: () => void;
+  positions: AdminData["positions"];
+}) {
+  const [draft, setDraft] = useState<AdminDraft | null>(item.draft);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [drafting, startDraft] = useTransition();
+  const asked = useRef(false);
+
+  // 처음 펼칠 때 초안이 없으면 그 이름만 만든다
+  useEffect(() => {
+    if (!open || draft || asked.current) return;
+    asked.current = true;
+    startDraft(async () => {
+      const r = await draftName(item.key);
+      if (r.ok) setDraft(r.draft);
+      else {
+        setProblem(r.message);
+        asked.current = false; // 다시 펼치면 다시 시도
+      }
+    });
+  }, [open, draft, item.key]);
+
+  return (
+    <li className="rounded-2xl border border-border bg-card">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
+      >
+        <span className="min-w-0">
+          <span className="block truncate text-[16px] font-semibold">‘{item.name}’</span>
+          <span className="block text-[13px] text-muted-foreground">
+            {item.times}번 · {item.people}명
+          </span>
+        </span>
+        <span className="flex shrink-0 items-center gap-1.5">
+          {draft ? <Badge variant="secondary">{KIND_LABEL[draft.kind]}</Badge> : <Badge variant="outline">초안 전</Badge>}
+          <ChevronDown className={`size-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+        </span>
+      </button>
+
+      {open && (
+        <div className="border-t border-border p-4 pt-3">
+          {drafting ? (
+            <p className="flex items-center gap-1.5 text-[14px] font-medium text-muted-foreground" role="status">
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+              AI 초안 만드는 중…
+            </p>
+          ) : draft ? (
+            <DraftCard draft={draft} positions={positions} />
+          ) : problem ? (
+            <p role="alert" className="text-[14px] font-medium text-destructive">
+              {problem}
+            </p>
+          ) : null}
+        </div>
+      )}
+    </li>
   );
 }
 
@@ -142,15 +194,7 @@ function DraftCard({ draft, positions }: { draft: AdminDraft; positions: AdminDa
   const approve = () => act(() => approveDraft(draft.id, edit()));
 
   return (
-    <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4" aria-labelledby={id("title")}>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
-        <h2 id={id("title")} className="text-[17px] font-semibold">
-          ‘{draft.name}’
-        </h2>
-        <span className="text-[13px] text-muted-foreground">
-          {draft.times}번 · {draft.people}명
-        </span>
-      </div>
+    <section className="flex flex-col gap-3" aria-label={`‘${draft.name}’ 초안`}>
       {note && <p className="text-[13px] text-muted-foreground">AI: {note}</p>}
 
       <div className="flex flex-col gap-1.5">

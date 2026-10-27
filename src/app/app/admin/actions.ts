@@ -6,9 +6,9 @@ import { isLive } from "@/lib/matching";
 import { forgetLibrary, getLibrary } from "@/lib/matching/library";
 import { DAILY_DRAFT_LIMIT, draftNames, nameKey, type Draft, type DraftKind } from "@/lib/admin/drafter";
 import { addDays, seoulToday } from "@/lib/seoul-date";
-import { draftedToday, type AdminDraft } from "@/lib/admin/admin-data";
+import { DRAFT_SELECT, draftedToday, toAdminDraft, type AdminDraft } from "@/lib/admin/admin-data";
 
-// 운영 화면 (D-47, T-39). 모든 동작은 운영자인지 DB 로 먼저 확인한다 — 표 · 함수도 운영자만 통과(RLS).
+// 운영 화면 (D-47 · D-49, T-39). 모든 동작은 운영자인지 DB 로 먼저 확인한다 — 표 · 함수도 운영자만 통과(RLS).
 
 type Supa = Awaited<ReturnType<typeof createSupabaseServer>>;
 export type AdminResult = { ok: true; message?: string } | { ok: false; message: string };
@@ -19,62 +19,76 @@ async function operator(): Promise<Supa | null> {
   return !error && data === true ? supabase : null;
 }
 
-// 운영 화면을 열면 자동으로 — 초안이 없는 새 이름을 모아(많이 적힌 순) 한 번에 초안을 만든다
-export async function generateDrafts(): Promise<AdminResult & { made?: number }> {
+// 목록에서 이름을 누르면 그 이름 하나만 초안을 만든다(D-49). 이미 있으면 그 초안을 돌려준다(비용 0).
+export type DraftNameResult = { ok: true; draft: AdminDraft } | { ok: false; message: string };
+
+export async function draftName(key: string): Promise<DraftNameResult> {
   const supabase = await operator();
   if (!supabase) return { ok: false, message: "운영자만 쓸 수 있어요." };
-  if (!isLive()) return { ok: false, message: "Claude 키가 없어 초안을 만들 수 없어요(연습용 예시)." };
+  if (typeof key !== "string" || !key || key.length > 100) return { ok: false, message: "잘못된 요청이에요." };
 
-  const left = DAILY_DRAFT_LIMIT - (await draftedToday(supabase));
-  if (left <= 0) return { ok: true, made: 0, message: `오늘 초안 ${DAILY_DRAFT_LIMIT}개를 다 만들었어요.` };
+  const existing = async () => {
+    const { data } = await supabase
+      .from("technique_drafts")
+      .select(DRAFT_SELECT)
+      .eq("name_key", key)
+      .eq("status", "pending")
+      .maybeSingle();
+    return data;
+  };
 
+  // 적힌 이름인지 · 몇 번 · 몇 명인지는 DB 에서 다시 확인한다(화면에서 온 값을 믿지 않음)
   const { data: pending, error } = await supabase.rpc("pending_custom_names");
   if (error) return { ok: false, message: "적힌 이름을 읽지 못했어요." };
-  const names = (pending ?? []).slice(0, left).map((p) => p.custom_name);
-  if (!names.length) return { ok: true, made: 0 };
+  const item = (pending ?? []).find((p) => p.name_key === key);
+  if (!item) {
+    const row = await existing();
+    if (row) return { ok: true, draft: toAdminDraft(row) };
+    return { ok: false, message: "이미 처리됐거나 없는 이름이에요." };
+  }
+
+  if (!isLive()) return { ok: false, message: "Claude 키가 없어 초안을 만들 수 없어요(연습용 예시)." };
+  if ((await draftedToday(supabase)) >= DAILY_DRAFT_LIMIT)
+    return { ok: false, message: `오늘 초안 ${DAILY_DRAFT_LIMIT}개를 다 만들었어요 — 내일 다시 눌러 주세요.` };
 
   const lib = await getLibrary(supabase);
-  let drafts;
+  let d: Draft;
   try {
-    drafts = await draftNames(names, lib);
+    [d] = await draftNames([item.custom_name], lib);
   } catch (e) {
-    console.error("generateDrafts failed:", e instanceof Error ? e.name + " " + e.message.slice(0, 120) : "unknown");
-    return { ok: false, message: "초안을 만들지 못했어요 — 잠시 뒤 다시 열어 주세요." };
+    console.error("draftName failed:", e instanceof Error ? e.name + " " + e.message.slice(0, 120) : "unknown");
+    return { ok: false, message: "초안을 만들지 못했어요 — 잠시 뒤 다시 눌러 주세요." };
   }
 
   const [pos, tech] = await Promise.all([
-    supabase.from("positions").select("id, slug"),
-    supabase
-      .from("techniques")
-      .select("id, slug")
-      .in("slug", drafts.map((d) => d.aliasOf).filter((s): s is string => Boolean(s))),
+    d.position ? supabase.from("positions").select("id").eq("slug", d.position).maybeSingle() : null,
+    d.aliasOf ? supabase.from("techniques").select("id").eq("slug", d.aliasOf).maybeSingle() : null,
   ]);
-  const posId = new Map((pos.data ?? []).map((p) => [p.slug, p.id]));
-  const techId = new Map((tech.data ?? []).map((t) => [t.slug, t.id]));
-
-  const rows = drafts.map((d) => ({
-    name_key: nameKey(d.name),
-    custom_name: d.name.slice(0, 100),
-    kind: d.kind,
-    alias_of: d.aliasOf ? (techId.get(d.aliasOf) ?? null) : null,
-    position_id: d.position ? (posId.get(d.position) ?? null) : null,
-    slug: d.slug,
-    name_ko: d.nameKo || null,
-    name_en: d.nameEn || null,
-    aliases: d.aliases,
-    steps: d.steps,
-    note: d.note || null,
-  }));
-  // 두 화면에서 동시에 열어도 같은 이름은 한 번만
-  const { error: insertError } = await supabase
+  const { data: row, error: insertError } = await supabase
     .from("technique_drafts")
-    .upsert(rows, { onConflict: "name_key", ignoreDuplicates: true });
+    .insert({
+      name_key: nameKey(item.custom_name),
+      custom_name: item.custom_name.slice(0, 100),
+      kind: d.kind,
+      alias_of: tech?.data?.id ?? null,
+      position_id: pos?.data?.id ?? null,
+      slug: d.slug,
+      name_ko: d.nameKo || null,
+      name_en: d.nameEn || null,
+      aliases: d.aliases,
+      steps: d.steps,
+      note: d.note || null,
+    })
+    .select(DRAFT_SELECT)
+    .single();
   if (insertError) {
+    // 두 화면에서 같은 이름을 동시에 눌렀으면 먼저 만든 초안을 쓴다
+    const other = insertError.code === "23505" ? await existing() : null;
+    if (other) return { ok: true, draft: toAdminDraft(other, Number(item.times), Number(item.people)) };
     console.error("draft insert failed:", insertError.code ?? "", (insertError.message ?? "").slice(0, 120));
     return { ok: false, message: "초안을 저장하지 못했어요." };
   }
-  revalidatePath("/app/admin");
-  return { ok: true, made: rows.length };
+  return { ok: true, draft: toAdminDraft(row, Number(item.times), Number(item.people)) };
 }
 
 // 다시 추천 (D-48) — 카드 하나를 이전 초안 + 운영자 메모와 함께 다시 만든다. 하루 한도 1개로 센다.
