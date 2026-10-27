@@ -62,6 +62,7 @@
 - [x] T-28 Supabase 이메일 가입 끄기 — 완료 기준: Email provider 꺼짐, Google 로그인만(D-05). 관리 API 로 바꾸고 설정값으로 확인 (2026-10-27 **완료** — 관리 API 로 external_email_enabled=false, Google 은 켜짐. 확인: 공개 키로 이메일 가입 시도 → 400 "Email signups are disabled", 계정 안 생김)
 - [x] T-29 개인정보처리방침에 운영자 열람 적기 — 완료 기준: /privacy 3 에 "운영자는 데이터베이스 관리 화면에서 기록을 볼 수 있고, 목록에 없는 기술 이름 확인 등 운영에만 쓴다" 를 쉬운 말로 (2026-10-27 **완료** — /privacy 3 에 운영자 DB 열람과 쓰는 경우(목록 추가 · 오류 · 삭제 요청), 2 에 벨트 색 설정, 맨 위 요약도 고침, 시행일 10월 27일)
 - [ ] T-30 문의 연락처 — 완료 기준: 본인이 정한 이메일(또는 인스타)을 /privacy 7 · /terms 8 에 넣음(PLAN 미정 11)
+- [ ] T-34 로그아웃 뒤 '뒤로 가기'로 이전 화면이 보임(본인 신고 10/27) — 완료 기준: /app 화면 `Cache-Control: private, no-store`, 로그아웃 응답 `Clear-Site-Data: "cache"`, 메모리에서 되살린 화면(pageshow persisted)은 다시 불러옴 → 로그아웃 뒤 뒤로 가기 하면 로그인 화면. 휴대폰(사파리 · 크롬)에서 확인
 - [ ] T-31 코드 검사 오류 정리 — 완료 기준: `npx eslint src` 오류 0 (따옴표 6 · effect 3), 음성 입력 · 쓰기 화면 동작 그대로
 - [ ] T-32 PLAN "연결된 도구" 표 갱신 — 완료 기준: Claude API 키 있음(T-00) · 도메인 rereroll.xyz(D-36) 반영
 
