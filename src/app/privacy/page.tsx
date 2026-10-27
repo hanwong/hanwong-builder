@@ -91,8 +91,8 @@ const sections: { title: string; body: React.ReactNode }[] = [
     title: "7. 문의",
     body: (
       <p>
-        정보 열람 · 수정 · 삭제 요청이나 궁금한 점은 운영자에게 알려 주세요. 문의 연락처는 준비 중이며,
-        정해지는 대로 이 자리에 적을게요.
+        정보 열람 · 수정 · 삭제 요청이나 궁금한 점은 <a href="mailto:rereroll.xyz@gmail.com" className="font-medium underline underline-offset-4">rereroll.xyz@gmail.com</a> 로 보내 주세요. 받은 날부터
+        7일 안에 답하고, 삭제 요청은 그 안에 처리해요.
       </p>
     ),
   },

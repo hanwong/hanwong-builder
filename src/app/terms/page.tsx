@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "Re:Re:롤을 쓸 때의 약속.",
 };
 
-const EFFECTIVE = "2026년 10월 26일";
+const EFFECTIVE = "2026년 10월 27일"; // 10/27: 문의 연락처 추가(T-30)
 
 const sections: { title: string; body: React.ReactNode }[] = [
   {
@@ -24,7 +24,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
       <ul className="list-disc space-y-1 pl-5">
         <li>Google 계정으로 로그인해요. 계정은 본인만 쓰고, 다른 사람에게 빌려주지 않아요.</li>
         <li>만 14세 미만은 보호자 동의 없이 쓸 수 없어요.</li>
-        <li>탈퇴는 운영자에게 요청하면 처리해요(앱 안 탈퇴 버튼은 준비 중).</li>
+        <li>탈퇴는 <a href="mailto:rereroll.xyz@gmail.com" className="font-medium underline underline-offset-4">rereroll.xyz@gmail.com</a> 로 요청하면 7일 안에 처리해요(앱 안 탈퇴 버튼은 준비 중).</li>
       </ul>
     ),
   },
@@ -85,7 +85,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
     body: (
       <p>
         약관이 바뀌면 시행일을 고치고 로그인 화면에서 알려요. 이 약관은 대한민국 법을 따라요. 문의
-        연락처는 준비 중이며, 정해지는 대로 적을게요.
+        문의는 <a href="mailto:rereroll.xyz@gmail.com" className="font-medium underline underline-offset-4">rereroll.xyz@gmail.com</a> 로 보내 주세요.
       </p>
     ),
   },
