@@ -22,6 +22,9 @@ export function TechniqueAdder({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<{ q: string; list: MatchedTechnique[] }>({ q: "", list: [] });
+  // 지금 눈에 보이는 영역(휴대폰 키보드 위). 아이폰은 키보드가 올라오면 화면을 밀어 올려서 팝업 위쪽이 가려진다 →
+  // 팝업을 늘 이 영역 안에 맞춰 띄운다(T-35)
+  const [visible, setVisible] = useState<{ top: number; height: number } | null>(null);
 
   const text = query.trim();
   const ready = text.replace(/\s/g, "").length >= 2;
@@ -43,6 +46,20 @@ export function TechniqueAdder({
     return () => {
       body.setAttribute("style", prev);
       window.scrollTo(0, y);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!open || !vv) return;
+    const update = () => setVisible({ top: vv.offsetTop, height: vv.height });
+    const raf = requestAnimationFrame(update);
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      cancelAnimationFrame(raf);
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
     };
   }, [open]);
 
@@ -85,9 +102,10 @@ export function TechniqueAdder({
           showCloseButton={false}
           className="sm:max-w-md"
           style={{
-            top: "max(1rem, 5dvh)",
+            // 보이는 영역 맨 위에서 조금 띄우고, 높이는 보이는 영역 안으로(키보드에 안 가림)
+            top: visible ? `${visible.top + 12}px` : "max(1rem, 5dvh)",
             translate: "-50% 0", // 가운데 정렬은 유지하고 세로 가운데 이동만 끈다(위쪽에 띄움)
-            maxHeight: "min(75dvh, 600px)",
+            maxHeight: visible ? `${Math.min(600, visible.height - 24)}px` : "min(75dvh, 600px)",
             display: "flex",
             flexDirection: "column",
             gap: "10px",
