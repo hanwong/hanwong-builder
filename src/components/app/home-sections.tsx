@@ -3,6 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getHomeData, type HomeData } from "@/lib/home-data";
 import { LogList } from "@/components/app/log-list";
 import { TrainingBelt } from "@/components/app/training-belt";
+import { JiujitsuMap } from "@/components/app/jiujitsu-map";
 import { cookies } from "next/headers";
 
 // 홈 ② 수련 벨트 · ③ 최근 기록 (FLOW 3 · DESIGN 6, 오늘 복습은 D-58 로 뺌). 로그인 쿠키를 읽으므로 page 에서 Suspense 로 감싼다.
@@ -29,12 +30,15 @@ export async function HomeSections() {
 }
 
 export function HomeView({ data }: { data: HomeData }) {
-  const { recent, weeks, belt, startedOn, thisMonth } = data;
+  const { recent, weeks, belt, startedOn, thisMonth, map } = data;
 
   return (
     <>
       {/* ② 수련 벨트 (D-33) */}
       <TrainingBelt weeks={weeks} belt={belt} startedOn={startedOn} thisMonth={thisMonth} />
+
+      {/* ②-1 내 주짓수 지도 (D-60) */}
+      <JiujitsuMap map={map} />
 
       {/* ③ 최근 기록 */}
       <section className="flex flex-col gap-3">
@@ -61,6 +65,11 @@ export function HomeSkeleton() {
   return (
     <div className="flex flex-col gap-5" aria-busy="true">
       <Skeleton className="h-14 w-full rounded-[3px]" />
+      <div className="grid grid-cols-4 gap-2">
+        {Array.from({ length: 8 }, (_, i) => (
+          <Skeleton key={i} className="aspect-square w-full rounded-xl" />
+        ))}
+      </div>
       <div className="flex flex-col gap-3">
         <Skeleton className="h-5 w-20" />
         {[0, 1, 2].map((i) => (

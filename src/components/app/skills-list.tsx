@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,14 @@ const LEVEL_LABEL = new Map(LEVELS.map((l) => [l.value, l.label]));
 // 내 기술 (T-10, FLOW 4 · DESIGN 6) — 포지션 아코디언(접힘) × 기술 + 숙련도 배지. 안 배운 건 흐리게.
 export function SkillsList({ groups }: { groups: PositionGroup[] }) {
   const [onlyLearned, setOnlyLearned] = useState(false);
+  // 홈 "내 주짓수 지도"에서 포지션을 누르고 오면(#pos-{slug}) 그 포지션을 펼쳐 보여 준다(D-60)
+  useEffect(() => {
+    const el = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    if (el instanceof HTMLDetailsElement) {
+      el.open = true;
+      el.scrollIntoView({ block: "start" });
+    }
+  }, []);
   const learnedTotal = groups.reduce((n, g) => n + g.skills.filter((s) => s.level).length, 0);
 
   const shown = groups
@@ -61,7 +69,7 @@ export function SkillsList({ groups }: { groups: PositionGroup[] }) {
       {shown.length > 0 && (
         <div className="flex flex-col divide-y divide-border overflow-hidden rounded-2xl bg-card ring-1 ring-border">
           {shown.map((g) => (
-            <details key={g.slug} className="group">
+            <details key={g.slug} id={`pos-${g.slug}`} className="group scroll-mt-4">
               <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
                 <PositionPicture slug={g.slug} size={44} className="rounded-lg" />
                 <span className="text-[17px] font-semibold">{g.nameKo}</span>

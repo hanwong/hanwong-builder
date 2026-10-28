@@ -34,7 +34,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
         </li>
         <li>
           <strong>화면 설정</strong> — 홈 수련 벨트에 고른 벨트 색과 주짓수를 시작한 연 · 월(적었을 때만). 로그인 계정
-          정보에 함께 저장되고, 홈에 "수련 N년째"로 보여 주는 데만 써요.
+          정보에 함께 저장되고, 홈에 ‘수련 N년째’로 보여 주는 데만 써요.
         </li>
         <li>
           <strong>자동으로 남는 것</strong> — 접속 시각 같은 서버 기록. 장애를 고칠 때만 봐요.
