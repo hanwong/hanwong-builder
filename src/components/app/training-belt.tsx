@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Settings, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,9 @@ import {
 } from "@/lib/belt";
 import { formatKoreanDate } from "@/lib/seoul-date";
 
+// 이 탭에서 물결을 이미 보여 줬나(서버에서는 늘 false — 바꾸는 건 브라우저 effect 에서만)
+let wavePlayed = false;
+
 // 홈 "수련 벨트" (D-33, DESIGN 2) — 최근 2년(104주)을 1주 1칸으로, 그 주 수련(기록) 횟수만큼 밝게.
 // 바깥은 내 벨트 색(양옆 너비의 약 5%, 위아래 높이의 약 1%), 가운데는 검정 바탕 + 살짝 둥근 네모.
 // 위에 "○○ 벨트 · 수련 N년 N개월째"(D-59) + 오른쪽 끝 톱니바퀴(벨트 설정 팝업: 벨트 색 · 수련 시작), 아래에 범례 · 최근 2년 횟수.
@@ -39,6 +42,11 @@ export function TrainingBelt({
   const [belt, setBeltState] = useState<Belt>(initialBelt);
   const [startedOn, setStartedOnState] = useState(initialStartedOn);
   const [picking, setPicking] = useState(false);
+  // 벨트 물결(D-65) — 이 탭에서 홈을 처음 열 때만. 다른 화면 갔다 오면 다시 안 한다
+  const [wave, setWave] = useState(() => !wavePlayed);
+  useEffect(() => {
+    wavePlayed = true;
+  }, []);
   const floating = useFloatingDialog(picking);
   const [, startSaving] = useTransition();
 
@@ -112,7 +120,7 @@ export function TrainingBelt({
         aria-label={`${label} 벨트, 최근 2년 동안 ${total}번 수련`}
       >
         <div
-          className="grid gap-[2px] p-[3px]"
+          className="relative grid gap-[2px] overflow-hidden p-[3px]"
           style={{
             // 블랙은 칸지 랭크바처럼 가운데 바탕만 빨강, 칸 색은 그대로(D-35)
             backgroundColor: belt === "black" ? BELT_BLACK_BAR : BELT_BG,
@@ -121,6 +129,14 @@ export function TrainingBelt({
             gridAutoFlow: "column",
           }}
         >
+          {/* 첫 로딩 때 한 번 — 라임 빛이 왼쪽에서 오른쪽으로 지나간다(D-65). 끝나면 지운다 */}
+          {wave && (
+            <span
+              aria-hidden
+              className="belt-wave pointer-events-none absolute inset-0 z-10"
+              onAnimationEnd={() => setWave(false)}
+            />
+          )}
           {weeks.map((w) => (
             <span
               key={w.start}

@@ -141,8 +141,26 @@
   animation-range: entry 0% entry 40%;
 }
 
+/* 홈 수련 벨트 물결(D-65) — 라임 빛 띠가 왼쪽에서 오른쪽으로 한 번 */
+@keyframes belt-wave {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+.belt-wave {
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgb(221 245 66 / 0) 25%,
+    rgb(221 245 66 / 0.55) 50%,
+    rgb(221 245 66 / 0) 75%,
+    transparent 100%
+  );
+  animation: belt-wave 1.6s cubic-bezier(0.45, 0, 0.25, 1) 0.25s 1 both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal { animation: none; }
+  .belt-wave { display: none; }
 }
 
 /* 기술 이름 강조 — 라임 형광 밑줄 (DESIGN.md 3) */

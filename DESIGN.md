@@ -103,3 +103,6 @@
 - 본인 피드백: "좋아요, 이대로" — 수정 없음. 방향(크림 · 먹색 · 라임 · 둥근 카드)과 랜딩 함께 바꾸기 모두 확정.
 - 고친 것: 용어 카드가 고정 저장 버튼에 가려져 아래 여백(4rem) 추가.
 - 파일: `src/app/app/layout.tsx`(한 열 + 하단 탭 틀), `src/app/app/log/page.tsx`, `src/components/app/log-review.tsx`, `src/lib/mock/log-seed.ts`(가짜 데이터, 5단계에서 서버 결과로 교체).
+
+## 움직임 (D-65)
+- 홈 수련 벨트: 처음 열 때 한 번 라임 빛 띠가 왼쪽→오른쪽(1.6초, 0.25초 뒤 시작). 같은 탭에서는 다시 안 함. `prefers-reduced-motion` 이면 없음.
