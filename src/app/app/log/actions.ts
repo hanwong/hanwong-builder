@@ -52,33 +52,43 @@ export async function searchTechniques(query: string): Promise<MatchedTechnique[
   return withLevels(supabase, [...mine, ...searchLibrary(lib, q, 8 - mine.length)]);
 }
 
-export type PickerPosition = { slug: string; nameKo: string; count: number };
+export type PickerTechnique = MatchedTechnique & { aliases: string[] };
+export type PickerData = { positions: { slug: string; nameKo: string }[]; techniques: PickerTechnique[] };
 
-// 기술 고르기 첫 화면 — 포지션 그림 칸(순서 = 포지션 sort_order) (D-56)
-export async function pickerPositions(): Promise<PickerPosition[]> {
+// 기술 고르기 전체(D-56, 속도) — 기록 화면을 열 때 한 번 받아 두고, 포지션 목록 · 검색은 브라우저에서 바로 한다.
+// 공용 기술(포지션 순서) + 내가 만든 기술(그 포지션 맨 아래) + 내 숙련도.
+export async function pickerData(): Promise<PickerData> {
   const supabase = await createSupabaseServer();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return [];
-  const [lib, own] = await Promise.all([getLibrary(supabase), getOwnTechniques(supabase, user.id)]);
-  const count = new Map<string, number>();
-  for (const t of [...lib.candidates, ...own]) count.set(t.positionSlug, (count.get(t.positionSlug) ?? 0) + 1);
-  return lib.positions.filter((p) => count.has(p.slug)).map((p) => ({ ...p, count: count.get(p.slug)! }));
-}
-
-// 포지션 그림을 누르면 — 그 포지션 기술 전부 + 내가 만든 기술(맨 아래) (D-56 · D-57)
-export async function positionTechniques(positionSlug: string): Promise<MatchedTechnique[]> {
-  const supabase = await createSupabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user || typeof positionSlug !== "string") return [];
-  const [lib, own] = await Promise.all([getLibrary(supabase), getOwnTechniques(supabase, user.id)]);
-  return withLevels(
-    supabase,
-    [...lib.candidates, ...own].filter((t) => t.positionSlug === positionSlug),
-  );
+  if (!user) return { positions: [], techniques: [] };
+  const [lib, own, levels] = await Promise.all([
+    getLibrary(supabase),
+    getOwnTechniques(supabase, user.id),
+    supabase.from("technique_levels").select("level, techniques!inner(slug)"),
+  ]);
+  const prev = new Map((levels.data ?? []).map((r) => [r.techniques.slug, r.level as Level]));
+  const order = new Map(lib.positions.map((p, i) => [p.slug, i]));
+  const all: Picked[] = [...lib.candidates, ...own].sort(
+    (a, b) => (order.get(a.positionSlug) ?? 99) - (order.get(b.positionSlug) ?? 99),
+  ); // 같은 포지션 안에서는 원래 순서(공용 → 내 것) 그대로
+  const used = new Set(all.map((t) => t.positionSlug));
+  return {
+    positions: lib.positions.filter((p) => used.has(p.slug)),
+    techniques: all.map((t) => ({
+      id: t.slug,
+      nameKo: t.nameKo,
+      nameEn: t.nameEn,
+      position: t.position,
+      positionSlug: t.positionSlug,
+      steps: t.steps,
+      aliases: t.aliases,
+      level: prev.get(t.slug) ?? "beginner",
+      draft: t.draft,
+      ...(t.ownerStatus ? { mine: t.ownerStatus } : {}),
+    })),
+  };
 }
 
 // 내용 생성 (D-57) — 목록 밖 이름 하나를 AI 로 기술 카드로. 하루 3번(성공한 AI 호출만 셈).

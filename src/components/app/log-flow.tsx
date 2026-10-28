@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { LogReview } from "@/components/app/log-review";
 import { saveLog } from "@/app/app/log/actions";
 import { seoulToday } from "@/lib/seoul-date";
+import { forgetPicker } from "@/lib/picker-store";
 
 const noSubscribe = () => () => {};
 
@@ -17,6 +18,19 @@ export function LogFlow() {
   // 서울 기준 오늘 — 서버(미리 만들기)에서는 빈 값, 브라우저에서 날짜로 바뀐다(cacheComponents: 렌더 중 new Date() 금지)
   const today = useSyncExternalStore(noSubscribe, seoulToday, () => "");
   const loggedOn = date || today;
+
+  // 저장하면 바로 이전 화면(홈 · 기록 목록 · 기술 상세)으로 간다. Next 는 떠난 화면을 숨겨 보관하므로(Activity),
+  // 숨겨질 때(layout effect 정리) 비워 두면 다시 들어올 때 빈 화면부터 보인다 — 저장 뒤 빈 화면이 깜빡이지 않는다.
+  const saved = useRef(false);
+  useLayoutEffect(
+    () => () => {
+      if (!saved.current) return;
+      saved.current = false;
+      setRound((r) => r + 1);
+      setDate("");
+    },
+    [],
+  );
 
   return (
     <LogReview
@@ -47,10 +61,11 @@ export function LogFlow() {
           return;
         }
         toast.success("기록을 저장했어요");
-        router.push("/app");
-        // 홈으로 간 뒤에도 이 화면 상태가 남아 있다(Next 가 지나간 화면을 숨겨 보관) — 다음 기록은 빈 화면부터
-        setRound((r) => r + 1);
-        setDate("");
+        forgetPicker(); // 숙련도가 바뀌었다 — 다음 고르기는 새로 받는다
+        saved.current = true;
+        // 주소로 바로 열어 돌아갈 곳이 없으면 홈으로
+        if (window.history.length > 1) router.back();
+        else router.replace("/app");
       }}
     />
   );

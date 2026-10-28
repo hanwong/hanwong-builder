@@ -6,6 +6,7 @@ import { LogReview } from "@/components/app/log-review";
 import { ShareLog } from "@/components/app/share-log";
 import { deleteLog, updateLog } from "@/app/app/log/actions";
 import { formatKoreanDate } from "@/lib/seoul-date";
+import { forgetPicker } from "@/lib/picker-store";
 import type { SavedLog } from "@/lib/log-data";
 
 // 저장한 기록 보기 · 고치기 (D-25) — 새 기록과 같은 화면(D-56).
@@ -33,6 +34,7 @@ export function LogDetail({ log }: { log: SavedLog }) {
           return;
         }
         toast.success("고친 내용을 저장했어요");
+        forgetPicker(); // 숙련도가 바뀌었다 — 다음 고르기는 새로 받는다
         goBack();
       }}
       onDelete={async () => {

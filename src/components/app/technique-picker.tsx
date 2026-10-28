@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { ArrowLeft, Check, Loader2, Plus, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { pickerPositions, positionTechniques, searchTechniques, type PickerPosition } from "@/app/app/log/actions";
+import { loadPicker, PICKER_PICTURE, searchPicker, type PickerStore } from "@/lib/picker-store";
 import { useFloatingDialog } from "@/lib/use-floating-dialog";
 import type { MatchedTechnique } from "@/lib/mock/log-seed";
 
@@ -15,10 +15,6 @@ import type { MatchedTechnique } from "@/lib/mock/log-seed";
 // 찾는 게 없으면 이름만 직접 추가 — 운영자 확인 후 기술 카드로 바뀐다(D-32).
 // 떠 있는 팝업(T-35): 뒤 화면은 붙잡아 두고, 키보드 위 보이는 영역 안에 맞춘다.
 type View = { kind: "grid" } | { kind: "position"; slug: string; nameKo: string };
-
-// 포지션 목록 · 포지션별 기술은 한 번 받으면 이 화면에서 다시 쓴다
-let positionsCache: PickerPosition[] | null = null;
-const listCache = new Map<string, MatchedTechnique[]>();
 
 export function TechniquePicker({
   selected,
@@ -32,9 +28,7 @@ export function TechniquePicker({
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<View>({ kind: "grid" });
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<{ q: string; list: MatchedTechnique[] }>({ q: "", list: [] });
-  const [positions, setPositions] = useState<PickerPosition[] | null>(positionsCache);
-  const [lists, setLists] = useState<Map<string, MatchedTechnique[]>>(listCache);
+  const [store, setStore] = useState<PickerStore | null>(null);
   const [failed, setFailed] = useState(false);
   const floating = useFloatingDialog(open);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -42,54 +36,18 @@ export function TechniquePicker({
 
   const text = query.trim();
   const searching = text.replace(/\s/g, "").length >= 2;
-  const loading = searching && results.q !== text;
   const count = selected.length;
 
-  // 처음 열 때 포지션 칸을 받는다
+  // 기록 화면이 열리면 바로 받아 둔다(이미 받았으면 그대로) — 팝업을 열 때 기다리지 않게 (D-56 속도)
   useEffect(() => {
-    if (!open || positions) return;
     let alive = true;
-    pickerPositions()
-      .then((list) => {
-        if (!alive) return;
-        positionsCache = list;
-        setPositions(list);
-      })
+    loadPicker()
+      .then((s) => alive && setStore(s))
       .catch(() => alive && setFailed(true));
     return () => {
       alive = false;
     };
-  }, [open, positions]);
-
-  // 포지션을 고르면 그 기술 목록
-  const slug = view.kind === "position" ? view.slug : null;
-  useEffect(() => {
-    if (!slug || lists.has(slug)) return;
-    let alive = true;
-    positionTechniques(slug)
-      .then((list) => {
-        if (!alive) return;
-        listCache.set(slug, list);
-        setLists(new Map(listCache));
-      })
-      .catch(() => alive && setFailed(true));
-    return () => {
-      alive = false;
-    };
-  }, [slug, lists]);
-
-  useEffect(() => {
-    if (!searching) return;
-    let alive = true;
-    const id = setTimeout(async () => {
-      const list = await searchTechniques(text).catch(() => []);
-      if (alive) setResults({ q: text, list });
-    }, 250); // 칠 때마다 부르지 않게 잠깐 기다린다
-    return () => {
-      alive = false;
-      clearTimeout(id);
-    };
-  }, [text, searching]);
+  }, [open]);
 
   // 열 때마다 포지션 칸 · 빈 검색부터(닫을 때 바꾸면 닫히는 동안 화면이 바뀌어 보인다)
   function show() {
@@ -100,13 +58,16 @@ export function TechniquePicker({
   }
   const close = () => setOpen(false);
 
-  function showPosition(p: PickerPosition) {
+  function showPosition(p: { slug: string; nameKo: string }) {
     setView({ kind: "position", slug: p.slug, nameKo: p.nameKo });
     scrollRef.current?.scrollTo(0, 0);
   }
 
-  const searchList = searching && results.q === text ? results.list : [];
-  const positionList = slug ? lists.get(slug) : undefined;
+  const slug = view.kind === "position" ? view.slug : null;
+  const positions = store?.positions ?? null;
+  const searchList = useMemo(() => (store && searching ? searchPicker(store, text) : []), [store, searching, text]);
+  const positionList = slug && store ? (store.byPosition.get(slug) ?? []) : undefined;
+  const loading = searching && !store;
 
   return (
     <>
@@ -262,8 +223,8 @@ export function TechniquePicker({
                         <Image
                           src={`/positions/${p.slug}.png`}
                           alt=""
-                          width={112}
-                          height={112}
+                          width={PICKER_PICTURE}
+                          height={PICKER_PICTURE}
                           className="aspect-square h-auto w-full rounded-xl bg-[#FAF9F4] ring-1 ring-border"
                         />
                         <span className="line-clamp-2 text-[12px] leading-tight font-medium break-keep">{p.nameKo}</span>

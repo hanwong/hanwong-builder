@@ -16,6 +16,7 @@ import { TechniquePicker } from "@/components/app/technique-picker";
 import { YoutubeLink } from "@/components/app/youtube-link";
 import { PositionPicture } from "@/components/app/position-picture";
 import { generateTechnique } from "@/app/app/log/actions";
+import { forgetPicker } from "@/lib/picker-store";
 import { MINE_LABEL, type Level, type MatchedTechnique, type Term } from "@/lib/mock/log-seed";
 
 export type AiStatus = "ok" | "mock" | "none";
@@ -68,6 +69,7 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
       return;
     }
     const t = res.technique;
+    if (res.kind === "new") forgetPicker(); // 새 내 기술 — 다음 고르기 · 검색에 보이게 새로 받는다
     setCustomNames((l) => l.filter((n) => n !== name));
     setTechniques((list) => (list.some((x) => x.id === t.id) ? list : [...list, t]));
     const left = res.left >= 0 ? ` · 오늘 ${res.left}번 남음` : "";
