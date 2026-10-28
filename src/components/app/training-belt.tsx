@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, type CSSProperties } from "react";
 import { Settings, X } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { BeltChoice } from "@/components/app/belt-choice";
@@ -24,6 +25,7 @@ import { formatKoreanDate } from "@/lib/seoul-date";
 
 // 이 탭에서 물결을 이미 보여 줬나(서버에서는 늘 false — 바꾸는 건 브라우저 effect 에서만)
 let wavePlayed = false;
+const WAVE_STEP = 45; // 세로줄(주) 사이 간격 ms — 26줄이면 약 1.2초에 걸쳐 지나간다
 
 // 홈 "수련 벨트" (D-33, DESIGN 2) — 최근 2년(104주)을 1주 1칸으로, 그 주 수련(기록) 횟수만큼 밝게.
 // 바깥은 내 벨트 색(양옆 너비의 약 5%, 위아래 높이의 약 1%), 가운데는 검정 바탕 + 살짝 둥근 네모.
@@ -120,7 +122,7 @@ export function TrainingBelt({
         aria-label={`${label} 벨트, 최근 2년 동안 ${total}번 수련`}
       >
         <div
-          className="relative grid gap-[2px] overflow-hidden p-[3px]"
+          className="grid gap-[2px] p-[3px]"
           style={{
             // 블랙은 칸지 랭크바처럼 가운데 바탕만 빨강, 칸 색은 그대로(D-35)
             backgroundColor: belt === "black" ? BELT_BLACK_BAR : BELT_BG,
@@ -129,20 +131,21 @@ export function TrainingBelt({
             gridAutoFlow: "column",
           }}
         >
-          {/* 첫 로딩 때 한 번 — 라임 빛이 왼쪽에서 오른쪽으로 지나간다(D-65). 끝나면 지운다 */}
-          {wave && (
-            <span
-              aria-hidden
-              className="belt-wave pointer-events-none absolute inset-0 z-10"
-              onAnimationEnd={() => setWave(false)}
-            />
-          )}
-          {weeks.map((w) => (
+          {/* 첫 로딩 때 한 번 — 칸들이 세로줄(주) 단위로 밝아졌다 돌아오며 왼쪽에서 오른쪽으로 지나간다(D-65).
+              같은 세로줄 4칸은 같은 시각에 같은 정도로. 마지막 줄이 끝나면 지운다 */}
+          {weeks.map((w, i) => (
             <span
               key={w.start}
               title={`${formatKoreanDate(w.start)} 주 · ${w.count}번`}
-              className="aspect-square rounded-[2px]"
-              style={{ backgroundColor: WEEK_SHADES[Math.min(w.count, 5)] }}
+              className={cn("aspect-square rounded-[2px]", wave && "belt-wave")}
+              style={
+                {
+                  backgroundColor: WEEK_SHADES[Math.min(w.count, 5)],
+                  "--week": WEEK_SHADES[Math.min(w.count, 5)],
+                  animationDelay: wave ? `${250 + Math.floor(i / BELT_ROWS) * WAVE_STEP}ms` : undefined,
+                } as CSSProperties
+              }
+              onAnimationEnd={i === weeks.length - 1 ? () => setWave(false) : undefined}
             />
           ))}
         </div>

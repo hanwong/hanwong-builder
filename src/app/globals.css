@@ -141,21 +141,15 @@
   animation-range: entry 0% entry 40%;
 }
 
-/* 홈 수련 벨트 물결(D-65) — 라임 빛 띠가 왼쪽에서 오른쪽으로 한 번 */
+/* 홈 수련 벨트 물결(D-65) — 칸마다 잠깐 밝아졌다 제자리로. 세로줄(주)마다 시작을 늦춰 왼쪽→오른쪽 파도.
+   어두운 칸도 보이게 밝기(filter)가 아니라 색을 밝은 회색 쪽으로 섞는다 */
 @keyframes belt-wave {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(100%); }
+  0% { background-color: var(--week); }
+  45% { background-color: color-mix(in oklab, var(--week) 30%, #E8E8E4); }
+  100% { background-color: var(--week); }
 }
 .belt-wave {
-  background: linear-gradient(
-    100deg,
-    transparent 0%,
-    rgb(221 245 66 / 0) 25%,
-    rgb(221 245 66 / 0.55) 50%,
-    rgb(221 245 66 / 0) 75%,
-    transparent 100%
-  );
-  animation: belt-wave 1.6s cubic-bezier(0.45, 0, 0.25, 1) 0.25s 1 both;
+  animation: belt-wave 0.75s ease-in-out 1 both;
 }
 
 @media (prefers-reduced-motion: reduce) {
