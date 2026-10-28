@@ -31,6 +31,7 @@ type Props = {
     loggedOn: string; // 화면 표시용 "10월 26일 (월)"
   };
   date?: ReactNode; // 새 기록 — 날짜 고르기. 없으면 loggedOn 글자
+  youtube?: boolean; // 기술 카드의 유튜브 버튼 — 새 기록 입력 중엔 뺀다(본인 요청)
   onBack?: () => void;
   saveLabel?: string; // 새 기록 "저장", 저장한 기록 고치기 "고친 내용 저장"
   // 저장 — 성공하면 부모가 다음 화면으로 보낸다
@@ -43,7 +44,7 @@ type Props = {
 
 // 기록 화면(D-56) — 새 기록(/app/log)과 저장한 기록 보기 · 고치기(/app/log/[id], D-25)가 함께 쓴다.
 // 배운 기술을 먼저 고르고(포지션 그림 · 검색) 오늘 메모는 한 칸(선택). 기술이나 메모 중 하나는 있어야 저장.
-export function LogReview({ initial, date, onBack, saveLabel = "저장", onSave, onDelete, headerAction }: Props) {
+export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "저장", onSave, onDelete, headerAction }: Props) {
   const [body, setBody] = useState(initial.body);
   const [techniques, setTechniques] = useState(initial.techniques);
   const [customNames, setCustomNames] = useState<string[]>(initial.customNames);
@@ -84,7 +85,7 @@ export function LogReview({ initial, date, onBack, saveLabel = "저장", onSave,
         </div>
 
         {techniques.map((t) => (
-          <TechniqueCard key={t.id} technique={t} onLevel={setLevel} onRemove={remove} />
+          <TechniqueCard key={t.id} technique={t} youtube={youtube} onLevel={setLevel} onRemove={remove} />
         ))}
 
         {customNames.map((name) => (
@@ -280,10 +281,12 @@ function MemoField({
 
 function TechniqueCard({
   technique: t,
+  youtube,
   onLevel,
   onRemove,
 }: {
   technique: MatchedTechnique;
+  youtube: boolean;
   onLevel: (id: string, level: Level) => void;
   onRemove: (id: string) => void;
 }) {
@@ -336,7 +339,7 @@ function TechniqueCard({
             />
             세팅 과정 {t.steps.length}줄
           </button>
-          <YoutubeLink nameEn={t.nameEn} />
+          {youtube && <YoutubeLink nameEn={t.nameEn} />}
         </div>
         {open && (
           <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-[15px] leading-relaxed">

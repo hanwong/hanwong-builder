@@ -21,6 +21,7 @@ export function LogFlow() {
   return (
     <LogReview
       key={round}
+      youtube={false}
       initial={{ loggedOn: "", body: "", techniques: [], customNames: [], terms: [], aiStatus: "none" }}
       date={
         <input
