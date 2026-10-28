@@ -8,7 +8,7 @@ import { deleteLog, updateLog } from "@/app/app/log/actions";
 import { formatKoreanDate } from "@/lib/seoul-date";
 import type { SavedLog } from "@/lib/log-data";
 
-// 저장한 기록 보기 · 고치기 (D-25) — 정리 완료 화면을 그대로 쓴다.
+// 저장한 기록 보기 · 고치기 (D-25) — 새 기록과 같은 화면(D-56).
 export function LogDetail({ log }: { log: SavedLog }) {
   const router = useRouter();
   // 들어온 곳(기록 목록 · 홈 · 기술 상세)으로 돌아간다. 주소로 바로 열어 돌아갈 곳이 없으면 기록 목록으로.

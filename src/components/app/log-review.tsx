@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useTransition, type ReactNode } from "react";
-import { ArrowLeft, ChevronDown, FlaskConical, Loader2, PencilLine, Sparkles, Trash2, X } from "lucide-react";
-import { toast } from "sonner";
+import { useState, useTransition, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { ArrowLeft, ChevronDown, Loader2, Mic, MicOff, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BottomAction } from "@/components/app/bottom-action";
 import { Badge } from "@/components/ui/badge";
@@ -10,9 +9,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { MAX_BODY } from "@/lib/log-limits";
-import { organizeLog } from "@/app/app/log/actions";
+import { useSpeechInput } from "@/lib/use-speech-input";
 import { LevelPicker } from "@/components/app/level-picker";
-import { TechniqueAdder } from "@/components/app/technique-adder";
+import { TechniquePicker } from "@/components/app/technique-picker";
 import { YoutubeLink } from "@/components/app/youtube-link";
 import { PositionPicture } from "@/components/app/position-picture";
 import type { Level, MatchedTechnique, Term } from "@/lib/mock/log-seed";
@@ -30,10 +29,8 @@ export type ReviewValue = {
 type Props = {
   initial: ReviewValue & {
     loggedOn: string; // 화면 표시용 "10월 26일 (월)"
-    skipped?: boolean; // 정리 실패 뒤 "그냥 저장"
-    keywordOnly?: boolean; // Claude 없이 글 속 기술 이름만 찾음(D-44)
-    limitReached?: boolean; // 이번 주 한도를 다 써서 이름만 찾음
   };
+  date?: ReactNode; // 새 기록 — 날짜 고르기. 없으면 loggedOn 글자
   onBack?: () => void;
   saveLabel?: string; // 새 기록 "저장", 저장한 기록 고치기 "고친 내용 저장"
   // 저장 — 성공하면 부모가 다음 화면으로 보낸다
@@ -44,165 +41,47 @@ type Props = {
   headerAction?: ReactNode;
 };
 
-// 정리 완료 화면(상태 C) — 새 기록(/app/log)과 저장한 기록 고치기(/app/log/[id], D-25)가 함께 쓴다.
-// 글은 "글 고치기"로 그 자리에서 고치고, "다시 정리하기"를 누를 때만 기술 · 용어를 다시 찾는다(Claude 비용).
-export function LogReview({ initial, onBack, saveLabel = "저장", onSave, onDelete, headerAction }: Props) {
+// 기록 화면(D-56) — 새 기록(/app/log)과 저장한 기록 보기 · 고치기(/app/log/[id], D-25)가 함께 쓴다.
+// 배운 기술을 먼저 고르고(포지션 그림 · 검색) 오늘 메모는 한 칸(선택). 기술이나 메모 중 하나는 있어야 저장.
+export function LogReview({ initial, date, onBack, saveLabel = "저장", onSave, onDelete, headerAction }: Props) {
   const [body, setBody] = useState(initial.body);
-  const [editing, setEditing] = useState<string | null>(null); // 고치는 중인 글
   const [techniques, setTechniques] = useState(initial.techniques);
   const [customNames, setCustomNames] = useState<string[]>(initial.customNames);
-  const [terms, setTerms] = useState(initial.terms);
-  const [aiStatus, setAiStatus] = useState<AiStatus>(initial.aiStatus);
   const [saving, startSaving] = useTransition();
-  const [organizing, startOrganizing] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, startDeleting] = useTransition();
 
   const setLevel = (id: string, level: Level) =>
     setTechniques((list) => list.map((t) => (t.id === id ? { ...t, level } : t)));
   const remove = (id: string) => setTechniques((list) => list.filter((t) => t.id !== id));
+  const toggle = (t: MatchedTechnique) =>
+    setTechniques((list) => (list.some((x) => x.id === t.id) ? list.filter((x) => x.id !== t.id) : [...list, t]));
 
-  const cardCount = techniques.length;
-  const skipped = initial.skipped && aiStatus === "none";
-
-  function finishEditing() {
-    const text = editing?.trim();
-    if (text) setBody(text);
-    setEditing(null);
-  }
-
-  function reorganize() {
-    const text = (editing ?? body).trim();
-    if (!text) return;
-    startOrganizing(async () => {
-      const res = await organizeLog(text).catch(() => null);
-      if (!res || !res.ok) {
-        toast.error(res?.message ?? "정리하지 못했어요. 인터넷 연결을 확인해 주세요.");
-        return;
-      }
-      // 이미 골라 둔 숙련도는 그대로 살린다
-      const chosen = new Map(techniques.map((t) => [t.id, t.level]));
-      setBody(text);
-      setEditing(null);
-      setTechniques(res.techniques.map((t) => ({ ...t, level: chosen.get(t.id) ?? t.level })));
-      setTerms(res.terms);
-      setAiStatus(res.isMock ? "mock" : res.keywordOnly ? "none" : "ok");
-      if (res.keywordOnly) toast.message(res.limitReached ? "이번 주 정리하기를 다 써서 이름만 찾았어요" : "이름만 찾았어요");
-      toast.success("고친 글로 다시 정리했어요");
-    });
-  }
+  const count = techniques.length + customNames.length;
+  const canSave = count > 0 || body.trim().length > 0;
 
   return (
     <div className="flex flex-col gap-5">
       {/* 제목 줄 */}
       <header className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" aria-label="뒤로" className="-ml-2 rounded-full" onClick={onBack}>
-          <ArrowLeft className="size-5" strokeWidth={1.75} />
-        </Button>
+        {onBack && (
+          <Button variant="ghost" size="icon" aria-label="뒤로" className="-ml-2 rounded-full" onClick={onBack}>
+            <ArrowLeft className="size-5" strokeWidth={1.75} />
+          </Button>
+        )}
         <h1 className="text-[22px] font-bold tracking-tight">오늘 배운 것</h1>
-        <span className="ml-auto text-[13px] font-medium text-muted-foreground">
-          {initial.loggedOn}
-        </span>
+        <span className="ml-auto text-[13px] font-medium text-muted-foreground">{date ?? initial.loggedOn}</span>
         {headerAction}
       </header>
 
-      {/* 내가 쓴 글 — 그 자리에서 고치기 (D-25) */}
-      {editing === null ? (
-        <Card className="rounded-2xl ring-border">
-          <CardContent className="flex flex-col gap-2">
-            <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{body}</p>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="-ml-3 self-start rounded-full text-muted-foreground"
-              onClick={() => setEditing(body)}
-              disabled={organizing || saving}
-            >
-              <PencilLine data-icon="inline-start" aria-hidden />
-              글 고치기
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="flex flex-col gap-2">
-          <Textarea
-            autoFocus
-            value={editing}
-            onChange={(e) => setEditing(e.target.value.slice(0, MAX_BODY))}
-            maxLength={MAX_BODY}
-            aria-label="글 고치기"
-            readOnly={organizing}
-            className="min-h-40 resize-none rounded-2xl bg-card px-4 py-3 text-base leading-relaxed"
-          />
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="secondary"
-              className="h-10 rounded-full"
-              onClick={finishEditing}
-              disabled={organizing || !editing.trim()}
-            >
-              글만 바꾸기
-            </Button>
-            <Button className="h-10 rounded-full" onClick={reorganize} disabled={organizing || !editing.trim()}>
-              {organizing ? (
-                <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />
-              ) : (
-                <Sparkles data-icon="inline-start" aria-hidden />
-              )}
-              {organizing ? "정리 중…" : "다시 정리하기"}
-            </Button>
-            <Button
-              variant="ghost"
-              className="h-10 rounded-full text-muted-foreground"
-              onClick={() => setEditing(null)}
-              disabled={organizing}
-            >
-              취소
-            </Button>
-          </div>
-          <p className="text-[13px] font-medium text-muted-foreground">
-            ‘다시 정리하기’는 고친 글에서 기술을 새로 찾아요. 정한 숙련도는 그대로 둬요.
-          </p>
-        </div>
-      )}
-
-      {/* 언급된 기술 */}
-      <section className={cn("flex flex-col gap-3", organizing && "opacity-50")}>
+      {/* 배운 기술 — 먼저 고른다 */}
+      <section className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-[17px] font-semibold">언급된 기술</h2>
-          {aiStatus === "mock" && (
-            <Badge variant="secondary">
-              <FlaskConical data-icon="inline-start" aria-hidden />
-              연습용 예시
-            </Badge>
+          <h2 className="text-[17px] font-semibold">배운 기술</h2>
+          {count > 0 && (
+            <span className="ml-auto text-[13px] font-medium text-muted-foreground tabular-nums">{count}개</span>
           )}
-          {initial.keywordOnly && aiStatus === "none" && <Badge variant="outline">이름으로만 찾음</Badge>}
-          <span className="ml-auto text-[13px] font-medium text-muted-foreground tabular-nums">
-            {cardCount}개
-          </span>
         </div>
-
-        {initial.keywordOnly && aiStatus === "none" && (
-          <p className="text-[13px] leading-relaxed font-medium text-muted-foreground">
-            {initial.limitReached
-              ? "이번 주 정리하기(AI)를 다 써서 글에 적힌 기술 이름만 찾았어요. 월요일에 다시 열려요."
-              : "AI 없이 글에 적힌 기술 이름만 찾았어요. 빠진 건 아래 ‘기술 추가’로 넣어 주세요."}
-          </p>
-        )}
-
-        {techniques.length === 0 && customNames.length === 0 && (
-          <p className="text-[15px] leading-relaxed text-muted-foreground">
-            {skipped && !initial.keywordOnly
-              ? "정리 없이 글만 저장해요. 배운 기술은 아래 ‘기술 추가’에서 찾아 넣을 수 있어요."
-              : "글에서 목록에 있는 기술을 찾지 못했어요. 아래 ‘기술 추가’에서 찾아 넣어 주세요."}
-          </p>
-        )}
-
-        {techniques.some((t) => t.guess) && (
-          <p className="text-[13px] leading-relaxed font-medium text-muted-foreground">
-            글에 포지션이 없어 포지션별로 추측한 기술도 넣었어요. 아닌 건 빼 주세요.
-          </p>
-        )}
 
         {techniques.map((t) => (
           <TechniqueCard key={t.id} technique={t} onLevel={setLevel} onRemove={remove} />
@@ -226,21 +105,24 @@ export function LogReview({ initial, onBack, saveLabel = "저장", onSave, onDel
           </Card>
         ))}
 
-        <TechniqueAdder
-          existing={techniques.map((t) => t.id)}
-          onPick={(t) => setTechniques((list) => (list.some((x) => x.id === t.id) ? list : [...list, t]))}
+        <TechniquePicker
+          selected={techniques.map((t) => t.id)}
+          onToggle={toggle}
           onCustom={(name) => setCustomNames((l) => (l.includes(name) ? l : [...l, name]))}
         />
       </section>
 
-      {/* 용어 */}
-      {terms.length > 0 && (
+      {/* 오늘 메모 — 선택 */}
+      <MemoField value={body} onChange={setBody} disabled={saving || deleting} />
+
+      {/* 용어 — 예전 정리하기(AI)로 저장한 기록에만 있다 */}
+      {initial.terms.length > 0 && (
         <section className="flex flex-col gap-3">
           <h2 className="text-[17px] font-semibold">용어</h2>
           <Card className="rounded-2xl ring-border">
             <CardContent>
               <dl className="flex flex-col gap-2.5">
-                {terms.map(({ term, meaning }) => (
+                {initial.terms.map(({ term, meaning }) => (
                   <div key={term} className="flex gap-3 text-[15px] leading-relaxed">
                     <dt className="shrink-0 font-semibold">{term}</dt>
                     <dd className="text-muted-foreground">{meaning}</dd>
@@ -261,7 +143,7 @@ export function LogReview({ initial, onBack, saveLabel = "저장", onSave, onDel
               size="sm"
               className="-ml-3 rounded-full text-destructive hover:text-destructive"
               onClick={() => setConfirmDelete(true)}
-              disabled={saving || organizing}
+              disabled={saving}
             >
               <Trash2 data-icon="inline-start" aria-hidden />이 기록 지우기
             </Button>
@@ -297,20 +179,102 @@ export function LogReview({ initial, onBack, saveLabel = "저장", onSave, onDel
       <BottomAction>
         <Button
           className="h-12 w-full rounded-full text-base shadow-none"
-          disabled={saving || organizing || deleting}
+          disabled={!canSave || saving || deleting}
           onClick={() =>
-            startSaving(() => {
-              // 고치는 중인 글도 저장에 넣는다
-              const text = editing?.trim() || body;
-              return onSave({ body: text, techniques, customNames, terms, aiStatus });
-            })
+            startSaving(() =>
+              onSave({ body: body.trim(), techniques, customNames, terms: initial.terms, aiStatus: initial.aiStatus }),
+            )
           }
         >
           {saving && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
-          {saving ? "저장 중…" : saveLabel}
+          {saving ? "저장 중…" : canSave ? saveLabel : "기술을 고르거나 메모를 적어 주세요"}
         </Button>
       </BottomAction>
     </div>
+  );
+}
+
+// 오늘 메모 — 글상자 + 마이크(브라우저 내장 음성 인식, 녹음 저장 없음, D-12)
+function MemoField({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string;
+  onChange: Dispatch<SetStateAction<string>>;
+  disabled: boolean;
+}) {
+  const { supported, listening, interim, problem, start, stop, debugLines } = useSpeechInput({
+    onText: (text) =>
+      onChange((prev) => {
+        const sep = prev && !/\s$/.test(prev) ? " " : "";
+        return (prev + sep + text).slice(0, MAX_BODY);
+      }),
+  });
+  const shown = interim ? `${value}${value && !/\s$/.test(value) ? " " : ""}${interim}` : value;
+
+  return (
+    <section className="flex flex-col gap-2">
+      <h2 className="text-[17px] font-semibold">
+        오늘 메모 <span className="text-[13px] font-medium text-muted-foreground">선택</span>
+      </h2>
+      <div className="relative">
+        <Textarea
+          value={shown}
+          onChange={(e) => {
+            if (listening) stop(); // 직접 고치기 시작하면 음성 입력은 멈춘다
+            onChange(e.target.value.slice(0, MAX_BODY));
+          }}
+          maxLength={MAX_BODY}
+          readOnly={disabled}
+          placeholder="느낀 점, 헷갈린 점, 스파링에서 써 본 것 등"
+          aria-label="오늘 메모"
+          className="min-h-[25dvh] resize-none rounded-2xl bg-card px-4 py-3 pb-16 text-base leading-relaxed"
+        />
+        {supported && !disabled && (
+          <div className="absolute right-3 bottom-3 flex items-center gap-2">
+            {listening && (
+              <span role="status" className="text-[13px] font-medium">
+                듣는 중…
+              </span>
+            )}
+            <Button
+              type="button"
+              size="icon-lg"
+              onClick={listening ? stop : start}
+              aria-label={listening ? "음성 입력 멈추기" : "음성으로 입력하기"}
+              aria-pressed={listening}
+              className={cn(
+                "size-12 rounded-full",
+                listening
+                  ? "bg-accent text-accent-foreground hover:bg-accent/80"
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+              )}
+            >
+              {listening ? <MicOff className="size-5" strokeWidth={1.75} /> : <Mic className="size-5" strokeWidth={1.75} />}
+            </Button>
+          </div>
+        )}
+      </div>
+      <p className="text-[13px] font-medium text-muted-foreground">
+        {supported ? "마이크 버튼을 누르고 말해도 돼요." : "키보드의 마이크로 말해도 돼요."} 상대 이름은 적지 않아도 돼요.
+        {value.length > MAX_BODY * 0.8 && (
+          <span className="ml-2 tabular-nums">
+            {value.length} / {MAX_BODY}
+          </span>
+        )}
+      </p>
+      {problem && (
+        <p role="alert" className="text-[13px] leading-relaxed font-medium text-destructive">
+          {problem}
+        </p>
+      )}
+      {debugLines.length > 0 && (
+        <pre className="overflow-x-auto rounded-xl bg-secondary p-3 text-[12px] leading-relaxed whitespace-pre-wrap">
+          {debugLines.join("\n")}
+        </pre>
+      )}
+    </section>
   );
 }
 

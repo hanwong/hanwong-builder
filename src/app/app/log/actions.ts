@@ -2,104 +2,18 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import { isLive, matchLog } from "@/lib/matching";
 import { getLibrary } from "@/lib/matching/library";
 import { searchLibrary } from "@/lib/matching/search";
-import type { OrganizeResult } from "@/lib/matching/types";
 import { MAX_BODY } from "@/lib/log-limits";
 import { LEVELS, type Level, type MatchedTechnique, type Term } from "@/lib/mock/log-seed";
 import { addDays, isIsoDate, seoulToday } from "@/lib/seoul-date";
 
-// 정리하기(Claude 호출) 한도 — 사람당 일주일 3번(D-43). 월요일 00:00(서울)부터 센다. 연습용 예시 · 실패는 안 센다.
-const WEEKLY_LIMIT = 3;
-function seoulWeekStart(today: string): string {
-  const [y, m, d] = today.split("-").map(Number);
-  const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
-  return `${addDays(today, -((dow + 6) % 7))}T00:00:00+09:00`;
-}
+// 기록 화면 — 기술을 먼저 고르고 오늘 메모(D-56). AI 정리하기는 없앴다.
 
-type Supa = Awaited<ReturnType<typeof createSupabaseServer>>;
-async function usedThisWeek(supabase: Supa): Promise<number> {
-  const { count } = await supabase
-    .from("ai_calls")
-    .select("id", { count: "exact", head: true })
-    .eq("kind", "organize") // 운영 화면 "다시 추천"(redraft, D-48)은 세지 않는다
-    .gte("called_at", seoulWeekStart(seoulToday()));
-  return count ?? 0;
-}
+type Picked = { slug: string; nameKo: string; nameEn: string; position: string; positionSlug: string; steps: string[]; draft: boolean };
 
-export type OrganizeQuota = { live: boolean; limit: number; used: number };
-
-// 쓰기 화면 안내용 — "일주일 3번 · 이번 주 N번 남음" (D-44). 연습용 예시(키 없음)면 live=false.
-export async function getOrganizeQuota(): Promise<OrganizeQuota> {
-  if (!isLive()) return { live: false, limit: WEEKLY_LIMIT, used: 0 };
-  const supabase = await createSupabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { live: true, limit: WEEKLY_LIMIT, used: 0 };
-  return { live: true, limit: WEEKLY_LIMIT, used: await usedThisWeek(supabase) };
-}
-
-// "정리하기" — 글에서 기술 · 용어를 찾는다(T-06). 저장은 하지 않는다.
-// 이미 숙련도를 정해 둔 기술은 그 값을 기본값으로 돌려준다(FLOW 상태 C, T-08).
-// keywordOnly: Claude 없이 글 속 기술 이름만 찾는다('그냥 저장', D-44). 한도를 다 썼을 때도 이 길로 간다.
-export async function organizeLog(body: string, opts?: { keywordOnly?: boolean }): Promise<OrganizeResult> {
-  const supabase = await createSupabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, message: "로그인이 풀렸어요. 다시 로그인해 주세요." };
-
-  const text = typeof body === "string" ? body.trim() : "";
-  if (!text) return { ok: false, message: "글을 먼저 적어 주세요." };
-  if (text.length > MAX_BODY) return { ok: false, message: `글은 ${MAX_BODY}자까지 정리할 수 있어요.` };
-
-  // 이름만 찾기(비용 0): 그냥 저장이거나, 실제 Claude 인데 이번 주 한도를 다 썼을 때
-  let keywordOnly = opts?.keywordOnly === true;
-  let limitReached = false;
-  if (!keywordOnly && isLive() && (await usedThisWeek(supabase)) >= WEEKLY_LIMIT) {
-    keywordOnly = true;
-    limitReached = true;
-  }
-
-  let result: Extract<OrganizeResult, { ok: true }>;
-  try {
-    result = await matchLog(text, await getLibrary(supabase), keywordOnly ? "keyword" : "auto");
-    if (limitReached) result.limitReached = true;
-  } catch (e) {
-    // 원인(오류 종류)만 서버 로그에 남긴다. 글 내용 · 키는 남기지 않는다.
-    console.error("organizeLog failed:", e instanceof Error ? e.name + " " + e.message.slice(0, 120) : "unknown");
-    return { ok: false, message: "잠시 뒤 다시 시도해 주세요." };
-  }
-  if (!result.isMock && !result.keywordOnly) {
-    // 성공한 실제 호출만 센다. 기록에 실패해도 결과는 그대로 준다(한 번 더 쓸 수 있게 되는 쪽이 낫다)
-    const { error } = await supabase.from("ai_calls").insert({ user_id: user.id, kind: "organize" });
-    if (error) console.error("ai_calls insert failed:", error.code ?? "", (error.message ?? "").slice(0, 80));
-  }
-
-  // 이전 숙련도 — 없거나 못 읽으면 비기너 그대로
-  const slugs = result.techniques.map((t) => t.id);
-  if (slugs.length) {
-    const { data } = await supabase
-      .from("technique_levels")
-      .select("level, techniques!inner(slug)")
-      .in("techniques.slug", slugs);
-    const prev = new Map((data ?? []).map((r) => [r.techniques.slug, r.level as Level]));
-    result.techniques = result.techniques.map((t) => ({ ...t, level: prev.get(t.id) ?? t.level }));
-  }
-  return result;
-}
-
-// 정리 화면 "기술 추가" 검색 (D-31) — 우리 목록에서 찾고, 이미 정해 둔 숙련도가 있으면 그 값으로 돌려준다.
-export async function searchTechniques(query: string): Promise<MatchedTechnique[]> {
-  const supabase = await createSupabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user || typeof query !== "string") return [];
-
-  const found = searchLibrary(await getLibrary(supabase), query.slice(0, 40));
+// 고른 기술에 이미 정해 둔 숙련도를 붙인다 — 없거나 못 읽으면 비기너
+async function withLevels(supabase: Supabase, found: Picked[]): Promise<MatchedTechnique[]> {
   if (!found.length) return [];
   const { data } = await supabase
     .from("technique_levels")
@@ -121,10 +35,49 @@ export async function searchTechniques(query: string): Promise<MatchedTechnique[
   }));
 }
 
+// 기술 고르기 — 이름 · 영어 이름 · 다른 이름으로 찾기 (D-31 · D-56)
+export async function searchTechniques(query: string): Promise<MatchedTechnique[]> {
+  const supabase = await createSupabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user || typeof query !== "string") return [];
+  return withLevels(supabase, searchLibrary(await getLibrary(supabase), query.slice(0, 40)));
+}
+
+export type PickerPosition = { slug: string; nameKo: string; count: number };
+
+// 기술 고르기 첫 화면 — 포지션 그림 칸(순서 = 포지션 sort_order) (D-56)
+export async function pickerPositions(): Promise<PickerPosition[]> {
+  const supabase = await createSupabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+  const lib = await getLibrary(supabase);
+  const count = new Map<string, number>();
+  for (const t of lib.candidates) count.set(t.positionSlug, (count.get(t.positionSlug) ?? 0) + 1);
+  return lib.positions.filter((p) => count.has(p.slug)).map((p) => ({ ...p, count: count.get(p.slug)! }));
+}
+
+// 포지션 그림을 누르면 — 그 포지션 기술 전부 (D-56)
+export async function positionTechniques(positionSlug: string): Promise<MatchedTechnique[]> {
+  const supabase = await createSupabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user || typeof positionSlug !== "string") return [];
+  const lib = await getLibrary(supabase);
+  return withLevels(
+    supabase,
+    lib.candidates.filter((t) => t.positionSlug === positionSlug),
+  );
+}
+
 export type SaveInput = {
   loggedOn: string; // YYYY-MM-DD (서울)
   body: string;
-  aiStatus: "ok" | "mock" | "none"; // none = 정리 실패 뒤 "그냥 저장"
+  aiStatus: "ok" | "mock" | "none"; // 새 기록은 none(D-56). 예전 기록은 정리하기 결과를 그대로
   techniques: { slug: string; level: Level }[];
   customNames: string[];
   terms: Term[];
@@ -142,23 +95,26 @@ const LEVEL_VALUES = new Set(LEVELS.map((l) => l.value));
 function clean(input: SaveInput) {
   const today = seoulToday();
   const body = typeof input?.body === "string" ? input.body.trim() : "";
-  if (!body || body.length > MAX_BODY) return null;
+  if (body.length > MAX_BODY) return null;
+  const picks = (Array.isArray(input.techniques) ? input.techniques : [])
+    .filter((t) => typeof t?.slug === "string" && LEVEL_VALUES.has(t.level))
+    .slice(0, 12);
+  const customNames = [
+    ...new Set(
+      (Array.isArray(input.customNames) ? input.customNames : [])
+        .filter((n): n is string => typeof n === "string")
+        .map((n) => n.trim().slice(0, 100))
+        .filter(Boolean),
+    ),
+  ].slice(0, 10);
+  if (!body && !picks.length && !customNames.length) return null; // 기술도 메모도 없으면 저장 안 함(D-56)
   return {
     today,
     body,
     loggedOn: isIsoDate(input.loggedOn) && input.loggedOn <= today ? input.loggedOn : today,
     aiStatus: ["ok", "mock", "none"].includes(input.aiStatus) ? input.aiStatus : "none",
-    picks: (Array.isArray(input.techniques) ? input.techniques : [])
-      .filter((t) => typeof t?.slug === "string" && LEVEL_VALUES.has(t.level))
-      .slice(0, 12),
-    customNames: [
-      ...new Set(
-        (Array.isArray(input.customNames) ? input.customNames : [])
-          .filter((n): n is string => typeof n === "string")
-          .map((n) => n.trim().slice(0, 100))
-          .filter(Boolean),
-      ),
-    ].slice(0, 10),
+    picks,
+    customNames,
     terms: (Array.isArray(input.terms) ? input.terms : [])
       .filter((t) => typeof t?.term === "string" && typeof t?.meaning === "string")
       .slice(0, 6)
@@ -210,7 +166,7 @@ export async function saveLog(input: SaveInput): Promise<SaveResult> {
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, message: "로그인이 풀렸어요. 다시 로그인해 주세요." };
   const v = clean(input);
-  if (!v) return { ok: false, message: "글이 비었거나 너무 길어요." };
+  if (!v) return { ok: false, message: "기술을 고르거나 메모를 적어 주세요. 메모는 5000자까지예요." };
 
   const { chosen, error: findError } = await resolve(supabase, v.picks);
   if (findError) return fail("techniques", findError);
@@ -254,7 +210,7 @@ export async function updateLog(logId: string, input: SaveInput): Promise<SaveRe
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, message: "로그인이 풀렸어요. 다시 로그인해 주세요." };
   const v = clean(input);
-  if (!v) return { ok: false, message: "글이 비었거나 너무 길어요." };
+  if (!v) return { ok: false, message: "기술을 고르거나 메모를 적어 주세요. 메모는 5000자까지예요." };
   if (typeof logId !== "string") return { ok: false, message: "기록을 찾지 못했어요." };
 
   // 본인 기록인지(RLS 로 남의 기록은 안 보인다) + 지금 연결

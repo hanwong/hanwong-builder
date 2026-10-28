@@ -62,8 +62,8 @@
 | id | uuid | ✓ | 자동 | |
 | user_id | uuid → auth.users | ✓ | | 누구 것 |
 | logged_on | date | ✓ | 오늘(서울) | 수업 날짜. 서버에서 Asia/Seoul 로 계산해 넣음 |
-| body | text | ✓ | | 글 원문(음성 입력 포함). 상대 이름은 적지 말라고 화면에 안내 |
-| terms | jsonb | | `[]` | 용어 요약 `[{term, meaning}]` — AI 가 쓴 것, 읽기용 |
+| body | text | ✓ | | 오늘 메모(음성 입력 포함, 0~5000자). D-56 부터 선택 — 기술만 고르면 빈 글. 기술도 메모도 없으면 앱이 막음. 상대 이름은 적지 말라고 화면에 안내 |
+| terms | jsonb | | `[]` | 용어 요약 `[{term, meaning}]` — AI 가 쓴 것, 읽기용. D-56 뒤 새 기록은 비어 있음 |
 | ai_status | text | ✓ | `'none'` | `mock` · `ok` · `failed` · `none`(그냥 저장) |
 | created_at | timestamptz | ✓ | now() | |
 
