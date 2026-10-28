@@ -114,6 +114,7 @@ export async function searchTechniques(query: string): Promise<MatchedTechnique[
     nameKo: t.nameKo,
     nameEn: t.nameEn,
     position: t.position,
+    positionSlug: t.positionSlug,
     steps: t.steps,
     level: prev.get(t.slug) ?? "beginner",
     draft: t.draft,

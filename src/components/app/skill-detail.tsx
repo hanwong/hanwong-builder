@@ -12,6 +12,7 @@ import { BottomAction } from "@/components/app/bottom-action";
 import { LevelPicker } from "@/components/app/level-picker";
 import { YoutubeLink } from "@/components/app/youtube-link";
 import { SuggestEdit } from "@/components/app/suggest-edit";
+import { PositionPicture } from "@/components/app/position-picture";
 import { setLevel } from "@/app/app/skills/actions";
 import { formatKoreanDate } from "@/lib/seoul-date";
 import type { Level } from "@/lib/mock/log-seed";
@@ -51,17 +52,23 @@ export function SkillDetail({ skill }: { skill: Detail }) {
         >
           <ArrowLeft className="size-5" strokeWidth={1.75} />
         </Button>
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Badge variant="secondary">{skill.position}</Badge>
-          {skill.draft && <Badge variant="outline">검수 전</Badge>}
+        {/* 왼쪽 이름 · 오른쪽 포지션 그림(D-54) */}
+        <div className="flex items-start gap-3">
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Badge variant="secondary">{skill.position}</Badge>
+              {skill.draft && <Badge variant="outline">검수 전</Badge>}
+            </div>
+            <h1 className="text-[24px] font-bold tracking-tight">
+              <span className="mark-lime">{skill.nameKo}</span>
+            </h1>
+            <p className="text-[13px] font-medium text-muted-foreground">
+              {skill.nameEn}
+              {skill.aliases.length > 0 && ` · 다른 이름: ${skill.aliases.join(", ")}`}
+            </p>
+          </div>
+          <PositionPicture slug={skill.positionSlug} size={96} className="rounded-2xl" />
         </div>
-        <h1 className="text-[24px] font-bold tracking-tight">
-          <span className="mark-lime">{skill.nameKo}</span>
-        </h1>
-        <p className="text-[13px] font-medium text-muted-foreground">
-          {skill.nameEn}
-          {skill.aliases.length > 0 && ` · 다른 이름: ${skill.aliases.join(", ")}`}
-        </p>
       </header>
 
       {/* 세팅 과정 */}

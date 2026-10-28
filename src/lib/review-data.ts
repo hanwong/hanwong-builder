@@ -10,6 +10,7 @@ export type DueCard = {
   nameKo: string;
   nameEn: string;
   position: string;
+  positionSlug: string | null; // 포지션 그림(D-54)
   steps: string[];
   draft: boolean;
   lastNote: { loggedOn: string; text: string } | null; // 그 기술이 나온 내 최근 기록 한 줄
@@ -26,7 +27,7 @@ export async function getReviewData(): Promise<ReviewData> {
   const [due, later] = await Promise.all([
     supabase
       .from("review_cards")
-      .select("id, interval_step, technique_id, techniques(name_ko, name_en, steps, is_reviewed, positions(name_ko))")
+      .select("id, interval_step, technique_id, techniques(name_ko, name_en, steps, is_reviewed, positions(slug, name_ko))")
       .lte("due_on", today)
       .order("due_on")
       .order("created_at")
@@ -67,6 +68,7 @@ export async function getReviewData(): Promise<ReviewData> {
           nameKo: t.name_ko,
           nameEn: t.name_en,
           position: t.positions?.name_ko ?? "",
+          positionSlug: t.positions?.slug ?? null,
           steps: t.steps,
           draft: !t.is_reviewed,
           lastNote: notes.get(c.technique_id) ?? null,

@@ -14,6 +14,7 @@ import { organizeLog } from "@/app/app/log/actions";
 import { LevelPicker } from "@/components/app/level-picker";
 import { TechniqueAdder } from "@/components/app/technique-adder";
 import { YoutubeLink } from "@/components/app/youtube-link";
+import { PositionPicture } from "@/components/app/position-picture";
 import type { Level, MatchedTechnique, Term } from "@/lib/mock/log-seed";
 
 export type AiStatus = "ok" | "mock" | "none";
@@ -327,8 +328,9 @@ function TechniqueCard({
   return (
     <Card className="rounded-2xl ring-border">
       <CardContent className="flex flex-col gap-3">
-        <div className="flex items-start gap-2">
-          <div className="flex flex-col gap-1">
+        <div className="flex items-start gap-3">
+          <PositionPicture slug={t.positionSlug} size={64} />
+          <div className="flex min-w-0 flex-col gap-1">
             <span className="text-[17px] font-semibold">
               <span className="mark-lime">{t.nameKo}</span>
             </span>

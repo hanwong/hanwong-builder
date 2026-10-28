@@ -9,6 +9,7 @@ import { LEVELS } from "@/lib/mock/log-seed";
 import { HoverPrefetchLink } from "@/components/app/hover-prefetch-link";
 import type { PositionGroup } from "@/lib/skills-data";
 import { cn } from "@/lib/utils";
+import { PositionPicture } from "@/components/app/position-picture";
 
 const LEVEL_LABEL = new Map(LEVELS.map((l) => [l.value, l.label]));
 
@@ -61,7 +62,8 @@ export function SkillsList({ groups }: { groups: PositionGroup[] }) {
         <div className="flex flex-col divide-y divide-border overflow-hidden rounded-2xl bg-card ring-1 ring-border">
           {shown.map((g) => (
             <details key={g.slug} className="group">
-              <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+                <PositionPicture slug={g.slug} size={44} className="rounded-lg" />
                 <span className="text-[17px] font-semibold">{g.nameKo}</span>
                 <span className="ml-auto text-[13px] font-medium text-muted-foreground tabular-nums">
                   {!onlyLearned && g.learned > 0 ? `${g.learned}개 배움 · ` : ""}

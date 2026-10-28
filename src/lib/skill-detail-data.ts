@@ -10,6 +10,7 @@ export type SkillDetail = {
   nameEn: string;
   aliases: string[];
   position: string;
+  positionSlug: string | null; // 포지션 그림(D-54)
   steps: string[];
   draft: boolean;
   level: Level | null;
@@ -25,7 +26,7 @@ export async function getSkill(slug: string): Promise<SkillDetail | null> {
 
   const { data: t, error } = await supabase
     .from("techniques")
-    .select("id, slug, name_ko, name_en, aliases, steps, is_reviewed, positions(name_ko)")
+    .select("id, slug, name_ko, name_en, aliases, steps, is_reviewed, positions(slug, name_ko)")
     .eq("slug", slug)
     .maybeSingle();
   if (error) throw new Error(`skill: ${error.code ?? ""} ${error.message.slice(0, 80)}`);
@@ -56,6 +57,7 @@ export async function getSkill(slug: string): Promise<SkillDetail | null> {
     nameEn: t.name_en,
     aliases: t.aliases ?? [],
     position: t.positions?.name_ko ?? "",
+    positionSlug: t.positions?.slug ?? null,
     steps: t.steps,
     draft: !t.is_reviewed,
     level: (level.data?.level as Level | undefined) ?? null,

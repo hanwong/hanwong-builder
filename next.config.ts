@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/app/log/*/card": [
       "./node_modules/pretendard/dist/public/static/Pretendard-{Bold,Medium}.otf",
-      "./src/assets/positions/**/*",
+      "./public/positions/**/*",
     ],
   },
   turbopack: {

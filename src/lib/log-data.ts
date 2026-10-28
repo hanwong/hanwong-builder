@@ -22,7 +22,7 @@ export async function getLog(id: string): Promise<SavedLog | null> {
   const { data, error } = await supabase
     .from("class_logs")
     .select(
-      "id, logged_on, body, terms, ai_status, class_log_techniques(created_at, custom_name, technique_id, techniques(slug, name_ko, name_en, steps, is_reviewed, positions(name_ko)))",
+      "id, logged_on, body, terms, ai_status, class_log_techniques(created_at, custom_name, technique_id, techniques(slug, name_ko, name_en, steps, is_reviewed, positions(slug, name_ko)))",
     )
     .eq("id", id)
     .maybeSingle();
@@ -45,6 +45,7 @@ export async function getLog(id: string): Promise<SavedLog | null> {
         nameKo: t.name_ko,
         nameEn: t.name_en,
         position: t.positions?.name_ko ?? "",
+        positionSlug: t.positions?.slug,
         steps: t.steps,
         level: levelOf.get(l.technique_id) ?? "beginner",
         draft: !t.is_reviewed,

@@ -14,6 +14,7 @@ import { formatKoreanDate } from "@/lib/seoul-date";
 import { INTERVAL_DAYS, RATINGS, nextStep, type Rating } from "@/lib/review-rules";
 import type { DueCard } from "@/lib/review-data";
 import { cn } from "@/lib/utils";
+import { PositionPicture } from "@/components/app/position-picture";
 
 // 오늘 복습 (T-09, FLOW 4 · DESIGN 6) — 앞면(이름 · 포지션) → 뒤집기 → 뒷면(세팅 과정 · 내 최근 기록) → 4단계 답.
 export function ReviewSession({ cards, laterDue }: { cards: DueCard[]; laterDue: string | null }) {
@@ -79,6 +80,11 @@ export function ReviewSession({ cards, laterDue }: { cards: DueCard[]; laterDue:
       <Card className="min-h-[60vh] rounded-2xl ring-border">
         <CardContent className={cn("flex flex-1 flex-col gap-4", !flipped && "items-center justify-center text-center")}>
           <div className={cn("flex flex-col gap-1", !flipped && "items-center")}>
+            <PositionPicture
+              slug={card.positionSlug}
+              size={flipped ? 72 : 144}
+              className={cn("mb-2", !flipped && "rounded-2xl")}
+            />
             <span className="text-[13px] font-medium text-muted-foreground">{card.position}</span>
             <h2 className="text-[24px] font-bold tracking-tight">
               <span className="mark-lime">{card.nameKo}</span>

@@ -15,6 +15,7 @@ export type MatchedTechnique = {
   nameKo: string;
   nameEn: string;
   position: string;
+  positionSlug?: string; // 포지션 그림(public/positions/{slug}.png, D-54)
   steps: string[];
   level: Level;
   draft?: boolean; // 검수 전 초안(D-21) — 카드에 "검수 전" 표시

@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { formatKoreanDate } from "@/lib/seoul-date";
 
 // 기록 공유 이미지 카드 (D-51) — 폭 1080, 높이는 내용에 맞춘 PNG. 저장하지 않고 그때그때 만든다.
-// 포지션 그림(D-52)은 src/assets/positions/{slug}.png, 없으면 이름만.
+// 포지션 그림(D-52)은 public/positions/{slug}.png(앱 화면과 함께 씀, D-54), 없으면 이름만.
 const W = 1080;
 const PAD_X = 80;
 const MAX_TECHNIQUES = 4;
@@ -32,7 +32,7 @@ function picture(slug: string) {
   if (!/^[a-z0-9-]+$/.test(slug)) return Promise.resolve(null);
   let p = pictures.get(slug);
   if (!p) {
-    p = readFile(join(process.cwd(), "src/assets/positions", `${slug}.png`))
+    p = readFile(join(process.cwd(), "public/positions", `${slug}.png`))
       .then((b) => `data:image/png;base64,${b.toString("base64")}`)
       .catch(() => null);
     pictures.set(slug, p);

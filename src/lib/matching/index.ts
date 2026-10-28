@@ -34,6 +34,7 @@ export async function matchLog(
       nameKo: t.nameKo,
       nameEn: t.nameEn,
       position: t.position,
+      positionSlug: t.positionSlug,
       steps: t.steps,
       level: "beginner" as const, // 이전 숙련도 불러오기는 T-07 · T-08
       draft: t.draft,
