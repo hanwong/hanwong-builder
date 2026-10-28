@@ -42,10 +42,6 @@ export function ShareLog({ id, loggedOn }: { id: string; loggedOn: string }) {
 
   const canShare =
     !!card && typeof navigator !== "undefined" && !!navigator.canShare?.({ files: [card.file] });
-  // 아이폰 · 아이패드는 내려받으면 '파일' 앱으로 간다 — 공유 창의 '이미지 저장'이 사진 앱에 넣는다
-  const saveViaShare =
-    canShare &&
-    (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
 
   async function share() {
     if (!card) return;
@@ -106,33 +102,21 @@ export function ShareLog({ id, loggedOn }: { id: string; loggedOn: string }) {
             )}
           </div>
 
-          <div className="flex gap-2">
-            {card &&
-              (saveViaShare ? (
-                <Button variant="secondary" className="h-12 flex-1 rounded-full text-base shadow-none" onClick={share}>
-                  <Download data-icon="inline-start" aria-hidden />
-                  이미지 저장
-                </Button>
-              ) : (
-                <Button asChild variant={canShare ? "secondary" : "default"} className="h-12 flex-1 rounded-full text-base shadow-none">
-                  <a href={card.url} download={card.file.name}>
-                    <Download data-icon="inline-start" aria-hidden />
-                    이미지 저장
-                  </a>
-                </Button>
-              ))}
-            {canShare && (
-              <Button className="h-12 flex-[2] rounded-full text-base shadow-none" onClick={share}>
+          {/* 버튼 하나(D-53) — 휴대폰은 공유 창(인스타 · 카톡 · '이미지 저장'으로 사진 앱), 공유 창이 없는 컴퓨터는 내려받기 */}
+          {card &&
+            (canShare ? (
+              <Button className="h-12 w-full rounded-full text-base shadow-none" onClick={share}>
                 <Share2 data-icon="inline-start" aria-hidden />
                 공유하기
               </Button>
-            )}
-          </div>
-          {saveViaShare && (
-            <p className="text-center text-[13px] text-muted-foreground">
-              공유 창에서 &lsquo;이미지 저장&rsquo;을 누르면 사진 앱에 저장돼요.
-            </p>
-          )}
+            ) : (
+              <Button asChild className="h-12 w-full rounded-full text-base shadow-none">
+                <a href={card.url} download={card.file.name}>
+                  <Download data-icon="inline-start" aria-hidden />
+                  이미지 저장
+                </a>
+              </Button>
+            ))}
         </DialogContent>
       </Dialog>
     </>
