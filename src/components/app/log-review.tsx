@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { ArrowLeft, ChevronDown, FlaskConical, Loader2, PencilLine, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -39,11 +39,13 @@ type Props = {
   onSave: (value: ReviewValue) => Promise<void>;
   // 저장한 기록만 — 지우기 (D-26). 한 번 더 확인한 뒤 부른다
   onDelete?: () => Promise<void>;
+  // 저장한 기록만 — 제목 줄 오른쪽 끝(공유, D-51)
+  headerAction?: ReactNode;
 };
 
 // 정리 완료 화면(상태 C) — 새 기록(/app/log)과 저장한 기록 고치기(/app/log/[id], D-25)가 함께 쓴다.
 // 글은 "글 고치기"로 그 자리에서 고치고, "다시 정리하기"를 누를 때만 기술 · 용어를 다시 찾는다(Claude 비용).
-export function LogReview({ initial, onBack, saveLabel = "저장", onSave, onDelete }: Props) {
+export function LogReview({ initial, onBack, saveLabel = "저장", onSave, onDelete, headerAction }: Props) {
   const [body, setBody] = useState(initial.body);
   const [editing, setEditing] = useState<string | null>(null); // 고치는 중인 글
   const [techniques, setTechniques] = useState(initial.techniques);
@@ -100,6 +102,7 @@ export function LogReview({ initial, onBack, saveLabel = "저장", onSave, onDel
         <span className="ml-auto text-[13px] font-medium text-muted-foreground">
           {initial.loggedOn}
         </span>
+        {headerAction}
       </header>
 
       {/* 내가 쓴 글 — 그 자리에서 고치기 (D-25) */}

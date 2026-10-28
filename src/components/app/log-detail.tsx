@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { LogReview } from "@/components/app/log-review";
+import { ShareLog } from "@/components/app/share-log";
 import { deleteLog, updateLog } from "@/app/app/log/actions";
 import { formatKoreanDate } from "@/lib/seoul-date";
 import type { SavedLog } from "@/lib/log-data";
@@ -17,6 +18,7 @@ export function LogDetail({ log }: { log: SavedLog }) {
       initial={{ ...log, loggedOn: formatKoreanDate(log.loggedOn) }}
       saveLabel="고친 내용 저장"
       onBack={goBack}
+      headerAction={<ShareLog id={log.id} loggedOn={log.loggedOn} />}
       onSave={async (value) => {
         const res = await updateLog(log.id, {
           loggedOn: log.loggedOn,

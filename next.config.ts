@@ -17,6 +17,13 @@ const nextConfig: NextConfig = {
     ];
   },
   partialPrefetching: true,
+  // 기록 공유 이미지(D-51) — 서버에서 읽는 글꼴 · 포지션 그림을 배포 묶음에 넣는다
+  outputFileTracingIncludes: {
+    "/app/log/*/card": [
+      "./node_modules/pretendard/dist/public/static/Pretendard-{Bold,Medium}.otf",
+      "./src/assets/positions/**/*",
+    ],
+  },
   turbopack: {
     rules: {
       "*.css": {
