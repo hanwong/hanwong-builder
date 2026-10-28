@@ -3,14 +3,15 @@
 import { useState, useSyncExternalStore, useTransition } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Check, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { finishOnboarding } from "@/app/app/actions";
 import { StartMonthPicker } from "@/components/app/start-month-picker";
-import { BELTS, BELT_WHITE_EDGE, trainingSpan, type Belt } from "@/lib/belt";
+import { BeltChoice } from "@/components/app/belt-choice";
+import { trainingSpan, type Belt } from "@/lib/belt";
 import { seoulToday } from "@/lib/seoul-date";
 import { cn } from "@/lib/utils";
 
@@ -56,36 +57,7 @@ export function StartForm() {
             <span id="belt-label" className="text-[15px] font-semibold">
               지금 벨트
             </span>
-            <div role="radiogroup" aria-labelledby="belt-label" className="grid grid-cols-5 gap-2">
-              {BELTS.map((b) => {
-                const on = b.value === belt;
-                return (
-                  <button
-                    key={b.value}
-                    type="button"
-                    role="radio"
-                    aria-checked={on}
-                    onClick={() => setBelt(b.value)}
-                    className={cn(
-                      "flex flex-col items-center gap-1.5 rounded-xl py-2 text-[13px] font-medium ring-1 transition-colors",
-                      on ? "bg-accent text-accent-foreground ring-foreground" : "ring-border hover:bg-muted",
-                    )}
-                  >
-                    <span
-                      className="flex h-3 w-9 items-center justify-center rounded-[2px]"
-                      style={{
-                        backgroundColor: b.color,
-                        boxShadow: b.value === "white" ? `0 0 0 1px ${BELT_WHITE_EDGE}` : undefined,
-                      }}
-                      aria-hidden
-                    >
-                      {on && <Check className={cn("size-3", b.value === "white" ? "text-foreground" : "text-white")} strokeWidth={3} />}
-                    </span>
-                    {b.label}
-                  </button>
-                );
-              })}
-            </div>
+            <BeltChoice value={belt} onChange={setBelt} labelledBy="belt-label" />
           </div>
 
           <div className="flex flex-col gap-2">
