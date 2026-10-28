@@ -248,14 +248,14 @@ export async function approveDraft(id: string, edit: DraftEdit): Promise<AdminRe
 
   const { data, error } = await supabase.rpc("approve_technique_draft", {
     p_draft: id,
-    p_due: addDays(seoulToday(), 1), // 새 카드는 내일 복습(D-09)
+    p_due: addDays(seoulToday(), 1), // 함수 호환용 — D-58 로 카드를 만들지 않아 쓰이지 않는다
   });
   if (error) {
     console.error("approve failed:", error.code ?? "", (error.message ?? "").slice(0, 120));
     return { ok: false, message: error.code === "23505" ? "같은 영문 키의 기술이 이미 있어요." : "승인하지 못했어요." };
   }
   forgetLibrary(); // 이 서버의 검색 · 정리하기는 바로, 다른 서버는 5분 안에
-  revalidatePath("/app", "layout"); // 연결된 사람들의 홈 · 기록 · 내 기술 · 복습이 바뀐다
+  revalidatePath("/app", "layout"); // 연결된 사람들의 홈 · 기록 · 내 기술이 바뀐다
   const r = (data ?? {}) as { logs?: number; users?: number };
   return {
     ok: true,
@@ -292,7 +292,7 @@ export async function approveSuggestion(id: string, steps: string[], aliases: st
     return { ok: false, message: "승인하지 못했어요 — 이미 처리됐을 수 있어요." };
   }
   forgetLibrary(); // 다른 이름이 바뀌면 검색 · 정리하기 목록도 바뀐다
-  revalidatePath("/app", "layout"); // 기술 상세 · 복습 뒷면 · 보낸 사람 홈 알림
+  revalidatePath("/app", "layout"); // 기술 상세 · 보낸 사람 홈 알림
   const added = (data as { aliases_added?: number } | null)?.aliases_added ?? 0;
   return { ok: true, message: added ? `반영했어요(다른 이름 ${added}개 추가).` : "반영했어요." };
 }

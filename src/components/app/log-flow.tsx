@@ -46,13 +46,7 @@ export function LogFlow() {
           toast.error(res?.message ?? "저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
           return;
         }
-        toast.success(
-          res.newCards > 0
-            ? `복습 카드 ${res.newCards}장 생겼어요. 내일부터 물어볼게요`
-            : res.linked > 0
-              ? "기록을 저장했어요. 이미 있던 복습 카드는 그대로예요"
-              : "기록을 저장했어요",
-        );
+        toast.success("기록을 저장했어요");
         router.push("/app");
         // 홈으로 간 뒤에도 이 화면 상태가 남아 있다(Next 가 지나간 화면을 숨겨 보관) — 다음 기록은 빈 화면부터
         setRound((r) => r + 1);

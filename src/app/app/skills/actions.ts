@@ -8,7 +8,7 @@ export type LevelResult = { ok: true } | { ok: false; message: string };
 
 const LEVEL_VALUES = new Set(LEVELS.map((l) => l.value));
 
-// 기술 상세에서 숙련도 저장 — 하단 "숙련도 저장"을 누르면 (T-10b, D-06 · D-27). 숙련도만 바꾸고 복습 카드는 만들지 않는다.
+// 기술 상세에서 숙련도 저장 — 하단 "숙련도 저장"을 누르면 (T-10b, D-06 · D-27). 숙련도만 바꾼다.
 export async function setLevel(slug: string, level: Level): Promise<LevelResult> {
   const supabase = await createSupabaseServer();
   const {

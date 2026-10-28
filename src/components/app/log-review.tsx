@@ -187,7 +187,7 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
           ) : (
             <>
               <p className="text-[15px] font-medium">
-                이 기록을 지울까요? 되돌릴 수 없어요. 이 기록에만 있던 기술의 복습 전 카드도 같이 지워져요.
+                이 기록을 지울까요? 되돌릴 수 없어요.
               </p>
               <div className="flex gap-2">
                 <Button

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { HomeSections, HomeSkeleton } from "@/components/app/home-sections";
 import { HomeNotices } from "@/components/app/home-notices";
 
-// 홈 (T-21, FLOW 3): ⓪ 알림(있을 때만, D-47) ① 기록하기 버튼(D-08) ② 오늘 복습 ③ 최근 기록 ④ 하단 탭(레이아웃).
+// 홈 (T-21, FLOW 3): ⓪ 알림(있을 때만, D-47) ① 기록하기 버튼(D-08) ② 수련 벨트 ③ 최근 기록(오늘 복습은 D-58 로 뺌) ④ 하단 탭(레이아웃).
 // ② · ③ 은 로그인한 사람 데이터라 요청 때 읽는다 — 그동안 스켈레톤.
 export default function AppHome() {
   return (

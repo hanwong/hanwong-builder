@@ -8,7 +8,7 @@ import { exactMatch, searchLibrary, searchList } from "@/lib/matching/search";
 import { draftNames } from "@/lib/admin/drafter";
 import { MAX_BODY } from "@/lib/log-limits";
 import { LEVELS, type Level, type MatchedTechnique, type Term } from "@/lib/mock/log-seed";
-import { addDays, isIsoDate, seoulToday } from "@/lib/seoul-date";
+import { isIsoDate, seoulToday } from "@/lib/seoul-date";
 
 // 기록 화면 — 기술을 먼저 고르고 오늘 메모(D-56). AI 정리하기는 없앴다.
 // 목록 밖 이름은 사용자가 '내용 생성'으로 AI 기술 카드를 만들 수 있다 — 만든 사람만 보고, 운영자 승인 뒤 공용(D-57).
@@ -192,7 +192,7 @@ export type SaveInput = {
   terms: Term[];
 };
 
-export type SaveResult = { ok: true; newCards: number; linked: number } | { ok: false; message: string };
+export type SaveResult = { ok: true; linked: number } | { ok: false; message: string };
 
 type Supabase = Awaited<ReturnType<typeof createSupabaseServer>>;
 type DbError = { code?: string; message?: string } | null;
@@ -241,23 +241,15 @@ async function resolve(supabase: Supabase, picks: { slug: string; level: Level }
   return { chosen: [...new Map(chosen.map((c) => [c.id, c])).values()], error };
 }
 
-// 숙련도(기술마다 1줄, 이번 값으로) + 복습 카드(기술당 1장, 이미 있으면 그대로 — 간격 단계 · 복습일 유지)
-async function levelsAndCards(supabase: Supabase, userId: string, chosen: Chosen[], today: string) {
-  if (!chosen.length) return { newCards: 0, error: null as DbError, step: "" };
+// 숙련도(기술마다 1줄, 이번 값으로). 복습 카드는 D-58 로 더 만들지 않는다(쌓인 카드는 DB 에 보관만)
+async function saveLevels(supabase: Supabase, userId: string, chosen: Chosen[]) {
+  if (!chosen.length) return { error: null as DbError, step: "" };
   const now = new Date().toISOString();
-  const { error: levelError } = await supabase.from("technique_levels").upsert(
+  const { error } = await supabase.from("technique_levels").upsert(
     chosen.map((c) => ({ user_id: userId, technique_id: c.id, level: c.level, updated_at: now })),
     { onConflict: "user_id,technique_id" },
   );
-  if (levelError) return { newCards: 0, error: levelError as DbError, step: "technique_levels" };
-  const { data, error } = await supabase
-    .from("review_cards")
-    .upsert(
-      chosen.map((c) => ({ user_id: userId, technique_id: c.id, interval_step: 0, due_on: addDays(today, 1) })),
-      { onConflict: "user_id,technique_id", ignoreDuplicates: true },
-    )
-    .select("id");
-  return { newCards: data?.length ?? 0, error: error as DbError, step: "review_cards" };
+  return { error: error as DbError, step: "technique_levels" };
 }
 
 function links(userId: string, logId: string, chosen: Chosen[], customNames: string[]) {
@@ -267,7 +259,7 @@ function links(userId: string, logId: string, chosen: Chosen[], customNames: str
   ];
 }
 
-// "저장" — 기록 1건 + 기술 연결 + 숙련도 + 복습 카드(기술당 1장, 다음 복습 = 내일 서울) (T-08 · DB.md · D-09)
+// "저장" — 기록 1건 + 기술 연결 + 숙련도 (T-08 · DB.md, 복습 카드는 D-58 로 뺌)
 export async function saveLog(input: SaveInput): Promise<SaveResult> {
   const supabase = await createSupabaseServer();
   const {
@@ -302,16 +294,16 @@ export async function saveLog(input: SaveInput): Promise<SaveResult> {
     if (error) return undo("class_log_techniques", error);
   }
 
-  // 3) 숙련도 · 4) 복습 카드
-  const r = await levelsAndCards(supabase, user.id, chosen, v.today);
+  // 3) 숙련도
+  const r = await saveLevels(supabase, user.id, chosen);
   if (r.error) return undo(r.step, r.error);
 
-  revalidatePath("/app", "layout"); // /app 아래 화면 전부(홈 · 복습 · 내 기술 · 기록) 미리 불러온 내용까지 새로
-  return { ok: true, newCards: r.newCards, linked: chosen.length };
+  revalidatePath("/app", "layout"); // /app 아래 화면 전부(홈 · 내 기술 · 기록) 미리 불러온 내용까지 새로
+  return { ok: true, linked: chosen.length };
 }
 
 // 저장한 기록 고치기 (D-25) — 글 · 용어 · 기술 연결 · 숙련도. 날짜는 그대로.
-// 새로 들어온 기술은 카드를 만들고, 뺀 기술이 다른 기록에도 없고 한 번도 복습 안 한 카드면 카드 · 숙련도를 지운다.
+// 새로 들어온 기술은 숙련도를 쓰고, 뺀 기술이 다른 기록에도 없으면 숙련도를 지운다.
 export async function updateLog(logId: string, input: SaveInput): Promise<SaveResult> {
   const supabase = await createSupabaseServer();
   const {
@@ -354,7 +346,7 @@ export async function updateLog(logId: string, input: SaveInput): Promise<SaveRe
     }
   }
 
-  const r = await levelsAndCards(supabase, user.id, chosen, v.today);
+  const r = await saveLevels(supabase, user.id, chosen);
   if (r.error) return fail(r.step, r.error);
 
   // 뺀 기술 정리
@@ -364,11 +356,11 @@ export async function updateLog(logId: string, input: SaveInput): Promise<SaveRe
     before.map((b) => b.technique_id).filter((id): id is string => !!id && !now.has(id)),
   );
 
-  revalidatePath("/app", "layout"); // /app 아래 화면 전부(홈 · 복습 · 내 기술 · 기록) 미리 불러온 내용까지 새로
-  return { ok: true, newCards: r.newCards, linked: chosen.length };
+  revalidatePath("/app", "layout"); // /app 아래 화면 전부(홈 · 내 기술 · 기록) 미리 불러온 내용까지 새로
+  return { ok: true, linked: chosen.length };
 }
 
-// 기록에서 빠진 기술 정리 (D-25 · D-26) — 다른 기록에도 없고, 카드를 아직 한 번도 안 풀었을 때만 카드 · 숙련도를 지운다.
+// 기록에서 빠진 기술 정리 (D-25 · D-26) — 다른 기록에도 없는 기술의 숙련도를 지운다. 복습 카드는 건드리지 않는다(D-58, 보관).
 // RLS 로 본인 것만 지워진다. 실패해도 기록 저장 · 삭제는 이미 끝났으므로 결과를 막지 않는다.
 async function dropOrphans(supabase: Supabase, techniqueIds: string[]) {
   if (!techniqueIds.length) return;
@@ -377,17 +369,8 @@ async function dropOrphans(supabase: Supabase, techniqueIds: string[]) {
     .select("technique_id")
     .in("technique_id", techniqueIds);
   const stillUsed = new Set((still ?? []).map((x) => x.technique_id));
-  const orphan = techniqueIds.filter((id) => !stillUsed.has(id));
-  if (!orphan.length) return;
-  const { data: reviewed } = await supabase
-    .from("review_cards")
-    .select("technique_id")
-    .in("technique_id", orphan)
-    .gt("reviews_count", 0);
-  const keep = new Set((reviewed ?? []).map((x) => x.technique_id));
-  const drop = orphan.filter((id) => !keep.has(id));
+  const drop = techniqueIds.filter((id) => !stillUsed.has(id));
   if (!drop.length) return;
-  await supabase.from("review_cards").delete().in("technique_id", drop);
   await supabase.from("technique_levels").delete().in("technique_id", drop);
 }
 
@@ -419,7 +402,7 @@ export async function deleteLog(logId: string): Promise<DeleteResult> {
     log.class_log_techniques.map((l) => l.technique_id).filter((id): id is string => !!id),
   );
 
-  revalidatePath("/app", "layout"); // /app 아래 화면 전부(홈 · 복습 · 내 기술 · 기록) 미리 불러온 내용까지 새로
+  revalidatePath("/app", "layout"); // /app 아래 화면 전부(홈 · 내 기술 · 기록) 미리 불러온 내용까지 새로
   return { ok: true };
 }
 

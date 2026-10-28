@@ -17,7 +17,7 @@ export default function LoginPage() {
             <Image src="/logo.png" alt="" width={48} height={48} className="rounded-xl" priority />
             <span className="text-[22px] font-bold tracking-tight">Re:Re:롤</span>
             <p className="text-[15px] leading-relaxed text-muted-foreground">
-              오늘 배운 주짓수, 잊지 않게. 기록과 복습 카드는 본인만 볼 수 있어요.
+              오늘 배운 주짓수, 잊지 않게. 기록과 내 기술 목록은 본인만 볼 수 있어요.
             </p>
           </div>
           <Suspense fallback={<div className="h-12 rounded-full bg-muted" aria-hidden />}>

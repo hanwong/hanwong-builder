@@ -3,7 +3,7 @@ import { cacheLife } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { mineOf, type Level } from "@/lib/mock/log-seed";
 
-// 기술 상세 (T-10b) — 기술 내용(공용) + 내 숙련도 · 복습 상태 · 그 기술이 나온 내 기록(본인 것만, RLS).
+// 기술 상세 (T-10b) — 기술 내용(공용) + 내 숙련도 · 그 기술이 나온 내 기록(본인 것만, RLS). 복습 상태는 D-58 로 뺌.
 export type SkillDetail = {
   slug: string;
   nameKo: string;
@@ -15,7 +15,6 @@ export type SkillDetail = {
   draft: boolean;
   mine?: "pending" | "rejected"; // 내가 만든 기술(D-57)
   level: Level | null;
-  card: { dueOn: string; reviews: number } | null;
   logs: { id: string; loggedOn: string; body: string }[]; // 날짜 최신순
   suggestionPending: boolean; // 내 보완 제안이 확인 대기 중(D-50)
 };
@@ -33,9 +32,8 @@ export async function getSkill(slug: string): Promise<SkillDetail | null> {
   if (error) throw new Error(`skill: ${error.code ?? ""} ${error.message.slice(0, 80)}`);
   if (!t) return null;
 
-  const [level, card, links, suggestion] = await Promise.all([
+  const [level, links, suggestion] = await Promise.all([
     supabase.from("technique_levels").select("level").eq("technique_id", t.id).maybeSingle(),
-    supabase.from("review_cards").select("due_on, reviews_count").eq("technique_id", t.id).maybeSingle(),
     supabase.from("class_log_techniques").select("class_logs(id, logged_on, body, created_at)").eq("technique_id", t.id),
     supabase
       .from("technique_suggestions")
@@ -43,7 +41,7 @@ export async function getSkill(slug: string): Promise<SkillDetail | null> {
       .eq("technique_id", t.id)
       .eq("status", "pending"),
   ]);
-  const err = level.error ?? card.error ?? links.error;
+  const err = level.error ?? links.error;
   if (err) throw new Error(`skill mine: ${err.code ?? ""} ${err.message.slice(0, 80)}`);
 
   const logs = (links.data ?? [])
@@ -63,7 +61,6 @@ export async function getSkill(slug: string): Promise<SkillDetail | null> {
     draft: !t.is_reviewed,
     mine: mineOf(t.owner_id, t.owner_status),
     level: (level.data?.level as Level | undefined) ?? null,
-    card: card.data ? { dueOn: card.data.due_on, reviews: card.data.reviews_count } : null,
     logs,
     suggestionPending: (suggestion.count ?? 0) > 0,
   };

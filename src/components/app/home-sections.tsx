@@ -1,15 +1,11 @@
 import Link from "next/link";
-import { Layers } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatKoreanDate } from "@/lib/seoul-date";
 import { getHomeData, type HomeData } from "@/lib/home-data";
 import { LogList } from "@/components/app/log-list";
 import { TrainingBelt } from "@/components/app/training-belt";
 import { cookies } from "next/headers";
 
-// 홈 ② 오늘 복습 · ③ 최근 기록 (FLOW 3 · DESIGN 6). 로그인 쿠키를 읽으므로 page 에서 Suspense 로 감싼다.
+// 홈 ② 수련 벨트 · ③ 최근 기록 (FLOW 3 · DESIGN 6, 오늘 복습은 D-58 로 뺌). 로그인 쿠키를 읽으므로 page 에서 Suspense 로 감싼다.
 export async function HomeSections() {
   // 쿠키 읽기는 try 밖에서 — 미리 만들기(prerender) 중에 Next 가 보내는 "요청 때까지 기다려" 신호를
   // 오류로 잡아 버리면 홈이 "불러오지 못했어요" 로 굳는다
@@ -33,40 +29,12 @@ export async function HomeSections() {
 }
 
 export function HomeView({ data }: { data: HomeData }) {
-  const { dueToday, totalCards, nextDue, recent, weeks, belt } = data;
+  const { recent, weeks, belt } = data;
 
   return (
     <>
       {/* ② 수련 벨트 (D-33) */}
       <TrainingBelt weeks={weeks} belt={belt} />
-
-      {/* ② 오늘 복습 */}
-      <Card className="rounded-2xl ring-border">
-        <CardContent className="flex flex-col gap-3">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-[17px] font-semibold">오늘 복습</h2>
-            <span className="text-[22px] font-bold tabular-nums">
-              {dueToday > 0 ? <span className="mark-lime">{dueToday}장</span> : "0장"}
-            </span>
-          </div>
-          {dueToday > 0 ? (
-            <Button asChild variant="secondary" className="h-11 w-full rounded-full text-[15px]">
-              <Link href="/app/review">
-                <Layers data-icon="inline-start" aria-hidden />
-                복습 시작
-              </Link>
-            </Button>
-          ) : (
-            <p className="text-[15px] leading-relaxed text-muted-foreground">
-              {totalCards === 0
-                ? "아직 카드가 없어요. 오늘 배운 걸 기록하면 내일부터 물어볼게요."
-                : nextDue
-                  ? `오늘 복습할 카드가 없어요. 다음 복습은 ${formatKoreanDate(nextDue)}이에요.`
-                  : "오늘 복습할 카드가 없어요."}
-            </p>
-          )}
-        </CardContent>
-      </Card>
 
       {/* ③ 최근 기록 */}
       <section className="flex flex-col gap-3">
@@ -93,13 +61,6 @@ export function HomeSkeleton() {
   return (
     <div className="flex flex-col gap-5" aria-busy="true">
       <Skeleton className="h-14 w-full rounded-[3px]" />
-      <div className="flex flex-col gap-3 rounded-2xl bg-card p-4 ring-1 ring-border">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="h-7 w-12" />
-        </div>
-        <Skeleton className="h-11 w-full rounded-full" />
-      </div>
       <div className="flex flex-col gap-3">
         <Skeleton className="h-5 w-20" />
         {[0, 1, 2].map((i) => (

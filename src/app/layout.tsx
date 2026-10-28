@@ -12,7 +12,7 @@ const pretendard = localFont({
 
 const title = "Re:Re:롤 — 오늘 배운 주짓수, 잊지 않게 해줄게요";
 const description =
-  "기술 이름을 몰라도 돼요. 수업에서 배운 걸 말하면 리리롤이 이름과 세팅 과정을 찾아 주고, 잊을 때쯤 복습 카드로 다시 물어봐요. 기록은 무제한 무료.";
+  "기술 이름을 몰라도 돼요. 포지션 그림을 눌러 오늘 배운 기술을 고르면 리리롤이 이름과 세팅 과정을 붙여 주고, 내 기술 목록에 숙련도와 함께 쌓아 둬요. 기록은 무제한 무료.";
 
 // 카톡 · 인스타 미리보기(T-11): 제목 · 설명 · 주소 + 이미지(src/app/opengraph-image.png, 로고 카드). 아이콘은 src/app/icon.png
 export const metadata: Metadata = {

@@ -55,7 +55,7 @@
 | 랜딩 큰 제목 | 36~56px / 800 / -0.02em | `text-4xl md:text-6xl font-extrabold tracking-tight` | 히어로 |
 
 - 강조 단어(기술 이름)는 `.mark-lime` — 라임 형광 밑줄(글자색은 그대로 먹색).
-- 숫자(복습 3장, 2/7)는 같은 글꼴, `tabular-nums`.
+- 숫자(기술 2개, 2/7)는 같은 글꼴, `tabular-nums`.
 - 한국어 줄바꿈: `word-break: keep-all`(body 전역).
 
 ## 4. 부품 규칙 (shadcn + lucide-react)
@@ -69,11 +69,11 @@
 | 입력칸 `Textarea` / `Input` | 흰 바탕 · 연한 선 · `rounded-xl` · 16px 글자(iOS 확대 방지) | 포커스 = 라임 링. 글상자 높이 휴대폰 화면 40% |
 | 아이콘 | lucide 20px, 선 굵기 1.75, 항상 글자 옆에 | 아이콘만 있는 버튼 금지(탭바 제외, 탭바는 아이콘 + 글자) |
 | 배지 "연습용 예시" | `variant="secondary"` + `FlaskConical` 아이콘 | AI 키 없이 mock 일 때 목록 제목 옆 |
-| 토스트 `sonner` | 라이트 테마, 아래 중앙 | "복습 카드 2장 생겼어요" |
-| 하단 탭 | 4개(홈 `House` · 기록 `PenLine` · 복습 `Layers` · 내 기술 `Map`) · 선택 = 먹색, 나머지 = muted | 휴대폰 고정, 데스크톱은 가운데 폭 `max-w-md` |
+| 토스트 `sonner` | 라이트 테마, 아래 중앙 | "기록을 저장했어요" |
+| 하단 탭 | 3개(홈 `House` · 기록 `PenLine` · 내 기술 `Map`, 복습 탭은 D-58 로 뺌) · 선택 = 먹색, 나머지 = muted | 휴대폰 고정, 데스크톱은 가운데 폭 `max-w-md` |
 | 마이크 버튼 | 원형 48px `rounded-full`, 글상자 안 오른쪽 아래. 평소 `secondary` + `Mic`, 듣는 중 `bg-accent` + "듣는 중…" 캡션, 멈춤 `MicOff` | 화면의 라임 한 군데 = 듣는 중 상태. 이 화면에선 라임 포인트를 여기만 쓴다 |
 | 접기 | 카드 안 "세팅 과정 4줄" 줄 + `ChevronDown`, 누르면 펼침 | 기본 접힘 |
-| 빈 상태 | 아이콘 1개 + 한 줄 + 버튼 하나 | "오늘 복습할 카드가 없어요" |
+| 빈 상태 | 아이콘 1개 + 한 줄 + 버튼 하나 | "아직 기록이 없어요. 첫 수업을 기록해 보세요" |
 | 로딩 | `Skeleton` 카드 자리 | 글자 없음 |
 
 ## 5. 화면별 적용 (FLOW.md 순서)

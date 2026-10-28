@@ -10,9 +10,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { FlaskConical, Layers, ListChecks, PenLine } from "lucide-react";
+import { ListChecks, Map, Shapes } from "lucide-react";
 
-// 랜딩 문구 — PLAN.md(M1) 와 같게. 서비스명 표기: 로고 Re:Re:롤, 본문 리리롤 (D-16)
+// 랜딩 문구 — PLAN.md 와 같게(D-56 기술 먼저 고르기, D-58 복습 뺌). 서비스명 표기: 로고 Re:Re:롤, 본문 리리롤 (D-16)
 
 const pains = [
   "배운 기술의 이름과 세팅 순서를 다음 주면 잊어요",
@@ -22,25 +22,25 @@ const pains = [
 
 const steps = [
   {
-    Icon: PenLine,
-    title: "수업 끝나고 오늘 배운 걸 아는 대로 적어요",
-    desc: "이름을 몰라도, 순서가 틀려도 괜찮아요. 마이크 버튼으로 말해도 돼요.",
+    Icon: Shapes,
+    title: "수업 끝나고 포지션 그림을 눌러 오늘 배운 기술을 골라요",
+    desc: "이름을 몰라도 그림으로 찾아요. 목록에 없으면 이름만 적어도 기록돼요.",
   },
   {
     Icon: ListChecks,
-    title: "리리롤이 글에서 기술을 찾아 목록으로 보여 줘요",
-    desc: "이름 · 포지션 · 세팅 과정이 따라와요. 내 숙련도만 골라 두면 끝.",
+    title: "기술마다 이름 · 포지션 · 세팅 과정이 따라와요",
+    desc: "내 숙련도만 골라 두고, 느낀 점은 메모 한 칸에. 마이크로 말해도 돼요.",
   },
   {
-    Icon: Layers,
-    title: "잊을 때쯤 복습 카드로 다시 물어봐요",
-    desc: "다음 수업 전에 카드 몇 장. 기억나면 간격이 길어지고, 까먹으면 처음부터.",
+    Icon: Map,
+    title: "내 기술 목록에 숙련도와 함께 쌓여요",
+    desc: "포지션별로 배운 기술이 한눈에. 오늘 기록은 이미지로 만들어 공유할 수 있어요.",
   },
 ];
 
 const differences = [
-  "일지 앱은 빈 칸을 주지만, 리리롤은 기술 이름과 세팅 과정을 찾아서 채워 줘요",
-  "이름을 몰라도 기록돼요. 기록하면 복습 카드가 저절로 생겨요",
+  "일지 앱은 빈 칸을 주지만, 리리롤은 기술 이름과 세팅 과정을 채워 줘요",
+  "이름을 몰라도 포지션 그림으로 골라요. 목록에 없는 기술은 이름만 적어도 기록돼요",
   "기록은 무제한 무료예요. 돈은 기록이 쌓인 뒤의 정리 · 리포트에서만 받아요",
 ];
 
@@ -56,30 +56,28 @@ function Divider() {
   );
 }
 
-// 예시 화면: 기록 → 언급된 기술 → 복습 카드 (M1 흐름 그대로)
+// 예시 화면: 오늘 배운 것 — 고른 기술(포지션 그림 · 세팅 과정 · 숙련도) + 메모 (D-56 흐름)
 function ExampleScreen() {
   return (
     <div className="reveal space-y-3">
       <p className="text-[13px] font-medium text-muted-foreground">예시 화면 · 오늘 배운 것</p>
-      <Card className="rounded-2xl ring-border">
-        <CardContent className="text-[15px] leading-relaxed">
-          상대 다리에 내 다리 감고 발목 잡는 가드 배웠고, 스파링에서는 니슬라이스에 계속 패스 당함.
-        </CardContent>
-      </Card>
-      <div className="flex items-center gap-2">
-        <span className="text-[15px] font-semibold">언급된 기술</span>
-        <Badge variant="secondary">
-          <FlaskConical data-icon="inline-start" aria-hidden />
-          연습용 예시
-        </Badge>
-      </div>
+      <span className="block text-[15px] font-semibold">배운 기술</span>
       <Card className="rounded-2xl ring-border" size="sm">
         <CardContent className="space-y-2">
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-[17px] font-semibold">
-              <span className="mark-lime">데라히바 가드</span>
-            </span>
-            <span className="text-[13px] font-medium text-muted-foreground">오픈 가드</span>
+          <div className="flex items-start gap-3">
+            <Image
+              src="/positions/de-la-riva.png"
+              alt=""
+              width={56}
+              height={56}
+              className="shrink-0 rounded-xl bg-[#FAF9F4] ring-1 ring-border"
+            />
+            <div className="min-w-0">
+              <span className="block text-[17px] font-semibold">
+                <span className="mark-lime">데라히바 가드</span>
+              </span>
+              <span className="text-[13px] font-medium text-muted-foreground">De La Riva Guard · 오픈 가드</span>
+            </div>
           </div>
           <ol className="list-decimal space-y-1 pl-5 text-[14px] leading-relaxed text-muted-foreground">
             <li>상대 한쪽 다리 바깥으로 내 다리를 감아 발을 골반 앞에 건다</li>
@@ -95,18 +93,25 @@ function ExampleScreen() {
         </CardContent>
       </Card>
       <Card className="rounded-2xl ring-border" size="sm">
-        <CardContent className="flex items-center justify-between gap-2">
-          <span className="text-[15px]">
+        <CardContent className="flex items-center gap-3">
+          <Image
+            src="/positions/passing.png"
+            alt=""
+            width={40}
+            height={40}
+            className="shrink-0 rounded-lg bg-[#FAF9F4] ring-1 ring-border"
+          />
+          <span className="min-w-0 flex-1 text-[15px]">
             <span className="mark-lime">니슬라이스 패스</span>
             <span className="ml-2 text-[13px] text-muted-foreground">패스</span>
           </span>
           <Badge variant="outline">초보</Badge>
         </CardContent>
       </Card>
-      <Card className="rounded-2xl bg-secondary ring-border" size="sm">
-        <CardContent className="flex items-center gap-2 text-[14px]">
-          <Layers className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
-          저장하면 복습 카드 2장이 생겨요. 내일부터 물어볼게요
+      <span className="block pt-1 text-[15px] font-semibold">오늘 메모</span>
+      <Card className="rounded-2xl ring-border" size="sm">
+        <CardContent className="text-[15px] leading-relaxed">
+          발목 그립을 놓치면 바로 무너짐. 스파링에서는 니슬라이스에 계속 패스 당함.
         </CardContent>
       </Card>
     </div>
@@ -128,9 +133,9 @@ export default function Home() {
             오늘 배운 주짓수, 잊지 않게 해줄게요
           </h1>
           <p className="max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
-            기술 이름을 몰라도 돼요. 수업에서 배운 걸 말하면 Re:Re:롤(리리롤)이 이름과 세팅 과정을
-            찾아 주고, 잊을 때쯤 복습 카드로 다시 물어봐요. 화이트 벨트부터 블루 초반까지, 다음
-            수업 전에 카드 몇 장이면 돼요.
+            기술 이름을 몰라도 돼요. 포지션 그림을 눌러 오늘 배운 기술을 고르면 Re:Re:롤(리리롤)이
+            이름과 세팅 과정을 붙여 주고, 내 기술 목록에 숙련도와 함께 쌓아 둬요. 화이트 벨트부터
+            블루 초반까지, 수업 끝나고 1분이면 돼요.
           </p>
           <StartButton />
         </div>
@@ -198,8 +203,8 @@ export default function Home() {
             <CardHeader>
               <CardDescription>처음 써 보면</CardDescription>
               <CardTitle className="text-lg font-semibold md:text-xl">
-                &quot;상대 다리에 내 다리 감고 발목 잡는 거&quot; 라고 적었더니 데라히바 가드가 뜨고,
-                세팅 과정 4줄이 따라와요
+                오픈 가드 그림을 눌러 &quot;데라히바 가드&quot;를 골랐더니 발을 어디에 거는지부터 세팅
+                과정 4줄이 따라와요
               </CardTitle>
             </CardHeader>
           </Card>
@@ -207,8 +212,8 @@ export default function Home() {
             <CardHeader>
               <CardDescription>계속 쓰게 되는 이유</CardDescription>
               <CardTitle className="text-lg font-semibold md:text-xl">
-                수업마다 배운 걸 적고, 다음 수업 전에 카드 몇 장을 풀어요. 내 기술 목록에 숙련도가
-                쌓여요
+                수업마다 배운 기술을 고르면 내 기술 목록에 숙련도가 쌓이고, 수련 벨트에 한 주가
+                채워져요
               </CardTitle>
             </CardHeader>
           </Card>
@@ -242,7 +247,7 @@ export default function Home() {
             <CardHeader>
               <CardTitle className="text-lg font-semibold">기록은 무제한 무료</CardTitle>
               <CardDescription>
-                오늘 배운 것 기록과 복습 카드는 몇 번을 쌓아도 돈을 받지 않아요. 기록이 쌓인 뒤의
+                오늘 배운 것 기록은 몇 번을 쌓아도 돈을 받지 않아요. 기록이 쌓인 뒤의
                 정리 · 리포트 가격은 준비 중이에요.
               </CardDescription>
             </CardHeader>

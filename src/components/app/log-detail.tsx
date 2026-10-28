@@ -32,7 +32,7 @@ export function LogDetail({ log }: { log: SavedLog }) {
           toast.error(res?.message ?? "저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
           return;
         }
-        toast.success(res.newCards > 0 ? `고쳤어요. 복습 카드 ${res.newCards}장이 새로 생겼어요` : "고친 내용을 저장했어요");
+        toast.success("고친 내용을 저장했어요");
         goBack();
       }}
       onDelete={async () => {

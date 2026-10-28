@@ -2,14 +2,13 @@
 
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { House, PenLine, Layers, Map } from "lucide-react";
+import { House, PenLine, Map } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// 하단 탭 4개 (DESIGN.md 4).
+// 하단 탭 3개 (DESIGN.md 4). 복습 탭은 D-58 로 뺐다.
 const tabs = [
   { href: "/app", label: "홈", Icon: House, ready: true, match: undefined },
   { href: "/app/logs", label: "기록", Icon: PenLine, ready: true, match: "/app/log" }, // 목록 · 쓰기 · 보기 모두(D-40)
-  { href: "/app/review", label: "복습", Icon: Layers, ready: true, match: undefined },
   { href: "/app/skills", label: "내 기술", Icon: Map, ready: true, match: undefined },
 ];
 

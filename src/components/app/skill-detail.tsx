@@ -18,7 +18,7 @@ import { formatKoreanDate } from "@/lib/seoul-date";
 import { MINE_LABEL, type Level } from "@/lib/mock/log-seed";
 import type { SkillDetail as Detail } from "@/lib/skill-detail-data";
 
-// 기술 상세 (T-10b, FLOW 4 · DESIGN 6) — 세팅 과정 · 내 숙련도(바꾸면 하단 "숙련도 저장", D-27) · 복습 상태 · 내 정리 모음.
+// 기술 상세 (T-10b, FLOW 4 · DESIGN 6) — 세팅 과정 · 내 숙련도(바꾸면 하단 "숙련도 저장", D-27) · 내 정리 모음.
 export function SkillDetail({ skill }: { skill: Detail }) {
   const router = useRouter();
   const [saved, setSaved] = useState<Level | null>(skill.level); // DB 에 있는 값
@@ -90,15 +90,10 @@ export function SkillDetail({ skill }: { skill: Detail }) {
         </CardContent>
       </Card>
 
-      {/* 내 숙련도 · 복습 상태 */}
+      {/* 내 숙련도 */}
       <section className="flex flex-col gap-2">
         <h2 className="text-[17px] font-semibold">내 숙련도</h2>
         <LevelPicker label={`${skill.nameKo} 숙련도`} value={level} onChange={setLevelState} disabled={saving} />
-        <p className="text-[13px] font-medium text-muted-foreground">
-          {skill.card
-            ? `다음 복습 ${formatKoreanDate(skill.card.dueOn)} · 지금까지 ${skill.card.reviews}번 복습`
-            : "아직 복습 카드가 없어요. 기록에서 이 기술을 저장하면 생겨요."}
-        </p>
       </section>
 
       {/* 내 정리 모음 */}
