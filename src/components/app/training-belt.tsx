@@ -44,8 +44,8 @@ export function TrainingBelt({
   const [belt, setBeltState] = useState<Belt>(initialBelt);
   const [startedOn, setStartedOnState] = useState(initialStartedOn);
   const [picking, setPicking] = useState(false);
-  // 벨트 물결(D-65) — 이 탭에서 홈을 처음 열 때만. 다른 화면 갔다 오면 다시 안 한다
-  const [wave, setWave] = useState(() => !wavePlayed);
+  // 벨트 물결(D-65) — 이 탭에서 홈을 처음 열 때 한 번 + 띠를 누를 때마다. 번호를 바꿔 다시 돈다
+  const [wave, setWave] = useState(() => (wavePlayed ? 0 : 1));
   useEffect(() => {
     wavePlayed = true;
   }, []);
@@ -111,15 +111,18 @@ export function TrainingBelt({
       </div>
       {/* 벨트: 바깥 = 벨트 색, 위아래는 높이의 약 1%(≈ 너비의 0.17%) */}
       <div
-        className="rounded-[3px]"
+        className="cursor-pointer rounded-[3px] outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50"
         style={{
           backgroundColor: color,
           padding: "max(1px, 0.17%) 5%",
           // 화이트는 크림 바탕에 묻혀서 벨트 전체에 테두리(D-35)
           boxShadow: belt === "white" ? `0 0 0 1px ${BELT_WHITE_EDGE}` : undefined,
         }}
-        role="img"
-        aria-label={`${label} 벨트, 최근 2년 동안 ${total}번 수련`}
+        role="button"
+        tabIndex={0}
+        aria-label={`${label} 벨트, 최근 2년 동안 ${total}번 수련 — 누르면 물결`}
+        onClick={() => setWave((n) => n + 1)}
+        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setWave((n) => n + 1))}
       >
         <div
           className="grid gap-[2px] p-[3px]"
@@ -131,21 +134,20 @@ export function TrainingBelt({
             gridAutoFlow: "column",
           }}
         >
-          {/* 첫 로딩 때 한 번 — 칸들이 세로줄(주) 단위로 밝아졌다 돌아오며 왼쪽에서 오른쪽으로 지나간다(D-65).
-              같은 세로줄 4칸은 같은 시각에 같은 정도로. 마지막 줄이 끝나면 지운다 */}
+          {/* 칸들이 세로줄(주) 단위로 밝아졌다 돌아오며 왼쪽에서 오른쪽으로 지나간다(D-65).
+              같은 세로줄 4칸은 같은 시각에 같은 정도로. key 에 물결 번호를 넣어 누를 때마다 처음부터 다시 */}
           {weeks.map((w, i) => (
             <span
-              key={w.start}
+              key={`${wave}-${w.start}`}
               title={`${formatKoreanDate(w.start)} 주 · ${w.count}번`}
-              className={cn("aspect-square rounded-[2px]", wave && "belt-wave")}
+              className={cn("aspect-square rounded-[2px]", wave > 0 && "belt-wave")}
               style={
                 {
                   backgroundColor: WEEK_SHADES[Math.min(w.count, 5)],
                   "--week": WEEK_SHADES[Math.min(w.count, 5)],
-                  animationDelay: wave ? `${250 + Math.floor(i / BELT_ROWS) * WAVE_STEP}ms` : undefined,
+                  animationDelay: wave > 0 ? `${Math.floor(i / BELT_ROWS) * WAVE_STEP}ms` : undefined,
                 } as CSSProperties
               }
-              onAnimationEnd={i === weeks.length - 1 ? () => setWave(false) : undefined}
             />
           ))}
         </div>

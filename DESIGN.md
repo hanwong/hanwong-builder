@@ -105,4 +105,4 @@
 - 파일: `src/app/app/layout.tsx`(한 열 + 하단 탭 틀), `src/app/app/log/page.tsx`, `src/components/app/log-review.tsx`, `src/lib/mock/log-seed.ts`(가짜 데이터, 5단계에서 서버 결과로 교체).
 
 ## 움직임 (D-65)
-- 홈 수련 벨트: 처음 열 때 한 번, 칸들이 세로줄 단위로 밝아졌다 돌아오며 왼쪽→오른쪽(줄 간격 45ms · 칸당 0.75초, 0.25초 뒤 시작). 덧씌우는 색 없음. 같은 탭에서는 다시 안 함. `prefers-reduced-motion` 이면 없음.
+- 홈 수련 벨트: 처음 열 때 한 번, 칸들이 세로줄 단위로 밝아졌다 돌아오며 왼쪽→오른쪽(줄 간격 45ms · 칸당 0.75초, 0.25초 뒤 시작). 덧씌우는 색 없음. 띠를 누르면(키보드 Enter · 스페이스도) 다시 돈다. 같은 탭에서는 다시 안 함. `prefers-reduced-motion` 이면 없음.

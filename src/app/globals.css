@@ -149,7 +149,7 @@
   100% { background-color: var(--week); }
 }
 .belt-wave {
-  animation: belt-wave 0.75s ease-in-out 1 both;
+  animation: belt-wave 0.75s ease-in-out 0.25s 1 both;
 }
 
 @media (prefers-reduced-motion: reduce) {
