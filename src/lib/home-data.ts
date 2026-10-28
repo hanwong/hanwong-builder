@@ -3,11 +3,9 @@ import { cacheLife } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { addDays, seoulToday } from "@/lib/seoul-date";
 import { BELT_WEEKS, isBelt, isStartMonth, type Belt } from "@/lib/belt";
-import { LOG_ROW_SELECT, toLogRow, type LogRow } from "@/lib/logs-data";
 
 // 홈(T-21)에 필요한 것만 읽는다. RLS 로 본인 것만 나온다(DB.md 5).
 export type HomeData = {
-  recent: LogRow[];
   map: { slug: string; nameKo: string; learned: number }[]; // 내 주짓수 지도(D-60) — 포지션 순서대로, 숙련도가 있는 기술 수
   belt: Belt; // 내 벨트 색(auth user_metadata, D-33)
   startedOn: string | null; // 수련 시작 'YYYY-MM'(D-59)
@@ -27,19 +25,13 @@ export async function getHomeData(): Promise<HomeData> {
   const monday = addDays(today, -((new Date(Date.UTC(y, m - 1, d)).getUTCDay() + 6) % 7));
   const firstWeek = addDays(monday, -7 * (BELT_WEEKS - 1));
 
-  const [logs, days, me, positions, levels] = await Promise.all([
-    supabase
-      .from("class_logs")
-      .select(LOG_ROW_SELECT)
-      .order("logged_on", { ascending: false })
-      .order("created_at", { ascending: false })
-      .limit(3),
+  const [days, me, positions, levels] = await Promise.all([
     supabase.from("class_logs").select("logged_on").gte("logged_on", firstWeek).limit(5000),
     supabase.auth.getUser(),
     supabase.from("positions").select("slug, name_ko").order("sort_order"),
     supabase.from("technique_levels").select("techniques(positions(slug))").limit(5000),
   ]);
-  const error = logs.error ?? days.error ?? positions.error ?? levels.error;
+  const error = days.error ?? positions.error ?? levels.error;
   if (error) throw new Error(`home: ${error.code ?? ""} ${error.message.slice(0, 80)}`);
 
   const weeks = Array.from({ length: BELT_WEEKS }, (_, i) => ({ start: addDays(firstWeek, i * 7), count: 0 }));
@@ -61,7 +53,6 @@ export async function getHomeData(): Promise<HomeData> {
     startedOn: isStartMonth(startedOn) ? startedOn : null,
     thisMonth: today.slice(0, 7),
     weeks,
-    recent: (logs.data ?? []).map(toLogRow),
     map: (positions.data ?? []).map((p) => ({ slug: p.slug, nameKo: p.name_ko, learned: learnedBy.get(p.slug) ?? 0 })),
   };
 }
