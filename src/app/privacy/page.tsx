@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 // 시행일은 고정 글자 (cacheComponents: 렌더 중 new Date() 금지)
-const EFFECTIVE = "2026년 10월 29일"; // 10/27: 운영자 열람 · 벨트 색 추가(T-29) / 10/28: 직접 적은 기술 이름 AI 초안(D-47) · 보완 제안(D-50) / 10/29: 정리하기 없앰(D-56) · 내용 생성(D-57) · 복습 뺌(D-58)
+const EFFECTIVE = "2026년 10월 29일"; // 10/27: 운영자 열람 · 벨트 색 추가(T-29) / 10/28: 직접 적은 기술 이름 AI 초안(D-47) · 보완 제안(D-50) / 10/29: 정리하기 없앰(D-56) · 내용 생성(D-57) · 복습 뺌(D-58) · 수련 시작 연월(D-59)
 
 const sections: { title: string; body: React.ReactNode }[] = [
   {
@@ -33,7 +33,8 @@ const sections: { title: string; body: React.ReactNode }[] = [
           지우지 않고 보관만 해요(화면에는 안 보여요).
         </li>
         <li>
-          <strong>화면 설정</strong> — 홈 수련 벨트에 고른 벨트 색. 로그인 계정 정보에 함께 저장돼요.
+          <strong>화면 설정</strong> — 홈 수련 벨트에 고른 벨트 색과 주짓수를 시작한 연 · 월(적었을 때만). 로그인 계정
+          정보에 함께 저장되고, 홈에 "수련 N년째"로 보여 주는 데만 써요.
         </li>
         <li>
           <strong>자동으로 남는 것</strong> — 접속 시각 같은 서버 기록. 장애를 고칠 때만 봐요.

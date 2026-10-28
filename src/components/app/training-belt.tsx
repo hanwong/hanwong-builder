@@ -5,16 +5,38 @@ import { Check, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { setBelt } from "@/app/app/actions";
-import { BELTS, BELT_BG, BELT_BLACK_BAR, BELT_ROWS, BELT_WEEKS, BELT_WHITE_EDGE, WEEK_SHADES, type Belt } from "@/lib/belt";
+import { setBelt, setStartedOn } from "@/app/app/actions";
+import { StartMonthPicker } from "@/components/app/start-month-picker";
+import {
+  BELTS,
+  BELT_BG,
+  BELT_BLACK_BAR,
+  BELT_ROWS,
+  BELT_WEEKS,
+  BELT_WHITE_EDGE,
+  WEEK_SHADES,
+  trainingSpan,
+  type Belt,
+} from "@/lib/belt";
 import { formatKoreanDate } from "@/lib/seoul-date";
 import { cn } from "@/lib/utils";
 
 // 홈 "수련 벨트" (D-33, DESIGN 2) — 최근 2년(104주)을 1주 1칸으로, 그 주 수련(기록) 횟수만큼 밝게.
 // 바깥은 내 벨트 색(양옆 너비의 약 5%, 위아래 높이의 약 1%), 가운데는 검정 바탕 + 살짝 둥근 네모.
-// 제목 없이 벨트만, 아래에 범례 · 최근 2년 횟수 · 벨트 색 설정(팝업).
-export function TrainingBelt({ weeks, belt: initialBelt }: { weeks: { start: string; count: number }[]; belt: Belt }) {
+// 위에 "○○ 벨트 · 수련 N년 N개월째"(D-59), 아래에 범례 · 최근 2년 횟수 · 벨트 설정(팝업: 벨트 색 · 수련 시작).
+export function TrainingBelt({
+  weeks,
+  belt: initialBelt,
+  startedOn: initialStartedOn,
+  thisMonth,
+}: {
+  weeks: { start: string; count: number }[];
+  belt: Belt;
+  startedOn: string | null;
+  thisMonth: string;
+}) {
   const [belt, setBeltState] = useState<Belt>(initialBelt);
+  const [startedOn, setStartedOnState] = useState(initialStartedOn);
   const [picking, setPicking] = useState(false);
   const [, startSaving] = useTransition();
 
@@ -35,8 +57,36 @@ export function TrainingBelt({ weeks, belt: initialBelt }: { weeks: { start: str
     });
   }
 
+  function changeStart(next: string) {
+    if (next && next > thisMonth) return; // 이번 달까지
+    const prev = startedOn;
+    const value = next || null;
+    setStartedOnState(value);
+    startSaving(async () => {
+      const res = await setStartedOn(value).catch(() => null);
+      if (!res?.ok) {
+        setStartedOnState(prev);
+        toast.error("수련 시작을 저장하지 못했어요. 다시 골라 주세요.");
+      }
+    });
+  }
+
   return (
     <section className="flex flex-col gap-2" aria-label="수련 벨트">
+      {/* 수련 기간 (D-59) — 시작을 모르면 설정으로 안내 */}
+      {startedOn ? (
+        <p className="text-[15px] font-semibold">
+          {label} 벨트 · <span className="mark-lime">{trainingSpan(startedOn, thisMonth)}</span>
+        </p>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setPicking(true)}
+          className="self-start text-left text-[13px] font-medium text-muted-foreground underline underline-offset-4"
+        >
+          수련 시작을 알려 주면 몇 년째인지 보여 드려요
+        </button>
+      )}
       {/* 벨트: 바깥 = 벨트 색, 위아래는 높이의 약 1%(≈ 너비의 0.17%) */}
       <div
         className="rounded-[3px]"
@@ -82,11 +132,11 @@ export function TrainingBelt({ weeks, belt: initialBelt }: { weeks: { start: str
           <span className="text-[13px] font-medium text-muted-foreground tabular-nums">최근 2년 · {total}번</span>
           <Popover open={picking} onOpenChange={setPicking}>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon-sm" aria-label="벨트 색 설정" className="rounded-full text-muted-foreground">
+              <Button variant="ghost" size="icon-sm" aria-label="벨트 설정" className="rounded-full text-muted-foreground">
                 <Settings2 />
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-44 gap-1 p-1.5">
+            <PopoverContent align="end" className="w-64 gap-1 p-1.5">
               <span className="px-2 pt-1 pb-0.5 text-[12px] font-medium text-muted-foreground">벨트 색</span>
               <div role="radiogroup" aria-label="벨트 색" className="flex flex-col">
                 {BELTS.map((b) => (
@@ -106,6 +156,15 @@ export function TrainingBelt({ weeks, belt: initialBelt }: { weeks: { start: str
                     {b.value === belt && <Check className="ml-auto size-4" aria-hidden />}
                   </button>
                 ))}
+              </div>
+              <div className="flex flex-col gap-1 border-t border-border px-2 pt-2 pb-1">
+                <span className="text-[12px] font-medium text-muted-foreground">수련 시작</span>
+                <StartMonthPicker
+                  idPrefix="belt-start"
+                  value={startedOn ?? ""}
+                  thisMonth={thisMonth}
+                  onChange={(v) => v && changeStart(v)}
+                />
               </div>
             </PopoverContent>
           </Popover>

@@ -29,12 +29,12 @@ export async function HomeSections() {
 }
 
 export function HomeView({ data }: { data: HomeData }) {
-  const { recent, weeks, belt } = data;
+  const { recent, weeks, belt, startedOn, thisMonth } = data;
 
   return (
     <>
       {/* ② 수련 벨트 (D-33) */}
-      <TrainingBelt weeks={weeks} belt={belt} />
+      <TrainingBelt weeks={weeks} belt={belt} startedOn={startedOn} thisMonth={thisMonth} />
 
       {/* ③ 최근 기록 */}
       <section className="flex flex-col gap-3">

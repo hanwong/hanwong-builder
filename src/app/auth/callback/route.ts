@@ -11,8 +11,13 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const supabase = await createSupabaseServer();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(`${origin}${next}`);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      // 처음이면(아직 시작하기를 안 봤으면) 벨트 · 수련 시작 안내부터 (D-59)
+      if (!data.user?.user_metadata?.onboarded)
+        return NextResponse.redirect(`${origin}/app/start?next=${encodeURIComponent(next)}`);
+      return NextResponse.redirect(`${origin}${next}`);
+    }
   }
   return NextResponse.redirect(`${origin}/app/login?error=auth`);
 }

@@ -14,7 +14,7 @@ const tabs = [
 
 export function TabBar() {
   const pathname = usePathname();
-  if (pathname === "/app/login") return null; // 로그인 화면은 탭 없이 카드 하나만
+  if (pathname === "/app/login" || pathname === "/app/start") return null; // 로그인 · 시작하기(D-59)는 탭 없이 카드 하나만
   return <TabBarView pathname={pathname} />;
 }
 

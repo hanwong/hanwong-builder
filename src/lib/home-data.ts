@@ -2,13 +2,15 @@ import "server-only";
 import { cacheLife } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { addDays, seoulToday } from "@/lib/seoul-date";
-import { BELT_WEEKS, isBelt, type Belt } from "@/lib/belt";
+import { BELT_WEEKS, isBelt, isStartMonth, type Belt } from "@/lib/belt";
 import { LOG_ROW_SELECT, toLogRow, type LogRow } from "@/lib/logs-data";
 
 // 홈(T-21)에 필요한 것만 읽는다. RLS 로 본인 것만 나온다(DB.md 5).
 export type HomeData = {
   recent: LogRow[];
   belt: Belt; // 내 벨트 색(auth user_metadata, D-33)
+  startedOn: string | null; // 수련 시작 'YYYY-MM'(D-59)
+  thisMonth: string; // 서울 기준 이번 달 'YYYY-MM' — "수련 N년째" 계산용
   weeks: { start: string; count: number }[]; // 최근 104주(월요일 시작, 서울) — 오래된 주부터
 };
 
@@ -44,9 +46,12 @@ export async function getHomeData(): Promise<HomeData> {
     if (i >= 0 && i < BELT_WEEKS) weeks[i].count += 1;
   }
   const belt = me.data.user?.user_metadata?.belt;
+  const startedOn = me.data.user?.user_metadata?.started_on;
 
   return {
     belt: isBelt(belt) ? belt : "white",
+    startedOn: isStartMonth(startedOn) ? startedOn : null,
+    thisMonth: today.slice(0, 7),
     weeks,
     recent: (logs.data ?? []).map(toLogRow),
   };

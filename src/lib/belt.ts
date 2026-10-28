@@ -17,3 +17,19 @@ export const BELT_WHITE_EDGE = "#D4D3CC"; // 화이트 벨트일 때 벨트 전�
 
 // 주별 수련 횟수 0 · 1 · 2 · 3 · 4 · 5회 이상 → 5회 이상이 가장 하얗다
 export const WEEK_SHADES = ["#1C1C1C", "#3A3A3A", "#5E5E5E", "#8C8C8C", "#C2C2C2", "#FAFAFA"] as const;
+
+// 수련 시작 연 · 월 (D-59) — 'YYYY-MM'. 로그인 계정 정보(user_metadata.started_on)에 벨트와 함께 둔다.
+export const isStartMonth = (v: unknown): v is string =>
+  typeof v === "string" && /^(19[5-9]\d|20\d\d)-(0[1-9]|1[0-2])$/.test(v);
+
+// "수련 2년 3개월째" — 시작한 달은 "수련 첫 달"
+export function trainingSpan(startedOn: string, thisMonth: string): string {
+  const [sy, sm] = startedOn.split("-").map(Number);
+  const [ty, tm] = thisMonth.split("-").map(Number);
+  const months = (ty - sy) * 12 + (tm - sm);
+  if (months <= 0) return "수련 첫 달";
+  const y = Math.floor(months / 12);
+  const m = months % 12;
+  return `수련 ${[y && `${y}년`, m && `${m}개월`].filter(Boolean).join(" ")}째`;
+}
+
