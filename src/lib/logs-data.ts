@@ -3,14 +3,15 @@ import { cacheLife } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 
 // 기록 한 줄(날짜 · 기술 이름들 · 글 앞부분) — 홈 최근 기록과 기록 목록(D-40)이 함께 쓴다. RLS 로 본인 것만.
-export type LogRow = { id: string; loggedOn: string; names: string[]; excerpt: string };
+export type LogRow = { id: string; loggedOn: string; names: string[]; excerpt: string; sparring: number };
 
-export const LOG_ROW_SELECT = "id, logged_on, body, class_log_techniques(custom_name, techniques(name_ko))";
+export const LOG_ROW_SELECT = "id, logged_on, body, sparring_rounds, class_log_techniques(custom_name, techniques(name_ko))";
 
 export function toLogRow(l: {
   id: string;
   logged_on: string;
   body: string;
+  sparring_rounds: number;
   class_log_techniques: { custom_name: string | null; techniques: { name_ko: string } | null }[];
 }): LogRow {
   return {
@@ -20,6 +21,7 @@ export function toLogRow(l: {
       .map((c) => c.techniques?.name_ko ?? c.custom_name)
       .filter((n): n is string => Boolean(n)),
     excerpt: l.body.slice(0, 40),
+    sparring: l.sparring_rounds,
   };
 }
 

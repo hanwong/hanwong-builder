@@ -112,6 +112,7 @@ export type Database = {
           created_at: string
           id: string
           logged_on: string
+          sparring_rounds: number
           terms: Json
           user_id: string
         }
@@ -121,6 +122,7 @@ export type Database = {
           created_at?: string
           id?: string
           logged_on: string
+          sparring_rounds?: number
           terms?: Json
           user_id: string
         }
@@ -130,6 +132,7 @@ export type Database = {
           created_at?: string
           id?: string
           logged_on?: string
+          sparring_rounds?: number
           terms?: Json
           user_id?: string
         }

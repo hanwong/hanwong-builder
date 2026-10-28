@@ -1,3 +1,4 @@
+import { Swords } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getHomeData, type HomeData } from "@/lib/home-data";
 import { TrainingBelt } from "@/components/app/training-belt";
@@ -28,14 +29,26 @@ export async function HomeSections() {
 }
 
 export function HomeView({ data }: { data: HomeData }) {
-  const { weeks, belt, startedOn, thisMonth, map } = data;
+  const { weeks, belt, startedOn, thisMonth, map, sparring } = data;
 
   return (
     <>
       {/* ② 수련 벨트 (D-33) */}
       <TrainingBelt weeks={weeks} belt={belt} startedOn={startedOn} thisMonth={thisMonth} />
 
-      {/* ②-1 내 주짓수 지도 (D-60) */}
+      {/* ②-1 스파링 (D-64) */}
+      <div className="flex items-center justify-between gap-3 rounded-2xl bg-card px-4 py-3 ring-1 ring-border">
+        <span className="flex items-center gap-2 text-[15px] font-semibold">
+          <Swords className="size-4" strokeWidth={1.75} aria-hidden />
+          스파링
+        </span>
+        <span className="text-[13px] font-medium text-muted-foreground tabular-nums">
+          이번 달 <span className="text-[15px] font-semibold text-foreground">{sparring.month}판</span> · 전체{" "}
+          {sparring.total}판
+        </span>
+      </div>
+
+      {/* ②-2 내 주짓수 지도 (D-60) */}
       <JiujitsuMap map={map} />
     </>
   );
@@ -46,6 +59,7 @@ export function HomeSkeleton() {
   return (
     <div className="flex flex-col gap-5" aria-busy="true">
       <Skeleton className="h-14 w-full rounded-[3px]" />
+      <Skeleton className="h-12 w-full rounded-2xl" />
       <div className="grid grid-cols-4 gap-2">
         {Array.from({ length: 8 }, (_, i) => (
           <Skeleton key={i} className="aspect-square w-full rounded-xl" />

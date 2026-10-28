@@ -200,6 +200,7 @@ export type SaveInput = {
   techniques: { slug: string; level: Level }[];
   customNames: string[];
   terms: Term[];
+  sparringRounds?: number; // 스파링 몇 판(D-64, 0~50)
 };
 
 export type SaveResult = { ok: true; linked: number } | { ok: false; message: string };
@@ -226,7 +227,8 @@ function clean(input: SaveInput) {
         .filter(Boolean),
     ),
   ].slice(0, 10);
-  if (!body && !picks.length && !customNames.length) return null; // 기술도 메모도 없으면 저장 안 함(D-56)
+  const sparringRounds = Number.isInteger(input.sparringRounds) ? Math.min(50, Math.max(0, input.sparringRounds!)) : 0;
+  if (!body && !picks.length && !customNames.length && !sparringRounds) return null; // 기술 · 메모 · 스파링 다 없으면 저장 안 함(D-56 · D-64)
   return {
     today,
     body,
@@ -234,6 +236,7 @@ function clean(input: SaveInput) {
     aiStatus: ["ok", "mock", "none"].includes(input.aiStatus) ? input.aiStatus : "none",
     picks,
     customNames,
+    sparringRounds,
     terms: (Array.isArray(input.terms) ? input.terms : [])
       .filter((t) => typeof t?.term === "string" && typeof t?.meaning === "string")
       .slice(0, 6)
@@ -277,7 +280,7 @@ export async function saveLog(input: SaveInput): Promise<SaveResult> {
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, message: "로그인이 풀렸어요. 다시 로그인해 주세요." };
   const v = clean(input);
-  if (!v) return { ok: false, message: "기술을 고르거나 메모를 적어 주세요. 메모는 5000자까지예요." };
+  if (!v) return { ok: false, message: "기술 · 스파링 · 메모 중 하나는 적어 주세요. 메모는 5000자까지예요." };
 
   const { chosen, error: findError } = await resolve(supabase, v.picks);
   if (findError) return fail("techniques", findError);
@@ -285,7 +288,14 @@ export async function saveLog(input: SaveInput): Promise<SaveResult> {
   // 1) 기록
   const { data: log, error: logError } = await supabase
     .from("class_logs")
-    .insert({ user_id: user.id, logged_on: v.loggedOn, body: v.body, terms: v.terms, ai_status: v.aiStatus })
+    .insert({
+      user_id: user.id,
+      logged_on: v.loggedOn,
+      body: v.body,
+      terms: v.terms,
+      ai_status: v.aiStatus,
+      sparring_rounds: v.sparringRounds,
+    })
     .select("id")
     .single();
   if (logError || !log) return fail("class_logs", logError);
@@ -321,7 +331,7 @@ export async function updateLog(logId: string, input: SaveInput): Promise<SaveRe
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, message: "로그인이 풀렸어요. 다시 로그인해 주세요." };
   const v = clean(input);
-  if (!v) return { ok: false, message: "기술을 고르거나 메모를 적어 주세요. 메모는 5000자까지예요." };
+  if (!v) return { ok: false, message: "기술 · 스파링 · 메모 중 하나는 적어 주세요. 메모는 5000자까지예요." };
   if (typeof logId !== "string") return { ok: false, message: "기록을 찾지 못했어요." };
 
   // 본인 기록인지(RLS 로 남의 기록은 안 보인다) + 지금 연결
@@ -338,7 +348,7 @@ export async function updateLog(logId: string, input: SaveInput): Promise<SaveRe
 
   const { error: updateError } = await supabase
     .from("class_logs")
-    .update({ body: v.body, terms: v.terms, ai_status: v.aiStatus })
+    .update({ body: v.body, terms: v.terms, ai_status: v.aiStatus, sparring_rounds: v.sparringRounds })
     .eq("id", logId);
   if (updateError) return fail("class_logs update", updateError);
 

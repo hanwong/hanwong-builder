@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, type Dispatch, type ReactNode, type SetStateAction } from "react";
-import { ArrowLeft, ChevronDown, Loader2, Mic, MicOff, Sparkles, Trash2, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, Loader2, Mic, MicOff, Minus, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { BottomAction } from "@/components/app/bottom-action";
@@ -27,6 +27,7 @@ export type ReviewValue = {
   customNames: string[];
   terms: Term[];
   aiStatus: AiStatus;
+  sparringRounds: number; // 스파링 몇 판(D-64)
 };
 
 type Props = {
@@ -51,6 +52,7 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
   const [body, setBody] = useState(initial.body);
   const [techniques, setTechniques] = useState(initial.techniques);
   const [customNames, setCustomNames] = useState<string[]>(initial.customNames);
+  const [sparring, setSparring] = useState(initial.sparringRounds);
   const [saving, startSaving] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, startDeleting] = useTransition();
@@ -83,7 +85,7 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
     setTechniques((list) => (list.some((x) => x.id === t.id) ? list.filter((x) => x.id !== t.id) : [...list, t]));
 
   const count = techniques.length + customNames.length;
-  const canSave = count > 0 || body.trim().length > 0;
+  const canSave = count > 0 || sparring > 0 || body.trim().length > 0;
 
   return (
     <div className="flex flex-col gap-5">
@@ -149,6 +151,38 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
           onToggle={toggle}
           onCustom={(name) => setCustomNames((l) => (l.includes(name) ? l : [...l, name]))}
         />
+      </section>
+
+      {/* 스파링 몇 판 (D-64) */}
+      <section className="flex items-center justify-between gap-3">
+        <h2 id="sparring-title" className="text-[17px] font-semibold">
+          스파링
+        </h2>
+        <div className="flex items-center gap-2" role="group" aria-labelledby="sparring-title">
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="스파링 한 판 빼기"
+            className="size-10 rounded-full shadow-none"
+            disabled={sparring === 0 || saving}
+            onClick={() => setSparring((n) => Math.max(0, n - 1))}
+          >
+            <Minus />
+          </Button>
+          <span className="w-14 text-center text-[17px] font-semibold tabular-nums" aria-live="polite">
+            {sparring}판
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="스파링 한 판 더하기"
+            className="size-10 rounded-full shadow-none"
+            disabled={sparring >= 50 || saving}
+            onClick={() => setSparring((n) => Math.min(50, n + 1))}
+          >
+            <Plus />
+          </Button>
+        </div>
       </section>
 
       {/* 오늘 메모 — 선택 */}
@@ -221,12 +255,19 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
           disabled={!canSave || saving || deleting || generating !== null}
           onClick={() =>
             startSaving(() =>
-              onSave({ body: body.trim(), techniques, customNames, terms: initial.terms, aiStatus: initial.aiStatus }),
+              onSave({
+                body: body.trim(),
+                techniques,
+                customNames,
+                terms: initial.terms,
+                aiStatus: initial.aiStatus,
+                sparringRounds: sparring,
+              }),
             )
           }
         >
           {saving && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
-          {saving ? "저장 중…" : canSave ? saveLabel : "기술을 고르거나 메모를 적어 주세요"}
+          {saving ? "저장 중…" : canSave ? saveLabel : "기술 · 스파링 · 메모 중 하나를 적어 주세요"}
         </Button>
       </BottomAction>
     </div>

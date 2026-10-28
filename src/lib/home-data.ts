@@ -10,6 +10,7 @@ export type HomeData = {
   belt: Belt; // 내 벨트 색(auth user_metadata, D-33)
   startedOn: string | null; // 수련 시작 'YYYY-MM'(D-59)
   thisMonth: string; // 서울 기준 이번 달 'YYYY-MM' — "수련 N년째" 계산용
+  sparring: { month: number; total: number }; // 스파링 판 수(D-64) — 이번 달 · 전체
   weeks: { start: string; count: number }[]; // 최근 104주(월요일 시작, 서울) — 오래된 주부터
 };
 
@@ -26,7 +27,8 @@ export async function getHomeData(): Promise<HomeData> {
   const firstWeek = addDays(monday, -7 * (BELT_WEEKS - 1));
 
   const [days, me, positions, levels] = await Promise.all([
-    supabase.from("class_logs").select("logged_on").gte("logged_on", firstWeek).limit(5000),
+    // 벨트(최근 2년)와 스파링(전체)을 한 번에 — 기록은 사람당 많아야 수천 개
+    supabase.from("class_logs").select("logged_on, sparring_rounds").limit(10000),
     supabase.auth.getUser(),
     supabase.from("positions").select("slug, name_ko").order("sort_order"),
     supabase.from("technique_levels").select("techniques(positions(slug))").limit(5000),
@@ -36,6 +38,11 @@ export async function getHomeData(): Promise<HomeData> {
 
   const weeks = Array.from({ length: BELT_WEEKS }, (_, i) => ({ start: addDays(firstWeek, i * 7), count: 0 }));
   const firstMs = Date.parse(firstWeek);
+  const sparring = { month: 0, total: 0 };
+  for (const row of days.data ?? []) {
+    sparring.total += row.sparring_rounds;
+    if (row.logged_on.startsWith(today.slice(0, 7))) sparring.month += row.sparring_rounds;
+  }
   for (const row of days.data ?? []) {
     const i = Math.floor((Date.parse(row.logged_on) - firstMs) / (7 * 86_400_000));
     if (i >= 0 && i < BELT_WEEKS) weeks[i].count += 1;
@@ -52,6 +59,7 @@ export async function getHomeData(): Promise<HomeData> {
     belt: isBelt(belt) ? belt : "white",
     startedOn: isStartMonth(startedOn) ? startedOn : null,
     thisMonth: today.slice(0, 7),
+    sparring,
     weeks,
     map: (positions.data ?? []).map((p) => ({ slug: p.slug, nameKo: p.name_ko, learned: learnedBy.get(p.slug) ?? 0 })),
   };

@@ -16,11 +16,16 @@ export function LogList({ rows, prefetchAll = false }: { rows: LogRow[]; prefetc
             className="flex min-w-0 items-center gap-2 px-4 py-3 transition-colors hover:bg-muted"
           >
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span className="text-[13px] font-medium text-muted-foreground">{formatKoreanDate(r.loggedOn)}</span>
+              <span className="text-[13px] font-medium text-muted-foreground">
+                {formatKoreanDate(r.loggedOn)}
+                {r.sparring > 0 && ` · 스파링 ${r.sparring}판`}
+              </span>
               {r.names.length > 0 ? (
                 <span className="text-[15px] font-semibold">{r.names.join(" · ")}</span>
-              ) : (
+              ) : r.excerpt ? (
                 <span className="truncate text-[15px] text-muted-foreground">{r.excerpt}</span>
+              ) : (
+                <span className="text-[15px] text-muted-foreground">스파링만 기록</span>
               )}
             </span>
             <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
