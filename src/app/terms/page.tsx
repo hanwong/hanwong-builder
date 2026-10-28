@@ -22,7 +22,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
     title: "2. 계정",
     body: (
       <ul className="list-disc space-y-1 pl-5">
-        <li>Google 계정으로 로그인해요. 계정은 본인만 쓰고, 다른 사람에게 빌려주지 않아요.</li>
+        <li>카카오 · 네이버 · Google 계정으로 로그인해요. 계정은 본인만 쓰고, 다른 사람에게 빌려주지 않아요.</li>
         <li>만 14세 미만은 보호자 동의 없이 쓸 수 없어요.</li>
         <li>탈퇴는 <a href="mailto:rereroll.xyz@gmail.com" className="font-medium underline underline-offset-4">rereroll.xyz@gmail.com</a> 로 요청하면 7일 안에 처리해요(앱 안 탈퇴 버튼은 준비 중).</li>
       </ul>

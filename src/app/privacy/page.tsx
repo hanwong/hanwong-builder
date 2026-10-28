@@ -24,8 +24,10 @@ const sections: { title: string; body: React.ReactNode }[] = [
     body: (
       <ul className="list-disc space-y-1 pl-5">
         <li>
-          <strong>Google 로그인 정보</strong> — 이메일 주소, 이름, 프로필 사진 주소, Google 계정 ID.
-          로그인과 ‘이 기록이 누구 것인지’를 구분하는 데만 써요. 비밀번호는 받지도 저장하지도 않아요.
+          <strong>로그인 정보</strong> — 카카오 · 네이버 · Google 중 고른 곳에서 받는 이메일 주소와 그 회사의 계정
+          ID. Google 은 이름 · 프로필 사진 주소도 함께 오고, 카카오는 닉네임 · 프로필 사진을 ‘선택’으로 동의했을 때만
+          와요(화면에는 쓰지 않아요). 로그인과 ‘이 기록이 누구 것인지’를 구분하는 데만 써요. 같은 이메일로
+          로그인하면 같은 계정으로 이어져요. 비밀번호는 받지도 저장하지도 않아요.
         </li>
         <li>
           <strong>직접 적는 기록</strong> — 오늘 배운 것에서 고른 기술과 숙련도, 오늘 메모, 직접 적은 기술 이름과
@@ -97,7 +99,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
       <ul className="list-disc space-y-1 pl-5">
         <li>정보를 팔거나 광고에 쓰지 않아요.</li>
         <li>다른 수련자에게 내 기록을 보여 주지 않아요.</li>
-        <li>로그인 외의 목적으로 Google 계정에 접근하지 않아요.</li>
+        <li>로그인 외의 목적으로 카카오 · 네이버 · Google 계정에 접근하지 않아요. 친구 목록 · 메시지 보내기 권한은 받지 않아요.</li>
       </ul>
     ),
   },
@@ -122,7 +124,7 @@ export default function PrivacyPage() {
         <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">개인정보처리방침</h1>
         <p className="text-[13px] font-medium text-muted-foreground">시행일 {EFFECTIVE}</p>
         <p className="text-[15px] leading-relaxed text-muted-foreground">
-          쉽게 쓴 버전이에요. 받는 정보는 Google 로그인 정보와 본인이 적는 기록뿐이에요. 앱에서는 본인만 볼
+          쉽게 쓴 버전이에요. 받는 정보는 로그인한 계정의 이메일과 본인이 적는 기록뿐이에요. 앱에서는 본인만 볼
           수 있고, 운영자는 운영에 필요할 때만 데이터베이스에서 봐요(3번).
         </p>
       </div>
