@@ -1,7 +1,7 @@
 import "server-only";
 import { cacheLife } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import type { Level, MatchedTechnique, Term } from "@/lib/mock/log-seed";
+import { mineOf, type Level, type MatchedTechnique, type Term } from "@/lib/mock/log-seed";
 
 // 저장한 기록 하나를 정리 완료 화면(상태 C) 모양으로 읽는다 (D-25). RLS 로 본인 기록만 나온다.
 export type SavedLog = {
@@ -22,7 +22,7 @@ export async function getLog(id: string): Promise<SavedLog | null> {
   const { data, error } = await supabase
     .from("class_logs")
     .select(
-      "id, logged_on, body, terms, ai_status, class_log_techniques(created_at, custom_name, technique_id, techniques(slug, name_ko, name_en, steps, is_reviewed, positions(slug, name_ko)))",
+      "id, logged_on, body, terms, ai_status, class_log_techniques(created_at, custom_name, technique_id, techniques(slug, name_ko, name_en, steps, is_reviewed, owner_id, owner_status, positions(slug, name_ko)))",
     )
     .eq("id", id)
     .maybeSingle();
@@ -49,6 +49,7 @@ export async function getLog(id: string): Promise<SavedLog | null> {
         steps: t.steps,
         level: levelOf.get(l.technique_id) ?? "beginner",
         draft: !t.is_reviewed,
+        mine: mineOf(t.owner_id, t.owner_status),
       },
     ];
   });

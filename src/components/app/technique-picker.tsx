@@ -239,7 +239,7 @@ export function TechniquePicker({
                       type="button"
                       onClick={() => {
                         onCustom(text);
-                        setQuery("");
+                        close(); // 이름을 넣으면 팝업을 닫고 기록 화면의 카드로 돌아간다
                       }}
                       className="flex w-full items-center gap-1.5 rounded-xl px-2 py-2.5 text-left text-[14px] text-muted-foreground transition-colors hover:bg-muted"
                     >

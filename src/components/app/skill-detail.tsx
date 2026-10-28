@@ -15,7 +15,7 @@ import { SuggestEdit } from "@/components/app/suggest-edit";
 import { PositionPicture } from "@/components/app/position-picture";
 import { setLevel } from "@/app/app/skills/actions";
 import { formatKoreanDate } from "@/lib/seoul-date";
-import type { Level } from "@/lib/mock/log-seed";
+import { MINE_LABEL, type Level } from "@/lib/mock/log-seed";
 import type { SkillDetail as Detail } from "@/lib/skill-detail-data";
 
 // 기술 상세 (T-10b, FLOW 4 · DESIGN 6) — 세팅 과정 · 내 숙련도(바꾸면 하단 "숙련도 저장", D-27) · 복습 상태 · 내 정리 모음.
@@ -57,7 +57,11 @@ export function SkillDetail({ skill }: { skill: Detail }) {
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             <div className="flex flex-wrap items-center gap-1.5">
               <Badge variant="secondary">{skill.position}</Badge>
-              {skill.draft && <Badge variant="outline">검수 전</Badge>}
+              {skill.mine ? (
+                <Badge variant="outline">{MINE_LABEL[skill.mine]}</Badge>
+              ) : (
+                skill.draft && <Badge variant="outline">검수 전</Badge>
+              )}
             </div>
             <h1 className="text-[24px] font-bold tracking-tight">
               <span className="mark-lime">{skill.nameKo}</span>
@@ -81,7 +85,8 @@ export function SkillDetail({ skill }: { skill: Detail }) {
             ))}
           </ol>
           <YoutubeLink nameEn={skill.nameEn} />
-          <SuggestEdit slug={skill.slug} steps={skill.steps} pending={skill.suggestionPending} />
+          {/* 내가 만든 기술은 승인 때 운영자가 고친다 — 보완 제안은 공용 기술만 */}
+          {!skill.mine && <SuggestEdit slug={skill.slug} steps={skill.steps} pending={skill.suggestionPending} />}
         </CardContent>
       </Card>
 

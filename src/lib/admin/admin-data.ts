@@ -45,8 +45,19 @@ export type AdminSuggestion = {
   reason: string;
 };
 
+// 사용자가 '내용 생성'으로 만든 기술(D-57) — 승인 대기. 누가 만들었는지는 담지 않는다
+export type AdminUserTechnique = {
+  id: string;
+  aliases: string[]; // 사용자가 적은 이름이 여기 들어 있다
+  position: string; // slug
+  nameKo: string;
+  nameEn: string;
+  steps: string[];
+};
+
 export type AdminData = {
   items: AdminItem[]; // 제한 없이 전부, 많이 적힌 순
+  userTechniques: AdminUserTechnique[]; // 오래된 것부터
   suggestions: AdminSuggestion[]; // 오래된 것부터
   leftToday: number; // 오늘 더 만들 수 있는 초안 수
   live: boolean; // Claude 키가 있나
@@ -108,7 +119,7 @@ export async function getAdminData(): Promise<AdminData | null> {
   const supabase = await createSupabaseServer();
   if (!(await isOperator(supabase))) return null;
 
-  const [drafts, pending, made, lib, suggestions] = await Promise.all([
+  const [drafts, pending, made, lib, suggestions, userTechniques] = await Promise.all([
     supabase.from("technique_drafts").select(DRAFT_SELECT).eq("status", "pending").order("created_at"),
     supabase.rpc("pending_custom_names"),
     draftedToday(supabase),
@@ -118,8 +129,13 @@ export async function getAdminData(): Promise<AdminData | null> {
       .select("id, steps, add_aliases, reason, techniques(slug, name_ko, steps, aliases)")
       .eq("status", "pending")
       .order("created_at"),
+    supabase
+      .from("techniques")
+      .select("id, name_ko, name_en, aliases, steps, positions(slug)")
+      .eq("owner_status", "pending")
+      .order("created_at"),
   ]);
-  if (drafts.error || pending.error || suggestions.error) throw new Error("admin read failed");
+  if (drafts.error || pending.error || suggestions.error || userTechniques.error) throw new Error("admin read failed");
 
   const keys = drafts.data.map((d) => d.name_key);
   const { data: counts } = keys.length
@@ -144,6 +160,14 @@ export async function getAdminData(): Promise<AdminData | null> {
 
   return {
     items,
+    userTechniques: userTechniques.data.map((t) => ({
+      id: t.id,
+      aliases: t.aliases ?? [],
+      position: t.positions?.slug ?? "",
+      nameKo: t.name_ko,
+      nameEn: t.name_en,
+      steps: t.steps,
+    })),
     suggestions: suggestions.data
       .filter((x) => x.techniques)
       .map((x) => ({
@@ -162,13 +186,14 @@ export async function getAdminData(): Promise<AdminData | null> {
   };
 }
 
-// 홈 알림 줄: 운영자에게만 "목록 추가 대기 N개" (초안 대기 + 초안 전 이름 + 보완 제안, D-50)
+// 홈 알림 줄: 운영자에게만 "목록 추가 대기 N개" (초안 대기 + 초안 전 이름 + 보완 제안 D-50 + 사용자가 만든 기술 D-57)
 export async function waitingCount(supabase: Supa): Promise<number | null> {
   if (!(await isOperator(supabase))) return null;
-  const [drafts, pending, suggestions] = await Promise.all([
+  const [drafts, pending, suggestions, mine] = await Promise.all([
     supabase.from("technique_drafts").select("id", { count: "exact", head: true }).eq("status", "pending"),
     supabase.rpc("pending_custom_names"),
     supabase.from("technique_suggestions").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    supabase.from("techniques").select("id", { count: "exact", head: true }).eq("owner_status", "pending"),
   ]);
-  return (drafts.count ?? 0) + (pending.data?.length ?? 0) + (suggestions.count ?? 0);
+  return (drafts.count ?? 0) + (pending.data?.length ?? 0) + (suggestions.count ?? 0) + (mine.count ?? 0);
 }

@@ -69,6 +69,7 @@ async function fromDb(supabase: SupabaseClient<Database>): Promise<Library> {
     supabase
       .from("techniques")
       .select("slug, name_ko, name_en, aliases, steps, is_reviewed, sort_order, position_id")
+      .is("owner_id", null) // 사용자가 만든 '내 기술'(D-57)은 공용 목록 · 캐시에 넣지 않는다
       .range(0, 9999),
   ]);
   if (pos.error || tech.error || !pos.data.length || !tech.data.length) throw new Error("library read failed");
@@ -107,6 +108,29 @@ export async function getLibrary(supabase: SupabaseClient<Database>): Promise<Li
     memo = { lib: memo?.lib ?? fromJson(), at: Date.now() - LIBRARY_TTL + 30_000 }; // 30초 뒤 다시 시도
   }
   return memo.lib;
+}
+
+// 내가 만든 기술(D-57) — 만든 사람에게만 보이고 공용 목록(위 캐시)에는 없다. 사람마다 그때그때 읽는다.
+export type OwnCandidate = Candidate & { ownerStatus: "pending" | "rejected" };
+
+export async function getOwnTechniques(supabase: SupabaseClient<Database>, userId: string): Promise<OwnCandidate[]> {
+  const { data, error } = await supabase
+    .from("techniques")
+    .select("slug, name_ko, name_en, aliases, steps, owner_status, positions(slug, name_ko)")
+    .eq("owner_id", userId)
+    .order("created_at");
+  if (error) return [];
+  return data.map((t) => ({
+    slug: t.slug,
+    nameKo: t.name_ko,
+    nameEn: t.name_en,
+    position: t.positions?.name_ko ?? "",
+    positionSlug: t.positions?.slug ?? "",
+    aliases: t.aliases ?? [],
+    steps: t.steps,
+    draft: true,
+    ownerStatus: t.owner_status === "rejected" ? "rejected" : "pending",
+  }));
 }
 
 // 승인 직후 이 서버에서는 바로 새 목록을 읽게 한다(다른 서버는 5분 안에)

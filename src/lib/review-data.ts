@@ -2,6 +2,7 @@ import "server-only";
 import { cacheLife } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { seoulToday } from "@/lib/seoul-date";
+import { mineOf } from "@/lib/mock/log-seed";
 
 // 오늘 복습 (T-09) — 복습일이 오늘(서울) 이하인 내 카드. RLS 로 본인 것만.
 export type DueCard = {
@@ -13,6 +14,7 @@ export type DueCard = {
   positionSlug: string | null; // 포지션 그림(D-54)
   steps: string[];
   draft: boolean;
+  mine?: "pending" | "rejected"; // 내가 만든 기술(D-57)
   lastNote: { loggedOn: string; text: string } | null; // 그 기술이 나온 내 최근 기록 한 줄
 };
 
@@ -27,7 +29,7 @@ export async function getReviewData(): Promise<ReviewData> {
   const [due, later] = await Promise.all([
     supabase
       .from("review_cards")
-      .select("id, interval_step, technique_id, techniques(name_ko, name_en, steps, is_reviewed, positions(slug, name_ko))")
+      .select("id, interval_step, technique_id, techniques(name_ko, name_en, steps, is_reviewed, owner_id, owner_status, positions(slug, name_ko))")
       .lte("due_on", today)
       .order("due_on")
       .order("created_at")
@@ -71,6 +73,7 @@ export async function getReviewData(): Promise<ReviewData> {
           positionSlug: t.positions?.slug ?? null,
           steps: t.steps,
           draft: !t.is_reviewed,
+          mine: mineOf(t.owner_id, t.owner_status),
           lastNote: notes.get(c.technique_id) ?? null,
         },
       ];

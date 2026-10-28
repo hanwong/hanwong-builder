@@ -1,7 +1,7 @@
 import "server-only";
 import { cacheLife } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import type { Level } from "@/lib/mock/log-seed";
+import { mineOf, type Level } from "@/lib/mock/log-seed";
 
 // 기술 상세 (T-10b) — 기술 내용(공용) + 내 숙련도 · 복습 상태 · 그 기술이 나온 내 기록(본인 것만, RLS).
 export type SkillDetail = {
@@ -13,6 +13,7 @@ export type SkillDetail = {
   positionSlug: string | null; // 포지션 그림(D-54)
   steps: string[];
   draft: boolean;
+  mine?: "pending" | "rejected"; // 내가 만든 기술(D-57)
   level: Level | null;
   card: { dueOn: string; reviews: number } | null;
   logs: { id: string; loggedOn: string; body: string }[]; // 날짜 최신순
@@ -26,7 +27,7 @@ export async function getSkill(slug: string): Promise<SkillDetail | null> {
 
   const { data: t, error } = await supabase
     .from("techniques")
-    .select("id, slug, name_ko, name_en, aliases, steps, is_reviewed, positions(slug, name_ko)")
+    .select("id, slug, name_ko, name_en, aliases, steps, is_reviewed, owner_id, owner_status, positions(slug, name_ko)")
     .eq("slug", slug)
     .maybeSingle();
   if (error) throw new Error(`skill: ${error.code ?? ""} ${error.message.slice(0, 80)}`);
@@ -60,6 +61,7 @@ export async function getSkill(slug: string): Promise<SkillDetail | null> {
     positionSlug: t.positions?.slug ?? null,
     steps: t.steps,
     draft: !t.is_reviewed,
+    mine: mineOf(t.owner_id, t.owner_status),
     level: (level.data?.level as Level | undefined) ?? null,
     card: card.data ? { dueOn: card.data.due_on, reviews: card.data.reviews_count } : null,
     logs,

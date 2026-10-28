@@ -310,3 +310,43 @@ export async function rejectSuggestion(id: string): Promise<AdminResult> {
   revalidatePath("/app", "layout"); // 보낸 사람의 "확인 대기 중" 표시가 풀린다
   return { ok: true, message: "버렸어요." };
 }
+
+// 사용자가 만든 기술 (D-57) — 운영자가 고친 포지션 · 이름 · 세팅 과정으로 승인하면 공용 기술이 되고 만든 사람에게 알림.
+// 버리면 만든 사람에게만 계속 보인다(기록 · 카드는 그대로).
+export async function approveUserTechnique(
+  id: string,
+  edit: { position: string; nameKo: string; nameEn: string; steps: string[] },
+): Promise<AdminResult> {
+  const supabase = await operator();
+  if (!supabase) return { ok: false, message: "운영자만 쓸 수 있어요." };
+  const lines = (Array.isArray(edit?.steps) ? edit.steps : []).map((x) => clean(x, 120)).filter(Boolean);
+  if (lines.length < 3 || lines.length > 5) return { ok: false, message: "세팅 과정은 3~5줄이 필요해요." };
+  const nameKo = clean(edit?.nameKo, 60);
+  const nameEn = clean(edit?.nameEn, 80);
+  if (!nameKo || !nameEn) return { ok: false, message: "한국어 · 영어 이름을 채워 주세요." };
+  if (!clean(edit?.position, 40)) return { ok: false, message: "포지션을 골라 주세요." };
+
+  const { error } = await supabase.rpc("approve_user_technique", {
+    p_id: id,
+    p_position: clean(edit.position, 40),
+    p_name_ko: nameKo,
+    p_name_en: nameEn,
+    p_steps: lines,
+  });
+  if (error) {
+    console.error("approveUserTechnique failed:", error.code ?? "", (error.message ?? "").slice(0, 120));
+    return { ok: false, message: "승인하지 못했어요 — 이미 처리됐을 수 있어요." };
+  }
+  forgetLibrary(); // 이 서버의 검색 목록은 바로, 다른 서버는 5분 안에
+  revalidatePath("/app", "layout");
+  return { ok: true, message: "승인했어요. 이제 모두의 기술 목록에 보여요." };
+}
+
+export async function rejectUserTechnique(id: string): Promise<AdminResult> {
+  const supabase = await operator();
+  if (!supabase) return { ok: false, message: "운영자만 쓸 수 있어요." };
+  const { error } = await supabase.rpc("reject_user_technique", { p_id: id });
+  if (error) return { ok: false, message: "이미 처리됐거나 저장하지 못했어요." };
+  revalidatePath("/app", "layout");
+  return { ok: true, message: "버렸어요. 만든 사람에게만 계속 보여요." };
+}

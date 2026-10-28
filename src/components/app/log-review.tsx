@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition, type Dispatch, type ReactNode, type SetStateAction } from "react";
-import { ArrowLeft, ChevronDown, Loader2, Mic, MicOff, Trash2, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, Loader2, Mic, MicOff, Sparkles, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { BottomAction } from "@/components/app/bottom-action";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +15,8 @@ import { LevelPicker } from "@/components/app/level-picker";
 import { TechniquePicker } from "@/components/app/technique-picker";
 import { YoutubeLink } from "@/components/app/youtube-link";
 import { PositionPicture } from "@/components/app/position-picture";
-import type { Level, MatchedTechnique, Term } from "@/lib/mock/log-seed";
+import { generateTechnique } from "@/app/app/log/actions";
+import { MINE_LABEL, type Level, type MatchedTechnique, type Term } from "@/lib/mock/log-seed";
 
 export type AiStatus = "ok" | "mock" | "none";
 
@@ -55,6 +57,26 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
   const setLevel = (id: string, level: Level) =>
     setTechniques((list) => list.map((t) => (t.id === id ? { ...t, level } : t)));
   const remove = (id: string) => setTechniques((list) => list.filter((t) => t.id !== id));
+  // 내용 생성(D-57) — 직접 적은 이름을 AI 기술 카드로 바꾼다(나만 보기, 운영자 승인 뒤 공용)
+  const [generating, setGenerating] = useState<string | null>(null);
+  async function generate(name: string) {
+    setGenerating(name);
+    const res = await generateTechnique(name).catch(() => null);
+    setGenerating(null);
+    if (!res || !res.ok) {
+      toast.error(res?.message ?? "만들지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
+      return;
+    }
+    const t = res.technique;
+    setCustomNames((l) => l.filter((n) => n !== name));
+    setTechniques((list) => (list.some((x) => x.id === t.id) ? list : [...list, t]));
+    const left = res.left >= 0 ? ` · 오늘 ${res.left}번 남음` : "";
+    toast.success(
+      res.kind === "new"
+        ? `‘${t.nameKo}’ 카드를 만들었어요. 승인 전까지 나에게만 보여요${left}`
+        : `이미 목록에 있는 ‘${t.nameKo}’(으)로 바꿨어요${left}`,
+    );
+  }
   const toggle = (t: MatchedTechnique) =>
     setTechniques((list) => (list.some((x) => x.id === t.id) ? list.filter((x) => x.id !== t.id) : [...list, t]));
 
@@ -90,9 +112,23 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
 
         {customNames.map((name) => (
           <Card key={name} className="rounded-2xl ring-border" size="sm">
-            <CardContent className="flex items-center gap-2">
+            <CardContent className="flex flex-wrap items-center gap-2">
               <span className="text-[17px] font-semibold">{name}</span>
               <Badge variant="outline">목록 추가 대기</Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-full shadow-none"
+                disabled={generating !== null || saving}
+                onClick={() => generate(name)}
+              >
+                {generating === name ? (
+                  <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />
+                ) : (
+                  <Sparkles data-icon="inline-start" aria-hidden />
+                )}
+                {generating === name ? "만드는 중…" : "내용 생성"}
+              </Button>
               <Button
                 variant="ghost"
                 size="icon-sm"
@@ -180,7 +216,7 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
       <BottomAction>
         <Button
           className="h-12 w-full rounded-full text-base shadow-none"
-          disabled={!canSave || saving || deleting}
+          disabled={!canSave || saving || deleting || generating !== null}
           onClick={() =>
             startSaving(() =>
               onSave({ body: body.trim(), techniques, customNames, terms: initial.terms, aiStatus: initial.aiStatus }),
@@ -307,7 +343,7 @@ function TechniqueCard({
             {(t.guess || t.draft) && (
               <div className="flex flex-wrap items-center gap-1.5">
                 {t.guess && <Badge variant="secondary">추측</Badge>}
-                {t.draft && <Badge variant="outline">검수 전</Badge>}
+                {t.draft && <Badge variant="outline">{t.mine ? MINE_LABEL[t.mine] : "검수 전"}</Badge>}
                 {t.guess && (
                   <span className="text-[13px] font-medium text-foreground">{t.position}에서 배웠다면</span>
                 )}

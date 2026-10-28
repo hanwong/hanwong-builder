@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ChevronDown, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LEVELS } from "@/lib/mock/log-seed";
+import { LEVELS, MINE_LABEL } from "@/lib/mock/log-seed";
 import { HoverPrefetchLink } from "@/components/app/hover-prefetch-link";
 import type { PositionGroup } from "@/lib/skills-data";
 import { cn } from "@/lib/utils";
@@ -87,6 +87,7 @@ export function SkillsList({ groups }: { groups: PositionGroup[] }) {
                       )}
                     >
                       <span className="min-w-0 flex-1 truncate text-[15px]">{s.nameKo}</span>
+                      {s.mine && <Badge variant="outline">{MINE_LABEL[s.mine]}</Badge>}
                       {s.level && <Badge variant="secondary">{LEVEL_LABEL.get(s.level)}</Badge>}
                     </HoverPrefetchLink>
                   </li>

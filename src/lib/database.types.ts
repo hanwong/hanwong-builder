@@ -460,6 +460,8 @@ export type Database = {
           is_reviewed: boolean
           name_en: string
           name_ko: string
+          owner_id: string | null
+          owner_status: string | null
           position_id: string
           slug: string
           sort_order: number
@@ -473,6 +475,8 @@ export type Database = {
           is_reviewed?: boolean
           name_en: string
           name_ko: string
+          owner_id?: string | null
+          owner_status?: string | null
           position_id: string
           slug: string
           sort_order?: number
@@ -486,6 +490,8 @@ export type Database = {
           is_reviewed?: boolean
           name_en?: string
           name_ko?: string
+          owner_id?: string | null
+          owner_status?: string | null
           position_id?: string
           slug?: string
           sort_order?: number
@@ -515,6 +521,16 @@ export type Database = {
         Args: { p_aliases: string[]; p_id: string; p_steps: string[] }
         Returns: Json
       }
+      approve_user_technique: {
+        Args: {
+          p_id: string
+          p_name_en: string
+          p_name_ko: string
+          p_position: string
+          p_steps: string[]
+        }
+        Returns: undefined
+      }
       custom_name_counts: {
         Args: { keys: string[] }
         Returns: {
@@ -536,6 +552,7 @@ export type Database = {
           times: number
         }[]
       }
+      reject_user_technique: { Args: { p_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

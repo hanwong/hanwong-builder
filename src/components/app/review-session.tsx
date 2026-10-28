@@ -13,6 +13,7 @@ import { answerCard } from "@/app/app/review/actions";
 import { formatKoreanDate } from "@/lib/seoul-date";
 import { INTERVAL_DAYS, RATINGS, nextStep, type Rating } from "@/lib/review-rules";
 import type { DueCard } from "@/lib/review-data";
+import { MINE_LABEL } from "@/lib/mock/log-seed";
 import { cn } from "@/lib/utils";
 import { PositionPicture } from "@/components/app/position-picture";
 
@@ -90,9 +91,9 @@ export function ReviewSession({ cards, laterDue }: { cards: DueCard[]; laterDue:
               <span className="mark-lime">{card.nameKo}</span>
             </h2>
             <span className="text-[13px] font-medium text-muted-foreground">{card.nameEn}</span>
-            {card.draft && (
+            {(card.mine || card.draft) && (
               <Badge variant="outline" className={cn("mt-1", !flipped && "self-center")}>
-                검수 전
+                {card.mine ? MINE_LABEL[card.mine] : "검수 전"}
               </Badge>
             )}
           </div>

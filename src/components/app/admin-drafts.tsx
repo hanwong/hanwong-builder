@@ -13,14 +13,16 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   approveDraft,
   approveSuggestion,
+  approveUserTechnique,
   draftName,
   redraftDraft,
   rejectDraft,
   rejectSuggestion,
+  rejectUserTechnique,
   type DraftEdit,
 } from "@/app/app/admin/actions";
 import { searchTechniques } from "@/app/app/log/actions";
-import type { AdminData, AdminDraft, AdminItem, AdminSuggestion } from "@/lib/admin/admin-data";
+import type { AdminData, AdminDraft, AdminItem, AdminSuggestion, AdminUserTechnique } from "@/lib/admin/admin-data";
 import type { DraftKind } from "@/lib/admin/drafter";
 
 const KIND_LABEL: Record<DraftKind, string> = {
@@ -39,8 +41,9 @@ export function AdminDrafts({ data }: { data: AdminData }) {
       <header className="flex flex-col gap-1">
         <h1 className="text-[22px] font-bold tracking-tight">목록 추가 대기</h1>
         <p className="text-[14px] text-muted-foreground">
-          적힌 이름은 누르면 AI 가 초안을 만들어요. 승인하면 그 이름으로 적은 기록이 기술 카드가 돼요. 보완 제안은
-          사용자가 고쳐 보낸 세팅 과정 · 다른 이름이에요.
+          적힌 이름은 누르면 AI 가 초안을 만들어요. 승인하면 그 이름으로 적은 기록이 기술 카드가 돼요. 사용자가 만든
+          기술은 지금 만든 사람만 봐요 — 승인하면 모두에게 보여요. 보완 제안은 사용자가 고쳐 보낸 세팅 과정 · 다른
+          이름이에요.
         </p>
         <p className="text-[13px] text-muted-foreground">
           오늘 AI 초안 {data.leftToday}개 더 만들 수 있어요
@@ -65,6 +68,29 @@ export function AdminDrafts({ data }: { data: AdminData }) {
                 open={open === item.key}
                 onToggle={() => setOpen(open === item.key ? null : item.key)}
                 positions={data.positions}
+              />
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-2" aria-labelledby="user-techniques-title">
+        <h2 id="user-techniques-title" className="text-[17px] font-semibold">
+          사용자가 만든 기술 <span className="text-muted-foreground tabular-nums">{data.userTechniques.length}</span>
+        </h2>
+        {data.userTechniques.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-border px-4 py-5 text-center text-[15px] text-muted-foreground">
+            승인 대기 중인 기술이 없어요.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {data.userTechniques.map((t) => (
+              <UserTechniqueRow
+                key={t.id}
+                technique={t}
+                positions={data.positions}
+                open={open === t.id}
+                onToggle={() => setOpen(open === t.id ? null : t.id)}
               />
             ))}
           </ul>
@@ -495,6 +521,95 @@ function SuggestionRow({
               className="flex-1 rounded-full"
               disabled={busy}
               onClick={() => act(() => approveSuggestion(sg.id, steps.split("\n"), aliases.split(/[,，]/)))}
+            >
+              {busy && <Loader2 className="animate-spin" data-icon="inline-start" aria-hidden />}
+              승인
+            </Button>
+          </div>
+        </div>
+      )}
+    </li>
+  );
+}
+
+// 사용자가 '내용 생성'으로 만든 기술 (D-57) — 지금은 만든 사람만 본다. 고쳐서 승인하면 모두에게, 버리면 그 사람에게만.
+function UserTechniqueRow({
+  technique: t,
+  positions,
+  open,
+  onToggle,
+}: {
+  technique: AdminUserTechnique;
+  positions: AdminData["positions"];
+  open: boolean;
+  onToggle: () => void;
+}) {
+  const router = useRouter();
+  const [busy, start] = useTransition();
+  const [position, setPosition] = useState(t.position);
+  const [nameKo, setNameKo] = useState(t.nameKo);
+  const [nameEn, setNameEn] = useState(t.nameEn);
+  const [steps, setSteps] = useState(t.steps.join("\n"));
+  const id = (k: string) => `${t.id}-${k}`;
+
+  function act(fn: () => Promise<{ ok: boolean; message?: string }>) {
+    start(async () => {
+      const r = await fn();
+      if (r.ok) {
+        toast.success(r.message ?? "처리했어요.");
+        router.refresh();
+      } else toast.error(r.message ?? "처리하지 못했어요.");
+    });
+  }
+
+  return (
+    <li className="rounded-2xl border border-border bg-card">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
+      >
+        <span className="min-w-0">
+          <span className="block truncate text-[16px] font-semibold">{t.nameKo}</span>
+          <span className="block truncate text-[13px] text-muted-foreground">
+            {positions.find((p) => p.slug === t.position)?.nameKo ?? "포지션 없음"}
+            {t.aliases.length > 0 && ` · 다른 이름: ${t.aliases.join(", ")}`}
+          </span>
+        </span>
+        <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+      </button>
+
+      {open && (
+        <div className="flex flex-col gap-3 border-t border-border p-4 pt-3">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={id("position")}>포지션</Label>
+            <NativeSelect id={id("position")} className="w-full" value={position} onChange={(e) => setPosition(e.target.value)}>
+              <NativeSelectOption value="">고르기</NativeSelectOption>
+              {positions.map((p) => (
+                <NativeSelectOption key={p.slug} value={p.slug}>
+                  {p.nameKo}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+          </div>
+          <Field id={id("ko")} label="한국어 이름" value={nameKo} onChange={setNameKo} />
+          <Field id={id("en")} label="영어 이름" value={nameEn} onChange={setNameEn} />
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={id("steps")}>세팅 과정 (한 줄에 하나, 3~5줄)</Label>
+            <Textarea id={id("steps")} value={steps} onChange={(e) => setSteps(e.target.value)} rows={5} />
+          </div>
+
+          <div className="flex gap-2 pt-1">
+            <Button variant="outline" className="flex-1 rounded-full" disabled={busy} onClick={() => act(() => rejectUserTechnique(t.id))}>
+              버림
+            </Button>
+            <Button
+              className="flex-1 rounded-full"
+              disabled={busy}
+              onClick={() =>
+                act(() => approveUserTechnique(t.id, { position, nameKo, nameEn, steps: steps.split("\n") }))
+              }
             >
               {busy && <Loader2 className="animate-spin" data-icon="inline-start" aria-hidden />}
               승인
