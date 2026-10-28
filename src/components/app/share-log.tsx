@@ -55,9 +55,9 @@ export function ShareLog({ id, loggedOn }: { id: string; loggedOn: string }) {
 
   return (
     <>
-      <Button variant="ghost" size="sm" className="rounded-full px-2.5" onClick={() => setOpen(true)}>
-        <Share2 data-icon="inline-start" aria-hidden />
-        공유
+      {/* 글자 없이 아이콘만(본인 요청) — 화면 읽기용 이름은 "공유" */}
+      <Button variant="outline" size="icon" aria-label="공유" className="size-9 rounded-[10px] bg-card shadow-none" onClick={() => setOpen(true)}>
+        <ShareOutIcon className="size-5" />
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
@@ -120,5 +120,25 @@ export function ShareLog({ id, loggedOn }: { id: string; loggedOn: string }) {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+// 열린 네모 밖으로 휘어져 나가는 화살표 — lucide 선 굵기 · 둥근 끝과 맞춘 공유 아이콘
+function ShareOutIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M11 4H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-4" />
+      <path d="M9 15c0-4.5 3-7.5 7.5-7.5H21" />
+      <path d="m17.5 4 3.5 3.5-3.5 3.5" />
+    </svg>
   );
 }
