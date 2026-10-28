@@ -37,6 +37,7 @@ export async function shareCardImage(
   { loggedOn, body, items }: { loggedOn: string; body: string; items: ShareItem[] },
   headers: Record<string, string>,
 ) {
+  const text = body.replace(/\s*\n\s*/g, " "); // 줄바꿈은 띄어쓰기로 — 잘릴 때 앞뒤 글자가 붙지 않게
   const all = await Promise.all(
     items.map(async (t) => ({ ...t, picture: t.positionSlug ? await picture(t.positionSlug) : null })),
   );
@@ -109,7 +110,7 @@ export async function shareCardImage(
           )}
         </div>
 
-        {body && (
+        {text && (
           <div
             style={{
               display: "flex",
@@ -128,7 +129,7 @@ export async function shareCardImage(
                 lineClamp: bodyLines,
               }}
             >
-              {body}
+              {text}
             </div>
           </div>
         )}
