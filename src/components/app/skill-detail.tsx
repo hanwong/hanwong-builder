@@ -78,7 +78,11 @@ export function SkillDetail({ skill }: { skill: Detail }) {
       {/* 세팅 과정 */}
       <Card className="rounded-2xl ring-border">
         <CardContent className="flex flex-col gap-3">
-          <h2 className="text-[17px] font-semibold">세팅 과정</h2>
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="text-[17px] font-semibold">세팅 과정</h2>
+            {/* 좌우는 오른손잡이 기준으로 적는다(D-74) */}
+            <span className="text-[12px] font-medium text-muted-foreground">오른손잡이 기준 · 왼손잡이는 좌우 반대로</span>
+          </div>
           <ol className="flex list-decimal flex-col gap-2 pl-5 text-[15px] leading-relaxed">
             {skill.steps.map((s) => (
               <li key={s}>{s}</li>

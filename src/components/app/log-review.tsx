@@ -421,11 +421,15 @@ function TechniqueCard({
           {youtube && <YoutubeLink nameEn={t.nameEn} />}
         </div>
         {open && (
-          <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-[15px] leading-relaxed">
-            {t.steps.map((s) => (
-              <li key={s}>{s}</li>
-            ))}
-          </ol>
+          <div className="flex flex-col gap-1">
+            <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-[15px] leading-relaxed">
+              {t.steps.map((s) => (
+                <li key={s}>{s}</li>
+              ))}
+            </ol>
+            {/* 좌우는 오른손잡이 기준(D-74) */}
+            <span className="pl-5 text-[12px] font-medium text-muted-foreground">오른손잡이 기준 · 왼손잡이는 좌우 반대로</span>
+          </div>
         )}
 
         <div className="flex flex-col gap-1.5">
