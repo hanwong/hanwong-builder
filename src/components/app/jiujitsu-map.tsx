@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-// 내 주짓수 지도 (D-60) — 포지션 그림 19칸. 배운 기술(숙련도가 있는 기술)이 있는 포지션은 진하게 + 개수, 없는 곳은 흐리게.
+// 내 주짓수 지도 (D-60) — 포지션 그림 21칸(D-76). 배운 기술(숙련도가 있는 기술)이 있는 포지션은 진하게 + 개수, 없는 곳은 흐리게.
 // 누르면 내 기술 목록에서 그 포지션을 펼친다(#pos-{slug}).
 export function JiujitsuMap({ map }: { map: { slug: string; nameKo: string; learned: number }[] }) {
   const reached = map.filter((p) => p.learned > 0).length;
