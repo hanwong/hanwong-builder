@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { House, PenLine, Map, Plus } from "lucide-react";
@@ -17,22 +18,58 @@ export function TabBar() {
   if (pathname === "/app/login" || pathname === "/app/start") return null; // 로그인 · 시작하기(D-59)는 탭 없이 카드 하나만
   return (
     <>
-      {(pathname === "/app" || pathname === "/app/logs") && <RecordButton />}
+      {(pathname === "/app" || pathname === "/app/logs") && <RecordButton key={pathname} />}
       <TabBarView pathname={pathname} />
     </>
   );
 }
 
-// 홈 · 기록 탭에서만 탭 바 바로 위 가운데에 떠 있는 "+ 기록하기"(D-67) — 한 손 엄지가 닿고, 내려도 늘 보인다
+// 홈 · 기록 탭에서만 탭 바 바로 위 가운데에 떠 있는 "+ 기록하기"(D-67) — 한 손 엄지가 닿고, 내려도 늘 보인다.
+// 화면(main)을 아래로 내리는 동안엔 동그란 + 로 줄어 아래 내용을 덜 가리고, 위로 올리거나 멈추면 다시 펼친다(Material 3).
+const EXPAND_AFTER = 900; // 멈추고 이만큼 지나면 다시 펼침(ms)
+
 function RecordButton() {
+  const [small, setSmall] = useState(false);
+  useEffect(() => {
+    const main = document.querySelector("main");
+    if (!main) return;
+    let last = main.scrollTop;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const onScroll = () => {
+      const y = main.scrollTop;
+      if (y > last + 2 && y > 24) setSmall(true);
+      else if (y < last - 2) setSmall(false);
+      last = y;
+      clearTimeout(timer);
+      timer = setTimeout(() => setSmall(false), EXPAND_AFTER);
+    };
+    main.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      main.removeEventListener("scroll", onScroll);
+      clearTimeout(timer);
+    };
+  }, []);
+
   return (
     <Link
       href="/app/log"
-      className="fixed left-1/2 z-30 flex h-12 -translate-x-1/2 items-center gap-1.5 rounded-full bg-primary px-6 text-base font-semibold text-primary-foreground shadow-lg shadow-black/20 transition-transform active:scale-95"
+      aria-label="기록하기"
+      className={cn(
+        "fixed left-1/2 z-30 flex h-12 -translate-x-1/2 items-center justify-center overflow-hidden rounded-full bg-primary text-base font-semibold whitespace-nowrap text-primary-foreground shadow-lg shadow-black/20 transition-[padding,transform] duration-200 ease-out active:scale-95 motion-reduce:transition-none",
+        small ? "w-12 px-0" : "px-6",
+      )}
       style={{ bottom: "calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 12px)" }}
     >
-      <Plus className="size-5" aria-hidden />
-      기록하기
+      <Plus className="size-5 shrink-0" aria-hidden />
+      <span
+        aria-hidden
+        className={cn(
+          "overflow-hidden transition-[max-width,opacity,margin] duration-200 ease-out motion-reduce:transition-none",
+          small ? "ml-0 max-w-0 opacity-0" : "ml-1.5 max-w-24 opacity-100",
+        )}
+      >
+        기록하기
+      </span>
     </Link>
   );
 }
