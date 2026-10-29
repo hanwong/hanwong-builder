@@ -1,7 +1,7 @@
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { shareCardImage, type ShareItem } from "@/lib/share-card";
 
-// 기록 공유 이미지 (D-51) — 그 사람 기록으로만(RLS) 만들고 어디에도 저장하지 않는다. ?body=0 이면 내 글을 빼고 기술 이름만.
+// 기록 공유 이미지 (D-51) — 그 사람 기록으로만(RLS) 만들고 어디에도 저장하지 않는다. ?body=0 이면 내 글을 빼고 기술 이름 · 스파링만.
 export async function GET(request: Request, ctx: RouteContext<"/app/log/[id]/card">) {
   const { id } = await ctx.params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return new Response("not found", { status: 404 });
@@ -10,7 +10,7 @@ export async function GET(request: Request, ctx: RouteContext<"/app/log/[id]/car
   const supabase = await createSupabaseServer();
   const { data, error } = await supabase
     .from("class_logs")
-    .select("logged_on, body, class_log_techniques(created_at, custom_name, techniques(name_ko, positions(slug, name_ko)))")
+    .select("logged_on, body, sparring_rounds, class_log_techniques(created_at, custom_name, techniques(name_ko, positions(slug, name_ko)))")
     .eq("id", id)
     .maybeSingle();
   if (error) {
@@ -28,7 +28,7 @@ export async function GET(request: Request, ctx: RouteContext<"/app/log/[id]/car
     });
 
   return shareCardImage(
-    { loggedOn: data.logged_on, body: withBody ? data.body.trim() : "", items },
+    { loggedOn: data.logged_on, body: withBody ? data.body.trim() : "", items, sparring: data.sparring_rounds ?? 0 },
     {
       "Cache-Control": "private, no-store, max-age=0",
       "Content-Disposition": `inline; filename="rereroll-${data.logged_on}.png"`,
