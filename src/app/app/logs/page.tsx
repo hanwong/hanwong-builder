@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LogList } from "@/components/app/log-list";
@@ -15,14 +14,8 @@ export const metadata: Metadata = {
 // 기록 목록 (T-33, D-40) — 하단 '기록' 탭. 최신순, 30개씩 더 보기(?n=60 …).
 export default function LogsPage({ searchParams }: { searchParams: Promise<{ n?: string }> }) {
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 pb-16">
       <h1 className="text-[22px] font-bold tracking-tight">기록</h1>
-      <Button asChild className="h-12 w-full rounded-full text-base">
-        <Link href="/app/log">
-          <Plus data-icon="inline-start" aria-hidden />
-          오늘 배운 것 기록하기
-        </Link>
-      </Button>
       <Suspense fallback={<LogsSkeleton />}>
         <Loader searchParams={searchParams} />
       </Suspense>

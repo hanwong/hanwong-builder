@@ -2,10 +2,10 @@
 
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { House, PenLine, Map } from "lucide-react";
+import { House, PenLine, Map, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// 하단 탭 3개 (DESIGN.md 4). 복습 탭은 D-58 로 뺐다.
+// 하단 탭 3개 (DESIGN.md 4). 복습 탭은 D-58 로 뺐다. 홈 · 기록 탭에는 위에 떠 있는 기록하기(D-67).
 const tabs = [
   { href: "/app", label: "홈", Icon: House, ready: true, match: undefined },
   { href: "/app/logs", label: "기록", Icon: PenLine, ready: true, match: "/app/log" }, // 목록 · 쓰기 · 보기 모두(D-40)
@@ -15,7 +15,26 @@ const tabs = [
 export function TabBar() {
   const pathname = usePathname();
   if (pathname === "/app/login" || pathname === "/app/start") return null; // 로그인 · 시작하기(D-59)는 탭 없이 카드 하나만
-  return <TabBarView pathname={pathname} />;
+  return (
+    <>
+      {(pathname === "/app" || pathname === "/app/logs") && <RecordButton />}
+      <TabBarView pathname={pathname} />
+    </>
+  );
+}
+
+// 홈 · 기록 탭에서만 탭 바 바로 위 가운데에 떠 있는 "+ 기록하기"(D-67) — 한 손 엄지가 닿고, 내려도 늘 보인다
+function RecordButton() {
+  return (
+    <Link
+      href="/app/log"
+      className="fixed left-1/2 z-30 flex h-12 -translate-x-1/2 items-center gap-1.5 rounded-full bg-primary px-6 text-base font-semibold text-primary-foreground shadow-lg shadow-black/20 transition-transform active:scale-95"
+      style={{ bottom: "calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 12px)" }}
+    >
+      <Plus className="size-5" aria-hidden />
+      기록하기
+    </Link>
+  );
 }
 
 // 주소를 읽기 전(기록 보기처럼 주소가 요청마다 다른 화면) 잠깐 보여 줄 탭 — 선택 표시만 없다
