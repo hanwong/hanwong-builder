@@ -8,7 +8,7 @@ import { createSupabaseBrowser } from "@/lib/supabase/client";
 
 // 로그인 버튼 (D-05 → D-66): 카카오 · 네이버 · Google. 로그인 뒤 /auth/callback → next 로 돌아간다.
 // Supabase 대시보드에서 설정을 끝낸 로그인만 true — 설정 전 버튼이 오류를 내지 않게.
-const READY = { kakao: true, naver: true, google: true };
+const READY = { kakao: true, naver: false, google: true }; // 네이버: 앱이 아직 개발 중(테스터만) — 검수 통과 뒤 다시 켬(D-69)
 
 type Way = {
   key: keyof typeof READY;
