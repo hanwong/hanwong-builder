@@ -51,6 +51,8 @@ export function LoginButtons() {
   const [loading, setLoading] = useState<string | null>(null);
   const params = useSearchParams();
   const next = params.get("next") ?? "/app";
+  // 확인용: /app/login?consent=again 으로 들어오면 네이버가 이미 동의한 사람에게도 정보제공 동의 화면을 다시 보여 준다(D-71)
+  const reprompt = params.get("consent") === "again";
 
   async function signIn(way: Way) {
     setLoading(way.key);
@@ -59,6 +61,7 @@ export function LoginButtons() {
       provider: way.provider,
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        queryParams: reprompt && way.key === "naver" ? { auth_type: "reprompt" } : undefined,
       },
     });
     if (error) {
