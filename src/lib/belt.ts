@@ -5,7 +5,14 @@ export const BELTS = [
   { value: "purple", label: "퍼플", color: "#6B4C90" },
   { value: "brown", label: "브라운", color: "#8E5F4B" },
   { value: "black", label: "블랙", color: "#212121" },
+  // 유소년 벨트(D-78) — 색 4개만(IBJJF 의 화이트 · 블랙 줄 단계는 나누지 않음)
+  { value: "grey", label: "그레이", color: "#9C9C97", youth: true },
+  { value: "yellow", label: "옐로", color: "#E8C32E", youth: true },
+  { value: "orange", label: "오렌지", color: "#E0782B", youth: true },
+  { value: "green", label: "그린", color: "#3F8A4F", youth: true },
 ] as const;
+// 체크 표시를 어두운 색으로 그릴 밝은 벨트
+export const LIGHT_BELTS: readonly Belt[] = ["white", "yellow"];
 export type Belt = (typeof BELTS)[number]["value"];
 export const isBelt = (v: unknown): v is Belt => BELTS.some((b) => b.value === v);
 
