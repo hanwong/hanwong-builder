@@ -25,7 +25,7 @@ export type Status = "connecting" | "ready" | "reconnecting" | "full" | "error";
 
 const clamp = (v: number) => Math.max(-MAT_HALF, Math.min(MAT_HALF, v));
 // 세로 휴대폰 화면 안에 보이게 가운데 근처에서 시작
-const spawn = () => ({ x: clamp((Math.random() - 0.5) * 3), z: clamp(Math.random() * 2) });
+const spawn = () => ({ x: clamp((Math.random() - 0.5) * 4), z: clamp((Math.random() - 0.5) * 3) }); // 가운데 근처 — 서로 카메라에 잘 보이게
 
 // 받침이 있으면 "을", 없으면 "를"(한글이 아니면 둘 다)
 const objectParticle = (word: string) => {
@@ -126,6 +126,8 @@ export function useMat() {
           const finish = (v: number) => !done && ((done = true), resolve(v));
           void synced.then(finish);
           ch.subscribe((s, err) => {
+            // 휴대폰이 잠깐 백그라운드에 갔다 오면 연결이 다시 붙는다 — 그때 내 자리를 다시 알린다(안 하면 남에게 안 보임)
+            if (s === "SUBSCRIBED" && !probing && self.current) void ch.track(self.current);
             if (s === "CHANNEL_ERROR" || s === "TIMED_OUT") {
               console.error("open-mat channel:", s, err?.message ?? "");
               finish(-1);

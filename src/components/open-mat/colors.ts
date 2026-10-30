@@ -11,6 +11,11 @@ export const MAT = {
   ceiling: "#1E1F22", // 어두운 노출 천장
   duct: "#2C2E33",
   light: "#FFFFFF", // 길게 이어진 조명
+  doorFrame: "#3A3D42", // 유리문 알루미늄 틀
+  glass: "#D8E6EE", // 반투명 유리
+  handle: "#C9CDD2",
+  hall: "#ECEEEF", // 유리 너머 복도
+  hallFloor: "#BFC3C7",
   matBorder: "#2B2A26", // 이름표 글자 · 내 이름표 바탕(먹색)
   wallTrim: "#D9D2C2", // 이름표 테두리
   gi: "#F7F7F4",

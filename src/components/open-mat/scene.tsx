@@ -30,13 +30,14 @@ function Room({ onPick }: { onPick: (x: number, z: number) => void }) {
     onPick(e.point.x, e.point.z);
   };
 
-  // 벽 셋(뒤 · 왼쪽 · 오른쪽) — 카메라 쪽은 비워 둔다
+  // 벽 네 면 모두 같은 모양(흰 패드 + 옅은 회색 벽). 뒤 벽(처음 바라보는 쪽) 가운데에만 유리 출입문
   const walls = [
-    { p: [0, 0, -ROOM] as const, r: 0 },
-    { p: [-ROOM, 0, 0] as const, r: Math.PI / 2 },
-    { p: [ROOM, 0, 0] as const, r: -Math.PI / 2 },
+    { p: [0, 0, -ROOM] as const, r: 0, door: true },
+    { p: [-ROOM, 0, 0] as const, r: Math.PI / 2, door: false },
+    { p: [ROOM, 0, 0] as const, r: -Math.PI / 2, door: false },
+    { p: [0, 0, ROOM] as const, r: Math.PI, door: false },
   ];
-  const pads = Array.from({ length: Math.round(ROOM * 2) }, (_, i) => -ROOM + 0.5 + i);
+  const pads = Array.from({ length: Math.floor(ROOM) * 2 }, (_, i) => -Math.floor(ROOM) + 0.5 + i);
 
   return (
     <group>
@@ -51,27 +52,104 @@ function Room({ onPick }: { onPick: (x: number, z: number) => void }) {
 
       {walls.map((w, i) => (
         <group key={i} position={w.p} rotation-y={w.r}>
-          {/* 위쪽 옅은 회색 벽 */}
-          <mesh position-y={WALL_H / 2}>
-            <planeGeometry args={[ROOM * 2, WALL_H]} />
-            <meshLambertMaterial color={MAT.wall} />
-          </mesh>
-          {/* 흰 벽 패드 — 1m 폭, 틈이 보이게 조금 띄움 */}
-          <mesh position={[0, PAD_H / 2, 0.01]}>
-            <planeGeometry args={[ROOM * 2, PAD_H]} />
-            <meshLambertMaterial color={MAT.padGap} />
-          </mesh>
-          {pads.map((x) => (
-            <mesh key={x} position={[x, PAD_H / 2, 0.09]}>
-              <boxGeometry args={[0.96, PAD_H, 0.16]} />
-              <meshLambertMaterial color={MAT.pad} />
-            </mesh>
-          ))}
+          {w.door ? (
+            <>
+              {/* 문 양옆 · 위 벽 */}
+              {[-1, 1].map((side) => (
+                <mesh key={side} position={[side * (DOOR_W / 2 + (ROOM - DOOR_W / 2) / 2), WALL_H / 2, 0]}>
+                  <planeGeometry args={[ROOM - DOOR_W / 2, WALL_H]} />
+                  <meshLambertMaterial color={MAT.wall} />
+                </mesh>
+              ))}
+              <mesh position={[0, (WALL_H + DOOR_H) / 2, 0]}>
+                <planeGeometry args={[DOOR_W, WALL_H - DOOR_H]} />
+                <meshLambertMaterial color={MAT.wall} />
+              </mesh>
+              {[-1, 1].map((side) => (
+                <mesh key={side} position={[side * (DOOR_W / 2 + (ROOM - DOOR_W / 2) / 2), PAD_H / 2, 0.01]}>
+                  <planeGeometry args={[ROOM - DOOR_W / 2, PAD_H]} />
+                  <meshLambertMaterial color={MAT.padGap} />
+                </mesh>
+              ))}
+              <GlassDoor />
+            </>
+          ) : (
+            <>
+              {/* 위쪽 옅은 회색 벽 */}
+              <mesh position-y={WALL_H / 2}>
+                <planeGeometry args={[ROOM * 2, WALL_H]} />
+                <meshLambertMaterial color={MAT.wall} />
+              </mesh>
+              {/* 패드 사이 틈 */}
+              <mesh position={[0, PAD_H / 2, 0.01]}>
+                <planeGeometry args={[ROOM * 2, PAD_H]} />
+                <meshLambertMaterial color={MAT.padGap} />
+              </mesh>
+            </>
+          )}
+          {/* 흰 벽 패드 — 1m 폭, 틈이 보이게 조금 띄움(문 자리는 비움) */}
+          {pads
+            .filter((x) => !w.door || Math.abs(x) > DOOR_W / 2)
+            .map((x) => (
+              <mesh key={x} position={[x, PAD_H / 2, 0.09]}>
+                <boxGeometry args={[0.96, PAD_H, 0.16]} />
+                <meshLambertMaterial color={MAT.pad} />
+              </mesh>
+            ))}
         </group>
       ))}
 
       {/* 어두운 천장 + 덕트 + 비스듬히 길게 이어진 조명 — 카메라가 천장 위로 올라가면 가리지 않게 숨긴다 */}
       <Ceiling />
+    </group>
+  );
+}
+
+// 유리 양문 출입문 — 어두운 알루미늄 틀 · 반투명 유리 · 세로 손잡이, 유리 너머로 밝은 복도
+const DOOR_W = 2;
+const DOOR_H = 2.4;
+function GlassDoor() {
+  const frame = { color: MAT.doorFrame };
+  return (
+    <group>
+      {/* 복도(문 너머) — 벽 뒤쪽 */}
+      <mesh position={[0, DOOR_H / 2, -1.2]}>
+        <planeGeometry args={[DOOR_W + 1, DOOR_H + 0.4]} />
+        <meshBasicMaterial color={MAT.hall} />
+      </mesh>
+      <mesh rotation-x={-Math.PI / 2} position={[0, 0.001, -0.6]}>
+        <planeGeometry args={[DOOR_W + 1, 1.2]} />
+        <meshLambertMaterial color={MAT.hallFloor} />
+      </mesh>
+      {/* 틀: 양옆 · 위 · 가운데 */}
+      {[-DOOR_W / 2, 0, DOOR_W / 2].map((x) => (
+        <mesh key={x} position={[x, DOOR_H / 2, 0.04]}>
+          <boxGeometry args={[x === 0 ? 0.05 : 0.09, DOOR_H, 0.08]} />
+          <meshLambertMaterial {...frame} />
+        </mesh>
+      ))}
+      <mesh position={[0, DOOR_H + 0.04, 0.04]}>
+        <boxGeometry args={[DOOR_W + 0.09, 0.09, 0.08]} />
+        <meshLambertMaterial {...frame} />
+      </mesh>
+      <mesh position={[0, 0.05, 0.04]}>
+        <boxGeometry args={[DOOR_W, 0.1, 0.06]} />
+        <meshLambertMaterial {...frame} />
+      </mesh>
+      {/* 유리 두 장 */}
+      {[-DOOR_W / 4, DOOR_W / 4].map((x) => (
+        <mesh key={x} position={[x, DOOR_H / 2, 0.03]}>
+          <planeGeometry args={[DOOR_W / 2 - 0.07, DOOR_H - 0.1]} />
+          <meshLambertMaterial color={MAT.glass} transparent opacity={0.28} depthWrite={false} />
+        </mesh>
+      ))}
+      {/* 세로 손잡이 */}
+      {[-0.14, 0.14].map((x) => (
+        <mesh key={x} position={[x, 1.1, 0.11]}>
+          <boxGeometry args={[0.03, 0.5, 0.03]} />
+          <meshLambertMaterial color={MAT.handle} />
+        </mesh>
+      ))}
     </group>
   );
 }
@@ -249,9 +327,9 @@ function Character({ player, mine, act, pose }: { player: Player; mine: boolean;
 }
 
 // 내 캐릭터 뒤에서 따라다니는 고정 시점 카메라(본인 요청 2026-10-31). 끌어서 돌리기 없음.
-// 벽 패드에 가리지 않게 카메라 자리는 방 안쪽으로 묶는다.
-const BEHIND = 3.4;
-const HEIGHT = 2.1;
+// 벽 패드에 가리지 않게 카메라 자리는 방 안쪽으로 묶는다. 휴대폰 세로 화면에서 옆 사람도 보이게 조금 뒤 · 위 · 넓게.
+const BEHIND = 4.4;
+const HEIGHT = 2.8;
 const CAM_LIMIT = ROOM - 0.4;
 function FollowCamera({ pose }: { pose: Pose }) {
   const look = useRef(new THREE.Vector3(0, 0.8, 0));
@@ -265,7 +343,7 @@ function FollowCamera({ pose }: { pose: Pose }) {
     want.set(
       Math.max(-CAM_LIMIT, Math.min(CAM_LIMIT, p.pos.x - fx * BEHIND)),
       HEIGHT,
-      Math.max(-CAM_LIMIT, Math.min(CAM_LIMIT + 3, p.pos.z - fz * BEHIND)), // 앞(카메라 쪽)은 벽이 없어 조금 더 허용
+      Math.max(-CAM_LIMIT, Math.min(CAM_LIMIT, p.pos.z - fz * BEHIND)),
     );
     aim.set(p.pos.x + fx * 1.5, 0.9, p.pos.z + fz * 1.5);
     const k = 1 - Math.exp(-dt * 4); // 부드럽게 따라가기
@@ -296,7 +374,7 @@ export default function MatScene({
   return (
     <Canvas
       dpr={[1, 1.75]}
-      camera={{ position: [0, HEIGHT + 1, 6], fov: 60 }}
+      camera={{ position: [0, HEIGHT + 0.5, 5.5], fov: 68 }}
       gl={{ antialias: true, powerPreference: "low-power" }}
       style={{ touchAction: "none" }}
     >
