@@ -1,9 +1,10 @@
 import "server-only";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { loadLibrary, type Library, type Position, type Technique } from "@/lib/mcp/library";
+import { loadLibrary, type Concept, type Library, type Position, type PositionNote, type Technique } from "@/lib/mcp/library";
+import { withLinks } from "@/lib/mcp/links";
 
-// 리리롤 MCP(D-81) — 공용 기술 목록을 읽기 전용으로 보여 주는 도구들. 사용자 기록 · 숙련도는 다루지 않는다.
+// 리리롤 MCP(D-81 · D-83) — 공용 기술 목록 · 포지션 노트 · 개념 카드를 읽기 전용으로 보여 주는 도구들. 사용자 기록 · 숙련도는 다루지 않는다.
 
 const NOTICE =
   "리리롤(rereroll.xyz) 기술 목록 · 오른손잡이 기준(왼손잡이는 좌우 반대). AI 가 쓰고 사람(블랙벨트) 확인 전인 공부용 자료예요. 일부 내용은 BJJGraph(© Diogo Seca, bjjgraph.org)를 참고해 우리 말로 새로 썼어요.";
@@ -11,7 +12,10 @@ const NOTICE =
 const INSTRUCTIONS = `리리롤 주짓수 기술 사전 · 지도. 한국어 이름으로 찾는다(영어 이름 · 다른 이름도 됨).
 - 이름을 모르면 rereroll_search 부터. 질문 낱말(예: "하프가드 크로스페이스 방어")을 그대로 넣어도 세팅 과정 · 방어 내용까지 찾는다.
 - "어떻게 해?" → rereroll_get_technique. "막는 법" → rereroll_get_technique(perspective="defender") 와, 그 자세의 아래쪽 기술(rereroll_position_options role=bottom).
-- "여기서 뭘 할 수 있어?" → rereroll_position_options. "A 에서 B 로" → rereroll_find_paths.
+- "여기서 뭘 해야 해? / 제일 중요한 게 뭐야?" → rereroll_get_position(role=top|bottom) 으로 목표 · 핵심 · "상대가 ~하면 → 기술" 을 먼저, 기술 목록은 rereroll_position_options.
+- "프레임이 뭐야? / 왜 자꾸 눌려? / 포지션 스파링은?" 같은 원리 · 공부법 → rereroll_get_concept (모르면 rereroll_list_concepts).
+- "A 에서 B 로" → rereroll_find_paths.
+- 답 속 [slug] 는 그 기술로 바로 이어 볼 수 있다는 뜻 — 필요하면 rereroll_get_technique 로 따라간다.
 - 좌우는 모두 오른손잡이 기준. 답할 때 이 점과 '공부용 · 사람 확인 전'임을 짧게 밝힌다.`;
 
 const KIND_KO: Record<string, string> = {
@@ -123,6 +127,81 @@ function search(lib: Library, q: string): Hit[] {
   return pool.sort((a, b) => b.score - a.score).filter((h, _, all) => h.score >= Math.min(20, all[0].score));
 }
 
+const ROLE_NOTE: Record<PositionNote["role"], string> = { top: "위", bottom: "아래", standing: "서서" };
+
+// 개념 카드 · 포지션 노트에서도 찾는다(D-83) — 기술 검색과 같은 낱말 규칙, 모든 낱말이 맞아야
+function searchExtra(lib: Library, q: string): string[] {
+  const toks = tokens(q).filter((w) => !DEFENSE_WORDS.some((d) => w.startsWith(d)));
+  if (!toks.length) return [];
+  const out: { s: number; line: string }[] = [];
+  for (const c of lib.concepts) {
+    const head = norm(c.nameKo + c.nameEn + c.slug);
+    const all = [c.summary, ...c.body, ...c.examples];
+    let s = 0;
+    for (const w of toks) s += head.includes(w) ? 50 : all.some((l) => norm(l).includes(w)) ? 10 : -1000;
+    if (s > 0) out.push({ s: s + 5, line: `- 개념: ${c.nameKo} (${c.nameEn}) [concept ${c.slug}] — ${c.summary}` });
+  }
+  for (const n of lib.notes) {
+    const p = lib.posBySlug.get(n.position);
+    if (!p) continue;
+    const posHit = toks.map((w) => resolvePosition(lib, w)?.slug === p.slug);
+    const lines = [...n.goals, ...n.keys, ...n.decisions, ...n.mistakes];
+    let s = 0;
+    let hitLine = "";
+    toks.forEach((w, i) => {
+      if (posHit[i]) return void (s += 15);
+      const l = lines.find((x) => norm(x).includes(w));
+      if (l) (s += 10), (hitLine ||= l);
+      else s -= 1000;
+    });
+    if (s > 0 && hitLine) out.push({ s, line: `- 포지션 노트: ${p.nameKo} ${ROLE_NOTE[n.role]} [포지션 ${p.slug}]\n  ↳ ${hitLine}` });
+  }
+  return out.sort((a, b) => b.s - a.s).slice(0, 5).map((x) => x.line);
+}
+
+function resolveConcept(lib: Library, q: string): Concept | { candidates: Concept[] } {
+  const n = norm(q);
+  const exact = lib.conceptBySlug.get(q.trim()) ?? lib.concepts.find((c) => norm(c.nameKo) === n || norm(c.nameEn) === n);
+  if (exact) return exact;
+  const part = lib.concepts.filter((c) => norm(c.nameKo).includes(n) || norm(c.nameEn).includes(n) || n.includes(norm(c.nameKo)));
+  if (part.length === 1) return part[0];
+  return { candidates: part.length ? part : lib.concepts.filter((c) => [c.summary, ...c.body].some((l) => norm(l).includes(n))).slice(0, 8) };
+}
+
+function renderNote(lib: Library, n: PositionNote): string {
+  const sec = (title: string, lines: string[], link = false) =>
+    lines.length ? `### ${title}\n${bullet(link ? lines.map((l) => withLinks(lib, l)) : lines)}` : "";
+  return [
+    `## ${ROLE_NOTE[n.role]}${n.role === "standing" ? "" : "에서"}`,
+    sec("목표 (순서대로)", n.goals),
+    sec("핵심", n.keys),
+    sec("상대가 ~하면", n.decisions, true),
+    sec("흔한 실수", n.mistakes),
+    sec("드릴", n.drills),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+function renderConcept(lib: Library, c: Concept): string {
+  const kind = c.kind === "principle" ? "원리" : "공부법";
+  const pos = c.relatedPositions.map((s) => lib.posBySlug.get(s)?.nameKo ?? s);
+  const tech = c.relatedTechniques.map((s) => lib.bySlug.get(s)).filter(Boolean) as Technique[];
+  const also = c.seeAlso.map((s) => lib.conceptBySlug.get(s)).filter(Boolean) as Concept[];
+  return [
+    `# ${c.nameKo} (${c.nameEn}) — ${kind}`,
+    c.summary,
+    bullet(c.body),
+    c.examples.length ? `## 어디서 쓰나\n${bullet(c.examples)}` : "",
+    pos.length ? `관련 포지션: ${pos.join(", ")}` : "",
+    tech.length ? `관련 기술: ${tech.map((t) => `${t.nameKo} [${t.slug}]`).join(", ")}` : "",
+    also.length ? `함께 보기: ${also.map((x) => `${x.nameKo} [concept ${x.slug}]`).join(", ")}` : "",
+    `---\n${NOTICE}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
 function label(lib: Library, t: Technique): string {
   const pos = lib.posBySlug.get(t.position)?.nameKo ?? t.position;
   const meta = [pos, t.kind && KIND_KO[t.kind], t.role && ROLE_KO[t.role]].filter(Boolean).join(" · ");
@@ -138,7 +217,7 @@ function renderTechnique(lib: Library, t: Technique, perspective: "attacker" | "
     out.push(`## 세팅 과정 (오른손잡이 기준)\n${t.steps.map((s, i) => `${i + 1}. ${s}`).join("\n")}`);
     if (t.keyPoints.length) out.push(`## 핵심 디테일\n${bullet(t.keyPoints)}`);
     if (t.mistakes.length) out.push(`## 흔한 실수\n${bullet(t.mistakes)}`);
-    if (t.ifBlocked.length) out.push(`## 막히면\n${bullet(t.ifBlocked)}`);
+    if (t.ifBlocked.length) out.push(`## 막히면\n${bullet(t.ifBlocked.map((l) => withLinks(lib, l)))}`);
   }
   if (perspective !== "attacker") {
     if (t.defense.length) out.push(`## 방어하는 쪽 (상대 입장)\n${bullet(t.defense)}`);
@@ -163,7 +242,7 @@ function guard<A>(fn: (lib: Library, args: A) => Result) {
 }
 
 export function createServer(): McpServer {
-  const server = new McpServer({ name: "rereroll", version: "0.1.0" }, { instructions: INSTRUCTIONS });
+  const server = new McpServer({ name: "rereroll", version: "0.2.0" }, { instructions: INSTRUCTIONS });
   const readOnly = { readOnlyHint: true, openWorldHint: false } as const;
   const kinds = z.enum(Object.keys(KIND_KO) as [string, ...string[]]);
 
@@ -172,7 +251,7 @@ export function createServer(): McpServer {
     {
       title: "기술 찾기",
       description:
-        "한국어 · 영어 이름, 다른 이름, 포지션 이름, 그리고 세팅 과정 · 핵심 · 막히면 · 방어 내용까지 찾는다. 질문 낱말을 그대로 넣어도 된다(예: \"하프가드 크로스페이스 방어\").",
+        "한국어 · 영어 이름, 다른 이름, 포지션 이름, 그리고 세팅 과정 · 핵심 · 막히면 · 방어 내용, 개념 카드 · 포지션 노트까지 찾는다. 질문 낱말을 그대로 넣어도 된다(예: \"하프가드 크로스페이스 방어\").",
       inputSchema: {
         query: z.string().min(1).describe("찾을 말. 예: \"올드 스쿨\", \"하프가드 크로스페이스 방어\", \"kimura\""),
         limit: z.number().int().min(1).max(30).optional().describe("최대 개수(기본 10)"),
@@ -181,9 +260,12 @@ export function createServer(): McpServer {
     },
     guard((lib, { query, limit = 10 }: { query: string; limit?: number }) => {
       const hits = search(lib, query);
-      if (!hits.length) return text(`"${query}" 에 맞는 기술이 없어요. 다른 낱말로 찾아보세요.`);
+      const extra = searchExtra(lib, query);
+      if (!hits.length && !extra.length) return text(`"${query}" 에 맞는 기술이 없어요. 다른 낱말로 찾아보세요.`);
       const lines = hits.slice(0, limit).map((h) => `- ${label(lib, h.t)} [${h.t.slug}]${h.snippet ? `\n  ↳ ${h.snippet}` : ""}`);
-      return text(`"${query}" — ${hits.length}개\n${lines.join("\n")}`);
+      const parts = [`"${query}" — 기술 ${hits.length}개`, ...lines];
+      if (extra.length) parts.push("", "개념 · 포지션 노트:", ...extra);
+      return text(parts.join("\n"));
     }),
   );
 
@@ -227,7 +309,7 @@ export function createServer(): McpServer {
         (t) => t.position === p.slug && (!role || t.role === role || t.role === "both") && (!kind || t.kind === kind),
       );
       if (!list.length) return text(`${p.nameKo} 에서 조건에 맞는 기술이 없어요.`);
-      return text(`${p.nameKo} — ${list.length}개\n${list.map((t) => `- ${label(lib, t)} [${t.slug}]`).join("\n")}\n\n${NOTICE}`);
+      return text(`${p.nameKo} — ${list.length}개${p.summary ? ` · ${p.summary}` : ""}\n${list.map((t) => `- ${label(lib, t)} [${t.slug}]`).join("\n")}\n\n${NOTICE}`);
     }),
   );
 
@@ -278,6 +360,74 @@ export function createServer(): McpServer {
   );
 
   server.registerTool(
+    "rereroll_get_position",
+    {
+      title: "포지션 자세히",
+      description:
+        "포지션 하나의 설명 · 갈래(변형)와, 위 · 아래(서서) 각각의 목표 · 핵심 · \"상대가 ~하면 → 기술\" · 흔한 실수 · 드릴. \"여기서 뭘 해야 해?\" 에 먼저 쓴다. 오른손잡이 기준.",
+      inputSchema: {
+        position: z.string().min(1).describe("포지션 이름 또는 slug. 예: \"하프가드\", \"사이드\", \"mount\""),
+        role: z.enum(["top", "bottom", "both"]).optional().describe("위 · 아래 · 둘 다(기본). 스탠딩 · 클린치는 하나뿐"),
+      },
+      annotations: readOnly,
+    },
+    guard((lib, { position, role = "both" }: { position: string; role?: "top" | "bottom" | "both" }) => {
+      const p = resolvePosition(lib, position);
+      if (!p) return fail(`"${position}" 포지션을 찾지 못했어요. rereroll_list_positions 로 목록을 보세요.`);
+      const notes = lib.notes.filter((n) => n.position === p.slug && (role === "both" || n.role === role || n.role === "standing"));
+      const count = lib.techniques.filter((t) => t.position === p.slug).length;
+      const out = [
+        `# ${p.nameKo} (${p.nameEn})`,
+        p.summary,
+        p.variants.length ? `## 갈래\n${bullet(p.variants)}` : "",
+        ...notes.map((n) => renderNote(lib, n)),
+        notes.length ? "" : "(이 포지션 노트는 아직 정리되지 않았어요)",
+        `이 포지션 기술 ${count}개 — rereroll_position_options 로 목록.`,
+        `---\n${NOTICE}`,
+      ];
+      return text(out.filter(Boolean).join("\n\n"));
+    }),
+  );
+
+  server.registerTool(
+    "rereroll_get_concept",
+    {
+      title: "개념 · 원리 자세히",
+      description:
+        "프레임 · 베이스 · 언더훅 · 압박 · 쿠즈시 · 포지션 서열 같은 원리, 포지션 스파링 · 지면서 배우기 같은 공부법 카드 하나. 무엇 · 왜 · 어떻게 · 흔한 오해 · 어디서 쓰나 · 관련 기술.",
+      inputSchema: { name: z.string().min(1).describe("개념 이름 또는 slug. 예: \"프레임\", \"언더훅\", \"positional-sparring\"") },
+      annotations: readOnly,
+    },
+    guard((lib, { name }: { name: string }) => {
+      const r = resolveConcept(lib, name);
+      if ("candidates" in r) {
+        if (!r.candidates.length) return fail(`"${name}" 개념을 찾지 못했어요. rereroll_list_concepts 로 목록을 보세요.`);
+        return text(`"${name}" 후보:\n${r.candidates.map((c) => `- ${c.nameKo} (${c.nameEn}) [${c.slug}] — ${c.summary}`).join("\n")}`);
+      }
+      return text(renderConcept(lib, r));
+    }),
+  );
+
+  server.registerTool(
+    "rereroll_list_concepts",
+    {
+      title: "개념 목록",
+      description: "원리(몸 쓰는 법) · 공부법(훈련 · 마음가짐) 카드 목록과 한 줄 설명.",
+      inputSchema: { kind: z.enum(["principle", "learning"]).optional().describe("principle=원리 · learning=공부법(기본 둘 다)") },
+      annotations: readOnly,
+    },
+    guard((lib, { kind }: { kind?: "principle" | "learning" }) => {
+      const list = lib.concepts.filter((c) => !kind || c.kind === kind);
+      if (!list.length) return text("아직 개념 카드가 없어요.");
+      const group = (k: Concept["kind"], title: string) => {
+        const g = list.filter((c) => c.kind === k);
+        return g.length ? `## ${title} ${g.length}개\n${g.map((c) => `- ${c.nameKo} [${c.slug}] — ${c.summary}`).join("\n")}` : "";
+      };
+      return text([group("principle", "원리"), group("learning", "공부법"), NOTICE].filter(Boolean).join("\n\n"));
+    }),
+  );
+
+  server.registerTool(
     "rereroll_list_positions",
     {
       title: "포지션 목록",
@@ -288,7 +438,7 @@ export function createServer(): McpServer {
     guard((lib) => {
       const n = new Map<string, number>();
       for (const t of lib.techniques) n.set(t.position, (n.get(t.position) ?? 0) + 1);
-      return text(lib.positions.map((p) => `- ${p.nameKo} (${p.nameEn}) [${p.slug}] — ${n.get(p.slug) ?? 0}개`).join("\n") + `\n\n${NOTICE}`);
+      return text(lib.positions.map((p) => `- ${p.nameKo} (${p.nameEn}) [${p.slug}] — ${n.get(p.slug) ?? 0}개${p.summary ? ` · ${p.summary}` : ""}`).join("\n") + `\n\n${NOTICE}`);
     }),
   );
 
