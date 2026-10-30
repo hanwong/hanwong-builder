@@ -2,7 +2,7 @@ import "server-only";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { loadLibrary, type Concept, type Library, type Position, type PositionNote, type Technique } from "@/lib/mcp/library";
-import { withLinks } from "@/lib/mcp/links";
+import { linksOf, withLinks } from "@/lib/mcp/links";
 
 // 리리롤 MCP(D-81 · D-83) — 공용 기술 목록 · 포지션 노트 · 개념 카드를 읽기 전용으로 보여 주는 도구들. 사용자 기록 · 숙련도는 다루지 않는다.
 
@@ -44,6 +44,16 @@ function tokens(q: string): string[] {
     .filter((w) => w.length >= 2 && !STOP.has(w));
 }
 
+const GUARDS = ["closed-guard", "open-guard", "butterfly-guard", "de-la-riva", "spider-lasso", "lapel-guard", "x-guard", "half-guard", "deep-half"];
+
+/** "가드" 처럼 여러 포지션을 뜻하는 말은 묶음으로(경로 찾기 도착지). 아니면 포지션 하나. */
+function resolvePositionSet(lib: Library, q: string): Position[] {
+  const n = norm(q);
+  if (["가드", "guard", "아무가드", "가드회복"].includes(n)) return GUARDS.map((s) => lib.posBySlug.get(s)!).filter(Boolean);
+  const p = resolvePosition(lib, q);
+  return p ? [p] : [];
+}
+
 function resolvePosition(lib: Library, q: string): Position | null {
   const n = norm(q);
   if (!n) return null;
@@ -55,11 +65,24 @@ function resolvePosition(lib: Library, q: string): Position | null {
     가드풀링: "clinch", 패스: "passing", 오픈가드: "open-guard", 버터플라이: "butterfly-guard", 데라히바: "de-la-riva",
     스파이더: "spider-lasso", 라쏘: "spider-lasso", 라펠: "lapel-guard", x가드: "x-guard", 프론트헤드락: "front-headlock",
     길로틴: "front-headlock", 서브미션: "submission-control",
+    가드: "closed-guard", 클로즈드가드: "closed-guard", 클로즈가드: "closed-guard",
+    버터플라이가드: "butterfly-guard", 데라히바가드: "de-la-riva", 리버스데라히바: "de-la-riva", 리버스데라히바가드: "de-la-riva",
+    dlr: "de-la-riva", 스파이더가드: "spider-lasso", 라쏘가드: "spider-lasso", 소매가드: "spider-lasso", 라펠가드: "lapel-guard",
+    엑스가드: "x-guard", 싱글레그x: "x-guard", slx: "x-guard", 딥하프가드: "deep-half", 백마운트: "back-control",
+    가드패스: "passing", 사이드컨트롤: "side-control", 니온벨리: "knee-on-belly",
+    크루시픽스: "turtle", 가드풀: "clinch",
   };
   if (alias[n]) return lib.posBySlug.get(alias[n]) ?? null;
   const exact = lib.positions.find((p) => p.slug === q || norm(p.nameKo) === n || norm(p.nameEn) === n);
   if (exact) return exact;
-  return lib.positions.find((p) => norm(p.nameKo).startsWith(n) || norm(p.nameKo).includes(n) || norm(p.nameEn).includes(n)) ?? null;
+  // 이름 조각(" · " 로 나뉜 부분)이 맞는 것을 먼저, 그다음 앞부분 · 포함
+  const part = lib.positions.find((p) => p.nameKo.split(/\s*[·(]\s*|\)/).some((x) => norm(x) === n));
+  if (part) return part;
+  const loose = lib.positions.find((p) => norm(p.nameKo).startsWith(n) || norm(p.nameEn).includes(n));
+  if (loose) return loose;
+  // "데라히바 가드" 처럼 끝에 '가드'를 붙여 부르면 떼고 다시
+  if (n.endsWith("가드") && n.length > 2) return resolvePosition(lib, n.slice(0, -2));
+  return null;
 }
 
 function resolveTechnique(lib: Library, q: string): Technique | { candidates: Technique[] } {
@@ -165,7 +188,18 @@ function resolveConcept(lib: Library, q: string): Concept | { candidates: Concep
   if (exact) return exact;
   const part = lib.concepts.filter((c) => norm(c.nameKo).includes(n) || norm(c.nameEn).includes(n) || n.includes(norm(c.nameKo)));
   if (part.length === 1) return part[0];
-  return { candidates: part.length ? part : lib.concepts.filter((c) => [c.summary, ...c.body].some((l) => norm(l).includes(n))).slice(0, 8) };
+  // 표기가 조금 달라도(쉼표 · 조사 · 괄호) 낱말이 이름에 많이 겹치는 카드로 — "포지션 먼저 서브미션 나중"
+  const toks = tokens(q);
+  const scored = lib.concepts
+    .map((c) => {
+      const head = norm(`${c.nameKo}${c.nameEn}${c.slug}`);
+      const rest = norm([c.summary, ...c.body].join(""));
+      return { c, s: toks.reduce((a, w) => a + (head.includes(w) ? 3 : rest.includes(w) ? 1 : 0), 0) };
+    })
+    .filter((x) => x.s > 0)
+    .sort((a, b) => b.s - a.s);
+  if (scored.length && scored[0].s >= 3 && (scored.length === 1 || scored[0].s > scored[1].s)) return scored[0].c;
+  return { candidates: (part.length ? part : scored.map((x) => x.c)).slice(0, 8) };
 }
 
 function renderNote(lib: Library, n: PositionNote): string {
@@ -211,13 +245,24 @@ function label(lib: Library, t: Technique): string {
 
 const bullet = (lines: string[]) => lines.map((l) => `- ${l}`).join("\n");
 
-function renderTechnique(lib: Library, t: Technique, perspective: "attacker" | "defender" | "both"): string {
+function renderTechnique(lib: Library, t: Technique, requested: "attacker" | "defender" | "both"): string {
+  // 방어 · 탈출 기술은 그 자체가 '막는 쪽'의 방법 — defender 로 물어도 세팅 과정을 보여 준다
+  const selfDefense = t.kind === "defense" || t.kind === "escape" || !t.defense.length;
+  const perspective = requested === "defender" && selfDefense ? "both" : requested;
   const out = [`# ${label(lib, t)}`, t.aliases.length ? `다른 이름: ${t.aliases.join(", ")}` : ""];
+  if (perspective !== requested) out.push("(이 기술이 바로 막는 쪽 · 빠져나오는 쪽의 방법이에요)");
   if (perspective !== "defender") {
     out.push(`## 세팅 과정 (오른손잡이 기준)\n${t.steps.map((s, i) => `${i + 1}. ${s}`).join("\n")}`);
     if (t.keyPoints.length) out.push(`## 핵심 디테일\n${bullet(t.keyPoints)}`);
     if (t.mistakes.length) out.push(`## 흔한 실수\n${bullet(t.mistakes)}`);
-    if (t.ifBlocked.length) out.push(`## 막히면\n${bullet(t.ifBlocked.map((l) => withLinks(lib, l)))}`);
+    if (t.ifBlocked.length) {
+      out.push(`## 막히면\n${bullet(t.ifBlocked.map((l) => withLinks(lib, l)))}`);
+      // 이어지는 기술을 한 번 더 부르지 않아도 하는 법의 뼈대가 보이게 — 기술마다 핵심 한 줄
+      const next = [...new Map(t.ifBlocked.flatMap((l) => linksOf(lib, l)).filter((k) => k.kind === "technique" && k.slug !== t.slug).map((k) => [k.slug, lib.bySlug.get(k.slug)!])).values()]
+        .filter(Boolean)
+        .slice(0, 4);
+      if (next.length) out.push(`### 이어지는 기술 한눈에\n${bullet(next.map((x) => `${x.nameKo} [${x.slug}] — ${x.keyPoints[0] ?? x.steps.slice(0, 2).join(" → ")}`))}`);
+    }
   }
   if (perspective !== "attacker") {
     if (t.defense.length) out.push(`## 방어하는 쪽 (상대 입장)\n${bullet(t.defense)}`);
@@ -276,7 +321,10 @@ export function createServer(): McpServer {
       description: "기술 하나의 세팅 과정 · 핵심 디테일 · 흔한 실수 · 막히면 · 방어하는 쪽(상대 입장)을 보여 준다. 오른손잡이 기준.",
       inputSchema: {
         name: z.string().min(1).describe("기술 이름 또는 slug. 예: \"올드 스쿨 스윕\", \"half-guard-pass\""),
-        perspective: z.enum(["attacker", "defender", "both"]).optional().describe("거는 쪽 · 막는 쪽 · 둘 다(기본)"),
+        perspective: z
+          .enum(["attacker", "defender", "both"])
+          .optional()
+          .describe("attacker = 이 기술을 쓰는 사람의 방법, defender = 이 기술을 당하는 상대가 막는 법, both(기본). 탈출 · 방어 기술은 그 자체가 막는 법이라 attacker 쪽이 답"),
       },
       annotations: readOnly,
     },
@@ -328,10 +376,14 @@ export function createServer(): McpServer {
     },
     guard((lib, { from, to, max_steps = 3, limit = 5 }: { from: string; to: string; max_steps?: number; limit?: number }) => {
       const a = resolvePosition(lib, from);
-      const b = resolvePosition(lib, to);
-      if (!a || !b) return fail(`포지션을 찾지 못했어요: ${!a ? from : to}`);
+      const bs = resolvePositionSet(lib, to);
+      if (!a || !bs.length) return fail(`포지션을 찾지 못했어요: ${!a ? from : to}`);
+      const goal = new Set(bs.map((p) => p.slug));
+      const b = { nameKo: bs.length > 1 ? `가드(${bs.map((p) => p.nameKo).join(" · ")})` : bs[0].nameKo };
+      // 방어 기술(위저 등)은 상대 공격을 막는 동작이라 길로 쓰지 않는다
       const edges = new Map<string, Technique[]>();
-      for (const t of lib.techniques) for (const e of t.endsAt) if (e !== t.position) (edges.get(t.position) ?? edges.set(t.position, []).get(t.position)!).push(t);
+      for (const t of lib.techniques)
+        if (t.kind !== "defense") for (const e of t.endsAt) if (e !== t.position) (edges.get(t.position) ?? edges.set(t.position, []).get(t.position)!).push(t);
       const paths: Technique[][] = [];
       const seen = new Set<string>(); // 같은 기술 순서는 한 번만
       let frontier: { at: string; path: Technique[] }[] = [{ at: a.slug, path: [] }];
@@ -342,7 +394,7 @@ export function createServer(): McpServer {
             for (const e of t.endsAt) {
               if (f.path.some((x) => x.position === e) || e === a.slug) continue;
               const path = [...f.path, t];
-              if (e === b.slug) {
+              if (goal.has(e)) {
                 const key = path.map((x) => x.slug).join(">");
                 if (paths.length < limit && !seen.has(key)) (seen.add(key), paths.push(path));
               } else next.push({ at: e, path });

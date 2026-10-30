@@ -4,7 +4,7 @@ import type { Library } from "@/lib/mcp/library";
 // 기술 이름을 고쳐도 링크가 따라오고, 줄 글은 사람이 읽는 그대로 둔다.
 
 export type Link = { kind: "technique" | "position"; slug: string; name: string };
-type Entry = Link & { key: string };
+type Entry = Link & { key: string; alias: boolean };
 
 const norm = (s: string) => s.toLowerCase().replace(/[\s·\-_()/,.]+/g, "");
 
@@ -14,20 +14,21 @@ function index(lib: Library): Entry[] {
   const hit = indexes.get(lib);
   if (hit) return hit;
   const out: Entry[] = [];
-  const add = (kind: Link["kind"], slug: string, name: string, label: string) => {
+  const add = (kind: Link["kind"], slug: string, name: string, label: string, alias: boolean) => {
     const key = norm(label);
-    if (key.length >= 2) out.push({ kind, slug, name, key });
+    if (key.length >= 2) out.push({ kind, slug, name, key, alias });
   };
   for (const t of lib.techniques) {
-    add("technique", t.slug, t.nameKo, t.nameKo);
-    for (const a of t.aliases) if (norm(a).length >= 3) add("technique", t.slug, t.nameKo, a);
+    add("technique", t.slug, t.nameKo, t.nameKo, false);
+    for (const a of t.aliases) if (norm(a).length >= 3) add("technique", t.slug, t.nameKo, a, true);
   }
   for (const p of lib.positions) {
-    add("position", p.slug, p.nameKo, p.nameKo);
-    for (const part of p.nameKo.split(/\s*[·(]\s*|\)/)) if (norm(part).length >= 2) add("position", p.slug, p.nameKo, part);
+    add("position", p.slug, p.nameKo, p.nameKo, false);
+    for (const part of p.nameKo.split(/\s*[·(]\s*|\)/)) if (norm(part).length >= 2) add("position", p.slug, p.nameKo, part, true);
   }
-  // 긴 이름부터 — "하프가드 백 테이크" 가 "하프가드" 보다 먼저 맞게. 같은 길이면 기술이 먼저
-  out.sort((a, b) => b.key.length - a.key.length || (a.kind === "technique" ? -1 : 1));
+  // 긴 이름부터 — "하프가드 백 테이크" 가 "하프가드" 보다 먼저 맞게. 같은 길이면 진짜 이름이 다른 이름보다,
+  // 기술이 포지션보다 먼저("암바 (백)" 은 다른 이름 "암바 백" 을 가진 '암바 안 되면 백 테이크' 가 아니라 '암바 (백)')
+  out.sort((a, b) => b.key.length - a.key.length || Number(a.alias) - Number(b.alias) || (a.kind === "technique" ? -1 : 1));
   indexes.set(lib, out);
   return out;
 }
