@@ -54,6 +54,13 @@
 | is_reviewed | boolean | ✓ | false | 본인 검수 끝남(D-04). false 면 앱에 "검수 전" 표시(D-24, 처음엔 숨김이었음) |
 | source | text | | | 뼈대 출처 표기(예: bjj-graph, EPL-2.0) |
 | sort_order | int | ✓ | 0 | 포지션 안 순서 |
+| kind | text | | | 종류(D-81): `takedown` · `guard_pull` · `sweep` · `pass` · `submission` · `escape` · `back_take` · `transition` · `control` · `defense` |
+| role | text | | | 쓰는 사람(D-81): `top` 위 · `bottom` 아래 · `standing` 서서 · `both` |
+| ends_at | text[] | | `{}` | 성공하면 도착하는 포지션 slug(여러 개 가능, 서브미션 마무리는 `{}`) |
+| key_points | text[] | | `{}` | 핵심 디테일 2~4줄(오른손잡이 기준) |
+| mistakes | text[] | | `{}` | 흔한 실수 2~3줄 |
+| if_blocked | text[] | | `{}` | 막히면 — "상대가 ~하면 → 다음 수" 2~3줄 |
+| defense | text[] | | `{}` | 방어하는 쪽 — 알아챌 신호 · 막는 법 2~4줄 |
 | owner_id | uuid → auth.users | | | **비면 공용.** 있으면 그 사람이 '내용 생성'으로 만든 내 기술(D-57) — 만든 사람 · 운영자만 보임. 계정을 지우면 같이 지움 |
 | owner_status | text | | | owner_id 가 있을 때만: `pending` 승인 대기 · `rejected` 버림(만든 사람에게 계속 보임). 승인하면 owner_id · owner_status 모두 비고 공용 |
 | created_at | timestamptz | ✓ | now() | |
@@ -181,8 +188,8 @@
 ## 5. 누가 읽고 쓰나 (= 접근 규칙 RLS)
 | 표 | 로그인 안 한 사람 | 로그인한 본인 | 다른 사용자 | 운영자(앱 안) |
 |---|---|---|---|---|
-| positions | ✗ | 보기 | 보기 | 보기 (쓰기는 마이그레이션 · 시드로만) |
-| techniques | ✗ | 공용 보기(검수 전 초안 포함, D-24) + **내가 만든 것 보기 · 추가**(승인 대기 · 검수 전으로만, D-57) | 공용만 (남이 만든 것 ✗) | 전부 보기, 사용자 기술 승인 · 버림은 함수로 (공용 쓰기는 마이그레이션 · 시드로만) |
+| positions | **보기**(D-81, 온라인 MCP) | 보기 | 보기 | 보기 (쓰기는 마이그레이션 · 시드로만) |
+| techniques | **공용만 보기**(owner_id 없음, D-81 — 온라인 MCP 용. 포지션도 같음) | 공용 보기(검수 전 초안 포함, D-24) + **내가 만든 것 보기 · 추가**(승인 대기 · 검수 전으로만, D-57) | 공용만 (남이 만든 것 ✗) | 전부 보기, 사용자 기술 승인 · 버림은 함수로 (공용 쓰기는 마이그레이션 · 시드로만) |
 | class_logs | ✗ | 보기 · 추가 · 수정 · 삭제 (자기 것만) | ✗ | ✗ |
 | class_log_techniques | ✗ | 보기 · 추가 · 삭제 (자기 것만) | ✗ | ✗ |
 | technique_levels | ✗ | 보기 · 추가 · 수정 · 삭제 (자기 것만) | ✗ | ✗ |

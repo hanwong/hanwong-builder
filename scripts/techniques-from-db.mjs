@@ -26,7 +26,8 @@ async function query(sql) {
 
 const positions = await query("select slug, name_ko, name_en, sort_order from public.positions order by sort_order");
 const techniques = await query(`
-  select p.slug as position, t.slug, t.name_ko, t.name_en, t.aliases, t.steps, t.is_reviewed, t.source, t.sort_order
+  select p.slug as position, t.slug, t.name_ko, t.name_en, t.aliases, t.steps, t.is_reviewed, t.source, t.sort_order,
+         t.kind, t.role, t.ends_at, t.key_points, t.mistakes, t.if_blocked, t.defense
   from public.techniques t join public.positions p on p.id = t.position_id
   order by p.sort_order, t.sort_order, t.created_at`);
 
@@ -60,6 +61,14 @@ ${techniques
         draft: !t.is_reviewed,
         source: t.source ?? "",
         sort: t.sort_order,
+        // 기술 지도(D-81)
+        kind: t.kind ?? null,
+        role: t.role ?? null,
+        ends_at: t.ends_at ?? [],
+        key_points: t.key_points ?? [],
+        mistakes: t.mistakes ?? [],
+        if_blocked: t.if_blocked ?? [],
+        defense: t.defense ?? [],
       }),
   )
   .join(",\n")}

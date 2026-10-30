@@ -54,16 +54,16 @@ const rows = techniques
     (t) =>
       `  (${q(t.position)}, ${q(t.slug)}, ${q(t.name_ko)}, ${q(t.name_en)}, ${arr(t.aliases)}, ${arr(t.steps)}, ${
         t.draft === false ? "true" : "false"
-      }, ${q(t.source ?? meta.source)}, ${Number(t.sort) || 0})`,
+      }, ${q(t.source ?? meta.source)}, ${Number(t.sort) || 0}, ${t.kind ? q(t.kind) : "null"}, ${t.role ? q(t.role) : "null"}, ${arr(t.ends_at ?? [])}, ${arr(t.key_points ?? [])}, ${arr(t.mistakes ?? [])}, ${arr(t.if_blocked ?? [])}, ${arr(t.defense ?? [])})`,
   )
   .join(",\n");
 
 out += `-- 기술 ${techniques.length}개 · slug 기준 upsert
-insert into public.techniques (position_id, slug, name_ko, name_en, aliases, steps, is_reviewed, source, sort_order)
-select p.id, t.slug, t.name_ko, t.name_en, t.aliases, t.steps, t.is_reviewed, t.source, t.sort_order
+insert into public.techniques (position_id, slug, name_ko, name_en, aliases, steps, is_reviewed, source, sort_order, kind, role, ends_at, key_points, mistakes, if_blocked, defense)
+select p.id, t.slug, t.name_ko, t.name_en, t.aliases, t.steps, t.is_reviewed, t.source, t.sort_order, t.kind, t.role, t.ends_at, t.key_points, t.mistakes, t.if_blocked, t.defense
 from (values
 ${rows}
-) as t(position_slug, slug, name_ko, name_en, aliases, steps, is_reviewed, source, sort_order)
+) as t(position_slug, slug, name_ko, name_en, aliases, steps, is_reviewed, source, sort_order, kind, role, ends_at, key_points, mistakes, if_blocked, defense)
 join public.positions p on p.slug = t.position_slug
 on conflict (slug) do update set
   position_id = excluded.position_id,
@@ -73,6 +73,13 @@ on conflict (slug) do update set
   steps       = excluded.steps,
   is_reviewed = excluded.is_reviewed,
   source      = excluded.source,
-  sort_order  = excluded.sort_order;
+  sort_order  = excluded.sort_order,
+  kind        = excluded.kind,
+  role        = excluded.role,
+  ends_at     = excluded.ends_at,
+  key_points  = excluded.key_points,
+  mistakes    = excluded.mistakes,
+  if_blocked  = excluded.if_blocked,
+  defense     = excluded.defense;
 `;
 process.stdout.write(out);
