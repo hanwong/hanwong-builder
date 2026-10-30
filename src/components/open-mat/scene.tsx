@@ -255,7 +255,7 @@ export default function MatScene({
   return (
     <Canvas
       dpr={[1, 1.75]}
-      camera={{ position: [0, 3.8, 8.4], fov: 55 }}
+      camera={{ position: [0, 4, 10.5], fov: 60 }}
       gl={{ antialias: true, powerPreference: "low-power" }}
       style={{ touchAction: "none" }}
     >
