@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 // 초안 만들기(Claude)가 이 화면의 Server Action 에서 돈다 — 이름 20개면 1분 가까이 걸릴 수 있다
-export const maxDuration = 120;
+export const maxDuration = 300; // 모르는 이름은 웹 조사까지(D-90) — 길면 1~2분
 
 // 운영 화면 (D-47, T-39) — 운영자만. 아니면 없는 페이지.
 export default function AdminPage() {

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { isLive } from "@/lib/matching";
 import { forgetLibrary, getLibrary } from "@/lib/matching/library";
-import { DAILY_DRAFT_LIMIT, draftNames, mapFields, nameKey, type Draft, type DraftKind, type Redo } from "@/lib/admin/drafter";
+import { DAILY_DRAFT_LIMIT, draftWithResearch, mapFields, nameKey, type Draft, type DraftKind, type Redo } from "@/lib/admin/drafter";
 import { addDays, seoulToday } from "@/lib/seoul-date";
 import { DRAFT_SELECT, draftedToday, toAdminDraft, type AdminDraft } from "@/lib/admin/admin-data";
 
@@ -54,7 +54,7 @@ export async function draftName(key: string): Promise<DraftNameResult> {
   const lib = await getLibrary(supabase);
   let d: Draft;
   try {
-    [d] = await draftNames([item.custom_name], lib);
+    d = await draftWithResearch(item.custom_name, lib); // 모르면 웹 조사 뒤 한 번 더(D-90)
   } catch (e) {
     console.error("draftName failed:", e instanceof Error ? e.name + " " + e.message.slice(0, 120) : "unknown");
     return { ok: false, message: "초안을 만들지 못했어요 — 잠시 뒤 다시 눌러 주세요." };
@@ -129,7 +129,7 @@ export async function redraftDraft(id: string, hint: string, current: DraftEdit)
   const lib = await getLibrary(supabase);
   let d: Draft;
   try {
-    [d] = await draftNames([row.custom_name], lib, { previous, hint: clean(hint, 200) });
+    d = await draftWithResearch(row.custom_name, lib, { previous, hint: clean(hint, 200) });
   } catch (e) {
     console.error("redraft failed:", e instanceof Error ? e.name + " " + e.message.slice(0, 120) : "unknown");
     return { ok: false, message: "다시 추천하지 못했어요 — 잠시 뒤 다시 눌러 주세요." };
