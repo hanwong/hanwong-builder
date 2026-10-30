@@ -112,7 +112,7 @@ export function OpenMat() {
       <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-2 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         {status === "ready" && (
           <p className="pointer-events-none rounded-full bg-card px-3 py-1 text-[12px] font-medium text-muted-foreground ring-1 ring-border">
-            매트를 누르면 걸어가요 · 끌어서 둘러보기
+            매트를 누르면 그쪽으로 걸어가요
           </p>
         )}
         <div className="flex items-center gap-1 rounded-full bg-card p-1.5 ring-1 ring-border">

@@ -1,6 +1,5 @@
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { MAT, beltColor } from "@/components/open-mat/colors";
 import type { Act, ActEvent, Player } from "@/components/open-mat/use-mat";
@@ -141,7 +140,11 @@ const GI_SHADE = new THREE.MeshLambertMaterial({ color: MAT.giShade });
 const HAIR = new THREE.MeshLambertMaterial({ color: MAT.hair });
 const SHADOW = new THREE.MeshBasicMaterial({ color: MAT.shadow, transparent: true, opacity: 0.12 });
 
-function Character({ player, mine, act }: { player: Player; mine: boolean; act: Act | null }) {
+// 내 캐릭터의 지금 자리 · 바라보는 방향 — 따라오는 카메라가 읽는다. 값은 메서드(copy · set)로만 바꾼다(React 규칙).
+// 처음엔 y = -1 로 두고, 내 캐릭터가 한 번 그려지면 0 이 된다(= 준비됨).
+type Pose = THREE.Object3D;
+
+function Character({ player, mine, act, pose }: { player: Player; mine: boolean; act: Act | null; pose: Pose }) {
   const root = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
   const armR = useRef<THREE.Group>(null);
@@ -153,6 +156,7 @@ function Character({ player, mine, act }: { player: Player; mine: boolean; act: 
   // (position 을 속성으로 주면 다시 그릴 때마다 목표로 순간이동한다)
   useLayoutEffect(() => {
     root.current?.position.set(player.x, 0, player.z);
+    if (root.current) root.current.rotation.y = Math.PI; // 처음엔 모두 뒤 벽(앞쪽)을 본다 — 카메라가 뒤에서 보게
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -175,6 +179,10 @@ function Character({ player, mine, act }: { player: Player; mine: boolean; act: 
       g.position.z += (dz / dist) * step;
       const face = Math.atan2(dx, dz);
       g.rotation.y += (((face - g.rotation.y + Math.PI * 3) % (Math.PI * 2)) - Math.PI) * Math.min(1, dt * 10);
+    }
+    if (mine) {
+      pose.position.copy(g.position);
+      pose.rotation.copy(g.rotation);
     }
     const bob = walking ? Math.abs(Math.sin(t * 10)) * 0.06 : Math.sin(t * 2) * 0.01;
     body.current.position.y = bob;
@@ -240,6 +248,34 @@ function Character({ player, mine, act }: { player: Player; mine: boolean; act: 
   );
 }
 
+// 내 캐릭터 뒤에서 따라다니는 고정 시점 카메라(본인 요청 2026-10-31). 끌어서 돌리기 없음.
+// 벽 패드에 가리지 않게 카메라 자리는 방 안쪽으로 묶는다.
+const BEHIND = 3.4;
+const HEIGHT = 2.1;
+const CAM_LIMIT = ROOM - 0.4;
+function FollowCamera({ pose }: { pose: Pose }) {
+  const look = useRef(new THREE.Vector3(0, 0.8, 0));
+  const want = useMemo(() => new THREE.Vector3(), []);
+  const aim = useMemo(() => new THREE.Vector3(), []);
+  useFrame(({ camera }, dt) => {
+    if (pose.position.y < 0) return;
+    const fx = Math.sin(pose.rotation.y);
+    const fz = Math.cos(pose.rotation.y);
+    const p = { pos: pose.position };
+    want.set(
+      Math.max(-CAM_LIMIT, Math.min(CAM_LIMIT, p.pos.x - fx * BEHIND)),
+      HEIGHT,
+      Math.max(-CAM_LIMIT, Math.min(CAM_LIMIT + 3, p.pos.z - fz * BEHIND)), // 앞(카메라 쪽)은 벽이 없어 조금 더 허용
+    );
+    aim.set(p.pos.x + fx * 1.5, 0.9, p.pos.z + fz * 1.5);
+    const k = 1 - Math.exp(-dt * 4); // 부드럽게 따라가기
+    camera.position.lerp(want, k);
+    look.current.lerp(aim, k);
+    camera.lookAt(look.current);
+  });
+  return null;
+}
+
 export default function MatScene({
   players,
   myId,
@@ -252,10 +288,15 @@ export default function MatScene({
   onPick: (x: number, z: number) => void;
 }) {
   const actOf = (id: string) => acts.find((a) => a.player === id)?.act ?? null;
+  const pose = useMemo<Pose>(() => {
+    const o = new THREE.Object3D();
+    o.position.set(0, -1, 0);
+    return o;
+  }, []);
   return (
     <Canvas
       dpr={[1, 1.75]}
-      camera={{ position: [0, 4, 10.5], fov: 60 }}
+      camera={{ position: [0, HEIGHT + 1, 6], fov: 60 }}
       gl={{ antialias: true, powerPreference: "low-power" }}
       style={{ touchAction: "none" }}
     >
@@ -264,18 +305,9 @@ export default function MatScene({
       <directionalLight position={[4, 8, 5]} intensity={1.3} />
       <Room onPick={onPick} />
       {players.map((p) => (
-        <Character key={p.id} player={p} mine={p.id === myId} act={actOf(p.id)} />
+        <Character key={p.id} player={p} mine={p.id === myId} act={actOf(p.id)} pose={pose} />
       ))}
-      <OrbitControls
-        target={[0, 0.6, 0]}
-        enablePan={false}
-        minDistance={5}
-        maxDistance={13}
-        minPolarAngle={0.35}
-        maxPolarAngle={1.4}
-        minAzimuthAngle={-1.1}
-        maxAzimuthAngle={1.1}
-      />
+      <FollowCamera pose={pose} />
     </Canvas>
   );
 }
