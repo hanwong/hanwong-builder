@@ -221,6 +221,30 @@ export type Database = {
           },
         ]
       }
+      open_mat_events: {
+        Row: {
+          belt: string
+          created_at: string
+          id: number
+          nickname: string
+          technique_names: string[]
+        }
+        Insert: {
+          belt: string
+          created_at?: string
+          id?: never
+          nickname: string
+          technique_names?: string[]
+        }
+        Update: {
+          belt?: string
+          created_at?: string
+          id?: never
+          nickname?: string
+          technique_names?: string[]
+        }
+        Relationships: []
+      }
       operators: {
         Row: {
           created_at: string
@@ -685,6 +709,9 @@ export type Database = {
       is_operator: { Args: never; Returns: boolean }
       my_pending_suggestions: { Args: never; Returns: number }
       name_key: { Args: { t: string }; Returns: string }
+      open_mat_announce: { Args: { p_log: string }; Returns: undefined }
+      open_mat_me: { Args: never; Returns: Json }
+      open_mat_nickname: { Args: { seed: string }; Returns: string }
       pending_custom_names: {
         Args: never
         Returns: {

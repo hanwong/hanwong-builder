@@ -1,4 +1,5 @@
-import { Swords } from "lucide-react";
+import Link from "next/link";
+import { ChevronRight, Swords, Users } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getHomeData, type HomeData } from "@/lib/home-data";
 import { TrainingBelt } from "@/components/app/training-belt";
@@ -50,6 +51,21 @@ export function HomeView({ data }: { data: HomeData }) {
 
       {/* ②-2 내 주짓수 지도 (D-60) */}
       <JiujitsuMap map={map} />
+
+      {/* ②-3 온라인 오픈매트 (D-88) */}
+      <Link
+        href="/open-mat"
+        className="flex items-center justify-between gap-3 rounded-2xl bg-card px-4 py-3 ring-1 ring-border hover:bg-muted"
+      >
+        <span className="flex items-center gap-2 text-[15px] font-semibold">
+          <Users className="size-4" strokeWidth={1.75} aria-hidden />
+          온라인 오픈매트
+        </span>
+        <span className="flex items-center gap-1 text-[13px] font-medium text-muted-foreground">
+          매트에 모여 오스
+          <ChevronRight className="size-4" aria-hidden />
+        </span>
+      </Link>
     </>
   );
 }

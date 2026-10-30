@@ -322,6 +322,10 @@ export async function saveLog(input: SaveInput): Promise<SaveResult> {
   const r = await saveLevels(supabase, user.id, chosen);
   if (r.error) return undo(r.step, r.error);
 
+  // 4) 온라인 오픈매트 알림(D-88) — 별명 + 기술 이름만, 끈 사람은 함수가 건너뛴다. 실패해도 저장은 그대로
+  const { error: announceError } = await supabase.rpc("open_mat_announce", { p_log: log.id });
+  if (announceError) console.error("open_mat_announce failed:", announceError.code ?? "");
+
   revalidatePath("/app", "layout"); // /app 아래 화면 전부(홈 · 내 기술 · 기록) 미리 불러온 내용까지 새로
   return { ok: true, linked: chosen.length };
 }
