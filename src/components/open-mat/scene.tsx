@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
@@ -114,6 +114,12 @@ function Character({ player, mine, act }: { player: Player; mine: boolean; act: 
   const actStart = useRef(0);
   const lastAct = useRef<Act | null>(null);
   const belt = useMemo(() => new THREE.MeshLambertMaterial({ color: beltColor(player.belt) }), [player.belt]);
+  // 처음 나타날 때만 그 자리에 둔다. 그 뒤 목표가 바뀌면 아래 useFrame 이 걸어서 따라간다
+  // (position 을 속성으로 주면 다시 그릴 때마다 목표로 순간이동한다)
+  useLayoutEffect(() => {
+    root.current?.position.set(player.x, 0, player.z);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useFrame((state, dt) => {
     const g = root.current;
@@ -147,7 +153,7 @@ function Character({ player, mine, act }: { player: Player; mine: boolean; act: 
   });
 
   return (
-    <group ref={root} position={[player.x, 0, player.z]}>
+    <group ref={root}>
       <mesh rotation-x={-Math.PI / 2} position-y={0.02} material={SHADOW}>
         <circleGeometry args={[0.32, 20]} />
       </mesh>
