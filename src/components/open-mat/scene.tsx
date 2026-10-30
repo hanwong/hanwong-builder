@@ -3,20 +3,22 @@ import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { MAT, beltColor } from "@/components/open-mat/colors";
-import { MAT_HALF, type Act, type ActEvent, type Player } from "@/components/open-mat/use-mat";
+import type { Act, ActEvent, Player } from "@/components/open-mat/use-mat";
 
 // 오픈매트 3D(D-88, DESIGN '온라인 오픈매트') — 모델 파일 없이 기본 도형으로 그린 2등신 도복 캐릭터와 매트 방.
 // 휴대폰 성능: 그림자 · 반사 없음, 빛 둘, 도형 조각 수 적게, 화면 배율 최대 1.75.
 
-const MAT_SIZE = MAT_HALF * 2 + 1.2;
+const ROOM = 6.6; // 방 반 너비 — 벽까지. 걷는 곳(use-mat 의 MAT_HALF)보다 조금 넓게
+const WALL_H = 4.2;
+const PAD_H = 2;
 
+// 체육관 방(본인이 보낸 사진 분위기 — 파란 매트 · 흰 벽 패드 · 어두운 천장 · 길게 이어진 조명). 로고 · 상표는 넣지 않는다
 function Room({ onPick }: { onPick: (x: number, z: number) => void }) {
   // 매트 이음선(1m 칸)
   const lines = useMemo(() => {
     const pts: number[] = [];
-    const h = MAT_SIZE / 2;
-    for (let i = -Math.floor(h); i <= Math.floor(h); i++) {
-      pts.push(i, 0.011, -h, i, 0.011, h, -h, 0.011, i, h, 0.011, i);
+    for (let i = -Math.floor(ROOM); i <= Math.floor(ROOM); i++) {
+      pts.push(i, 0.006, -ROOM, i, 0.006, ROOM, -ROOM, 0.006, i, ROOM, 0.006, i);
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
@@ -29,41 +31,74 @@ function Room({ onPick }: { onPick: (x: number, z: number) => void }) {
     onPick(e.point.x, e.point.z);
   };
 
+  // 벽 셋(뒤 · 왼쪽 · 오른쪽) — 카메라 쪽은 비워 둔다
+  const walls = [
+    { p: [0, 0, -ROOM] as const, r: 0 },
+    { p: [-ROOM, 0, 0] as const, r: Math.PI / 2 },
+    { p: [ROOM, 0, 0] as const, r: -Math.PI / 2 },
+  ];
+  const pads = Array.from({ length: Math.round(ROOM * 2) }, (_, i) => -ROOM + 0.5 + i);
+
   return (
     <group>
-      {/* 나무 바닥 */}
-      <mesh rotation-x={-Math.PI / 2} position-y={-0.02}>
-        <planeGeometry args={[30, 30]} />
-        <meshLambertMaterial color={MAT.floor} />
-      </mesh>
-      {/* 매트 테두리 + 매트 */}
-      <mesh rotation-x={-Math.PI / 2} position-y={0}>
-        <planeGeometry args={[MAT_SIZE + 0.5, MAT_SIZE + 0.5]} />
-        <meshLambertMaterial color={MAT.matBorder} />
-      </mesh>
-      <mesh rotation-x={-Math.PI / 2} position-y={0.005} onClick={click}>
-        <planeGeometry args={[MAT_SIZE, MAT_SIZE]} />
+      {/* 파란 매트(벽까지 꽉) */}
+      <mesh rotation-x={-Math.PI / 2} onClick={click}>
+        <planeGeometry args={[ROOM * 2, ROOM * 2]} />
         <meshLambertMaterial color={MAT.mat} />
       </mesh>
       <lineSegments geometry={lines}>
         <lineBasicMaterial color={MAT.matLine} />
       </lineSegments>
-      {/* 벽 셋 + 아래 띠 */}
-      {[
-        { p: [0, 2, -9] as const, r: 0, w: 20 },
-        { p: [-9, 2, 0] as const, r: Math.PI / 2, w: 20 },
-        { p: [9, 2, 0] as const, r: -Math.PI / 2, w: 20 },
-      ].map((w, i) => (
+
+      {walls.map((w, i) => (
         <group key={i} position={w.p} rotation-y={w.r}>
-          <mesh>
-            <planeGeometry args={[w.w, 4.2]} />
+          {/* 위쪽 옅은 회색 벽 */}
+          <mesh position-y={WALL_H / 2}>
+            <planeGeometry args={[ROOM * 2, WALL_H]} />
             <meshLambertMaterial color={MAT.wall} />
           </mesh>
-          <mesh position-y={-1.85} position-z={0.01}>
-            <planeGeometry args={[w.w, 0.5]} />
-            <meshLambertMaterial color={MAT.wallTrim} />
+          {/* 흰 벽 패드 — 1m 폭, 틈이 보이게 조금 띄움 */}
+          <mesh position={[0, PAD_H / 2, 0.01]}>
+            <planeGeometry args={[ROOM * 2, PAD_H]} />
+            <meshLambertMaterial color={MAT.padGap} />
           </mesh>
+          {pads.map((x) => (
+            <mesh key={x} position={[x, PAD_H / 2, 0.09]}>
+              <boxGeometry args={[0.96, PAD_H, 0.16]} />
+              <meshLambertMaterial color={MAT.pad} />
+            </mesh>
+          ))}
         </group>
+      ))}
+
+      {/* 어두운 천장 + 덕트 + 비스듬히 길게 이어진 조명 — 카메라가 천장 위로 올라가면 가리지 않게 숨긴다 */}
+      <Ceiling />
+    </group>
+  );
+}
+
+function Ceiling() {
+  const g = useRef<THREE.Group>(null);
+  useFrame(({ camera }) => {
+    if (g.current) g.current.visible = camera.position.y < WALL_H - 0.2;
+  });
+  return (
+    <group ref={g}>
+      <mesh rotation-x={Math.PI / 2} position-y={WALL_H}>
+        <planeGeometry args={[ROOM * 2, ROOM * 2]} />
+        <meshBasicMaterial color={MAT.ceiling} />
+      </mesh>
+      {[-2.5, 2.5].map((x) => (
+        <mesh key={x} position={[x, WALL_H - 0.35, 0]} rotation-x={Math.PI / 2}>
+          <cylinderGeometry args={[0.22, 0.22, ROOM * 2, 10]} />
+          <meshLambertMaterial color={MAT.duct} />
+        </mesh>
+      ))}
+      {[-3.6, -1.2, 1.2, 3.6].map((x) => (
+        <mesh key={x} position={[x, WALL_H - 0.12, 0]} rotation-y={0.35}>
+          <boxGeometry args={[0.06, 0.04, ROOM * 2.2]} />
+          <meshBasicMaterial color={MAT.light} />
+        </mesh>
       ))}
     </group>
   );
@@ -220,12 +255,12 @@ export default function MatScene({
   return (
     <Canvas
       dpr={[1, 1.75]}
-      camera={{ position: [0, 7, 9], fov: 50 }}
+      camera={{ position: [0, 3.8, 8.4], fov: 55 }}
       gl={{ antialias: true, powerPreference: "low-power" }}
       style={{ touchAction: "none" }}
     >
       <color attach="background" args={[MAT.background]} />
-      <hemisphereLight args={["#ffffff", MAT.floor, 1.1]} />
+      <hemisphereLight args={["#ffffff", MAT.mat, 1.6]} />
       <directionalLight position={[4, 8, 5]} intensity={1.3} />
       <Room onPick={onPick} />
       {players.map((p) => (
@@ -235,9 +270,9 @@ export default function MatScene({
         target={[0, 0.6, 0]}
         enablePan={false}
         minDistance={5}
-        maxDistance={16}
+        maxDistance={13}
         minPolarAngle={0.35}
-        maxPolarAngle={1.25}
+        maxPolarAngle={1.4}
         minAzimuthAngle={-1.1}
         maxAzimuthAngle={1.1}
       />
