@@ -8,9 +8,9 @@ export type Indexed<T> = { t: T; name: string; others: string[] };
 export const indexList = <T extends Searchable>(list: T[]): Indexed<T>[] =>
   list.map((t) => ({ t, name: norm(t.nameKo), others: [norm(t.nameEn), ...t.aliases.map(norm)] }));
 
-export function rank<T extends Searchable>(entries: Indexed<T>[], query: string, limit: number): T[] {
+export function rank<T extends Searchable>(entries: Indexed<T>[], query: string, limit: number, minLength = 2): T[] {
   const q = norm(query);
-  if (q.length < 2) return [];
+  if (q.length < minLength) return [];
   const scored: { t: T; score: number }[] = [];
   for (const { t, name, others } of entries) {
     const score = name.startsWith(q) ? 3 : name.includes(q) ? 2 : others.some((o) => o.includes(q)) ? 1 : 0;

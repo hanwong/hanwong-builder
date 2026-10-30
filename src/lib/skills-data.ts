@@ -4,7 +4,15 @@ import { createSupabaseServer } from "@/lib/supabase/server";
 import { mineOf, type Level } from "@/lib/mock/log-seed";
 
 // 내 기술 (T-10) — 포지션 21개 × 기술 + 내 숙련도. 기술은 공용(로그인하면 초안 포함, D-24), 숙련도는 본인 것만(RLS).
-export type SkillRow = { slug: string; nameKo: string; level: Level | null; draft: boolean; mine?: "pending" | "rejected" };
+export type SkillRow = {
+  slug: string;
+  nameKo: string;
+  nameEn: string; // 검색용(D-91)
+  aliases: string[]; // 검색용(D-91)
+  level: Level | null;
+  draft: boolean;
+  mine?: "pending" | "rejected";
+};
 export type PositionGroup = { slug: string; nameKo: string; skills: SkillRow[] };
 
 export async function getSkills(): Promise<PositionGroup[]> {
@@ -19,7 +27,7 @@ export async function getSkills(): Promise<PositionGroup[]> {
     supabase.from("positions").select("id, slug, name_ko").order("sort_order"),
     supabase
       .from("techniques")
-      .select("id, slug, name_ko, position_id, is_reviewed, owner_id, owner_status")
+      .select("id, slug, name_ko, name_en, aliases, position_id, is_reviewed, owner_id, owner_status")
       // 공용 + 내가 만든 것만(D-57). 운영자는 접근 규칙상 남의 것도 읽혀서 여기서 거른다
       .or(`owner_id.is.null,owner_id.eq.${user?.id ?? "00000000-0000-0000-0000-000000000000"}`)
       .order("sort_order")
@@ -36,6 +44,8 @@ export async function getSkills(): Promise<PositionGroup[]> {
     list.push({
       slug: t.slug,
       nameKo: t.name_ko,
+      nameEn: t.name_en,
+      aliases: t.aliases ?? [],
       level: levelOf.get(t.id) ?? null,
       draft: !t.is_reviewed,
       mine: mineOf(t.owner_id, t.owner_status),
