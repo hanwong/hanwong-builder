@@ -138,6 +138,54 @@ export type Database = {
         }
         Relationships: []
       }
+      concepts: {
+        Row: {
+          body: string[]
+          created_at: string
+          examples: string[]
+          id: string
+          kind: string
+          name_en: string
+          name_ko: string
+          related_positions: string[]
+          related_techniques: string[]
+          see_also: string[]
+          slug: string
+          sort_order: number
+          summary: string
+        }
+        Insert: {
+          body?: string[]
+          created_at?: string
+          examples?: string[]
+          id?: string
+          kind: string
+          name_en: string
+          name_ko: string
+          related_positions?: string[]
+          related_techniques?: string[]
+          see_also?: string[]
+          slug: string
+          sort_order?: number
+          summary: string
+        }
+        Update: {
+          body?: string[]
+          created_at?: string
+          examples?: string[]
+          id?: string
+          kind?: string
+          name_en?: string
+          name_ko?: string
+          related_positions?: string[]
+          related_techniques?: string[]
+          see_also?: string[]
+          slug?: string
+          sort_order?: number
+          summary?: string
+        }
+        Relationships: []
+      }
       notices: {
         Row: {
           created_at: string
@@ -188,6 +236,50 @@ export type Database = {
         }
         Relationships: []
       }
+      position_notes: {
+        Row: {
+          created_at: string
+          decisions: string[]
+          drills: string[]
+          goals: string[]
+          id: string
+          keys: string[]
+          mistakes: string[]
+          position_id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          decisions?: string[]
+          drills?: string[]
+          goals?: string[]
+          id?: string
+          keys?: string[]
+          mistakes?: string[]
+          position_id: string
+          role: string
+        }
+        Update: {
+          created_at?: string
+          decisions?: string[]
+          drills?: string[]
+          goals?: string[]
+          id?: string
+          keys?: string[]
+          mistakes?: string[]
+          position_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "position_notes_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       positions: {
         Row: {
           created_at: string
@@ -196,6 +288,8 @@ export type Database = {
           name_ko: string
           slug: string
           sort_order: number
+          summary: string | null
+          variants: string[]
         }
         Insert: {
           created_at?: string
@@ -204,6 +298,8 @@ export type Database = {
           name_ko: string
           slug: string
           sort_order?: number
+          summary?: string | null
+          variants?: string[]
         }
         Update: {
           created_at?: string
@@ -212,6 +308,8 @@ export type Database = {
           name_ko?: string
           slug?: string
           sort_order?: number
+          summary?: string | null
+          variants?: string[]
         }
         Relationships: []
       }
@@ -304,16 +402,23 @@ export type Database = {
           created_at: string
           custom_name: string
           decided_at: string | null
+          defense: string[]
+          ends_at: string[]
           id: string
+          if_blocked: string[]
+          key_points: string[]
           kind: string
+          mistakes: string[]
           name_en: string | null
           name_key: string
           name_ko: string | null
           note: string | null
           position_id: string | null
+          role: string | null
           slug: string | null
           status: string
           steps: string[]
+          tech_kind: string | null
           technique_id: string | null
         }
         Insert: {
@@ -322,16 +427,23 @@ export type Database = {
           created_at?: string
           custom_name: string
           decided_at?: string | null
+          defense?: string[]
+          ends_at?: string[]
           id?: string
+          if_blocked?: string[]
+          key_points?: string[]
           kind?: string
+          mistakes?: string[]
           name_en?: string | null
           name_key: string
           name_ko?: string | null
           note?: string | null
           position_id?: string | null
+          role?: string | null
           slug?: string | null
           status?: string
           steps?: string[]
+          tech_kind?: string | null
           technique_id?: string | null
         }
         Update: {
@@ -340,16 +452,23 @@ export type Database = {
           created_at?: string
           custom_name?: string
           decided_at?: string | null
+          defense?: string[]
+          ends_at?: string[]
           id?: string
+          if_blocked?: string[]
+          key_points?: string[]
           kind?: string
+          mistakes?: string[]
           name_en?: string | null
           name_key?: string
           name_ko?: string | null
           note?: string | null
           position_id?: string | null
+          role?: string | null
           slug?: string | null
           status?: string
           steps?: string[]
+          tech_kind?: string | null
           technique_id?: string | null
         }
         Relationships: [
@@ -459,13 +578,20 @@ export type Database = {
         Row: {
           aliases: string[]
           created_at: string
+          defense: string[]
+          ends_at: string[]
           id: string
+          if_blocked: string[]
           is_reviewed: boolean
+          key_points: string[]
+          kind: string | null
+          mistakes: string[]
           name_en: string
           name_ko: string
           owner_id: string | null
           owner_status: string | null
           position_id: string
+          role: string | null
           slug: string
           sort_order: number
           source: string | null
@@ -474,13 +600,20 @@ export type Database = {
         Insert: {
           aliases?: string[]
           created_at?: string
+          defense?: string[]
+          ends_at?: string[]
           id?: string
+          if_blocked?: string[]
           is_reviewed?: boolean
+          key_points?: string[]
+          kind?: string | null
+          mistakes?: string[]
           name_en: string
           name_ko: string
           owner_id?: string | null
           owner_status?: string | null
           position_id: string
+          role?: string | null
           slug: string
           sort_order?: number
           source?: string | null
@@ -489,13 +622,20 @@ export type Database = {
         Update: {
           aliases?: string[]
           created_at?: string
+          defense?: string[]
+          ends_at?: string[]
           id?: string
+          if_blocked?: string[]
           is_reviewed?: boolean
+          key_points?: string[]
+          kind?: string | null
+          mistakes?: string[]
           name_en?: string
           name_ko?: string
           owner_id?: string | null
           owner_status?: string | null
           position_id?: string
+          role?: string | null
           slug?: string
           sort_order?: number
           source?: string | null

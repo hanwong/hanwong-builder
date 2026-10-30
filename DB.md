@@ -171,6 +171,7 @@
 | slug · name_ko · name_en | text | | 새 기술 칸(승인 때 필수) |
 | aliases · steps | text[] | ✓ | 다른 이름 · 세팅 과정(승인 때 3~5줄) |
 | note | text | | AI 가 그렇게 본 이유 한 줄 |
+| tech_kind · role · ends_at · key_points · mistakes · if_blocked · defense | text · text[] | | 기술 지도 칸(D-87, techniques 의 kind · role … 와 같은 뜻). 종류 칸은 초안 종류(kind)와 겹쳐 `tech_kind`. 승인하면 기술로 그대로 옮긴다 |
 | status | text | ✓ | `pending` · `approved` · `rejected` |
 | technique_id | uuid → techniques | | 승인 뒤 연결된 기술 |
 | decided_at · created_at | timestamptz | | |

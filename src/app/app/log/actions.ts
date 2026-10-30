@@ -5,7 +5,7 @@ import { createSupabaseServer } from "@/lib/supabase/server";
 import { isLive } from "@/lib/matching";
 import { getLibrary, getOwnTechniques, type Candidate, type OwnCandidate } from "@/lib/matching/library";
 import { exactMatch, searchLibrary, searchList } from "@/lib/matching/search";
-import { draftNames } from "@/lib/admin/drafter";
+import { draftNames, mapFields } from "@/lib/admin/drafter";
 import { MAX_BODY } from "@/lib/log-limits";
 import { LEVELS, type Level, type MatchedTechnique, type Term } from "@/lib/mock/log-seed";
 import { isIsoDate, seoulToday } from "@/lib/seoul-date";
@@ -145,7 +145,9 @@ export async function generateTechnique(name: string): Promise<GenerateResult> {
   if (d.kind !== "new" || !d.position || !d.nameKo || !d.nameEn || d.steps.length < 3) {
     return {
       ok: false,
-      message: `기술 이름으로 보기 어려워 만들지 않았어요${d.note ? ` — ${d.note}` : ""}. 이름은 그대로 남아요.`,
+      message: d.note.startsWith("확신 없음")
+        ? `AI 가 이 기술을 정확히 몰라 지어내지 않았어요 — ${d.note.replace(/^확신 없음\s*[—-]?\s*/, "")}. 이름은 그대로 남아요.`
+        : `기술 이름으로 보기 어려워 만들지 않았어요${d.note ? ` — ${d.note}` : ""}. 이름은 그대로 남아요.`,
     };
   }
 
@@ -169,6 +171,8 @@ export async function generateTechnique(name: string): Promise<GenerateResult> {
     steps: d.steps,
     source: "사용자 AI 생성(D-57)",
     sort_order: 9999,
+    kind: d.techKind, // 기술 지도 칸(D-87) — 승인되면 그대로 공용이 된다
+    ...mapFields(d),
   });
   if (error) {
     console.error("user technique insert failed:", error.code ?? "", (error.message ?? "").slice(0, 80));

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { isLive } from "@/lib/matching";
 import { forgetLibrary, getLibrary } from "@/lib/matching/library";
-import { DAILY_DRAFT_LIMIT, draftNames, nameKey, type Draft, type DraftKind } from "@/lib/admin/drafter";
+import { DAILY_DRAFT_LIMIT, draftNames, mapFields, nameKey, type Draft, type DraftKind, type Redo } from "@/lib/admin/drafter";
 import { addDays, seoulToday } from "@/lib/seoul-date";
 import { DRAFT_SELECT, draftedToday, toAdminDraft, type AdminDraft } from "@/lib/admin/admin-data";
 
@@ -78,6 +78,8 @@ export async function draftName(key: string): Promise<DraftNameResult> {
       aliases: d.aliases,
       steps: d.steps,
       note: d.note || null,
+      tech_kind: d.techKind,
+      ...mapFields(d),
     })
     .select(DRAFT_SELECT)
     .single();
@@ -112,7 +114,7 @@ export async function redraftDraft(id: string, hint: string, current: DraftEdit)
   if (!row) return { ok: false, message: "이미 처리된 초안이에요." };
 
   // 이전 초안 = 운영자가 지금 화면에서 보고 있는 칸(고친 것 포함)
-  const previous: Omit<Draft, "name"> = {
+  const previous: Redo["previous"] = {
     kind: current?.kind === "alias" || current?.kind === "new" ? current.kind : "unclear",
     aliasOf: clean(current?.aliasOf, 80) || null,
     position: clean(current?.position, 40) || null,
@@ -157,6 +159,8 @@ export async function redraftDraft(id: string, hint: string, current: DraftEdit)
       aliases: d.aliases,
       steps: d.steps,
       note: d.note || null,
+      tech_kind: d.techKind,
+      ...mapFields(d),
     })
     .eq("id", id)
     .eq("status", "pending");
