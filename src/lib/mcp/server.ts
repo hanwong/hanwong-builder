@@ -3,11 +3,11 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { loadLibrary, type Concept, type Library, type Position, type PositionNote, type Technique } from "@/lib/mcp/library";
 import { linksOf, withLinks } from "@/lib/mcp/links";
+import { AI_NOTICE } from "@/lib/ai-notice";
 
 // 리리롤 MCP(D-81 · D-83) — 공용 기술 목록 · 포지션 노트 · 개념 카드를 읽기 전용으로 보여 주는 도구들. 사용자 기록 · 숙련도는 다루지 않는다.
 
-const NOTICE =
-  "리리롤(rereroll.xyz) 기술 목록 · 오른손잡이 기준(왼손잡이는 좌우 반대). AI 가 쓰고 사람(블랙벨트) 확인 전인 공부용 자료예요. 일부 내용은 BJJGraph(© Diogo Seca, bjjgraph.org)를 참고해 우리 말로 새로 썼어요.";
+const NOTICE = `리리롤(rereroll.xyz) 기술 목록 · 오른손잡이 기준(왼손잡이는 좌우 반대). ${AI_NOTICE} 일부 내용은 BJJGraph(© Diogo Seca, bjjgraph.org)를 참고해 우리 말로 새로 썼어요.`;
 
 const INSTRUCTIONS = `리리롤 주짓수 기술 사전 · 지도. 한국어 이름으로 찾는다(영어 이름 · 다른 이름도 됨).
 - 이름을 모르면 rereroll_search 부터. 질문 낱말(예: "하프가드 크로스페이스 방어")을 그대로 넣어도 세팅 과정 · 방어 내용까지 찾는다.
@@ -16,7 +16,7 @@ const INSTRUCTIONS = `리리롤 주짓수 기술 사전 · 지도. 한국어 이
 - "프레임이 뭐야? / 왜 자꾸 눌려? / 포지션 스파링은?" 같은 원리 · 공부법 → rereroll_get_concept (모르면 rereroll_list_concepts).
 - "A 에서 B 로" → rereroll_find_paths.
 - 답 속 [slug] 는 그 기술로 바로 이어 볼 수 있다는 뜻 — 필요하면 rereroll_get_technique 로 따라간다.
-- 좌우는 모두 오른손잡이 기준. 답할 때 이 점과 '공부용 · 사람 확인 전'임을 짧게 밝힌다.`;
+- 좌우는 모두 오른손잡이 기준. 답할 때마다 끝에 이 점과 "AI 가 추천한 내용이라 틀릴 수 있고, 사람(블랙벨트)이 검증하지 않았으니 코치에게 확인하라"는 안내를 짧게 꼭 붙인다.`;
 
 const KIND_KO: Record<string, string> = {
   takedown: "테이크다운",

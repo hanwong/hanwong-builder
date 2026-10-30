@@ -17,6 +17,7 @@ import { setLevel } from "@/app/app/skills/actions";
 import { formatKoreanDate } from "@/lib/seoul-date";
 import { MINE_LABEL, type Level } from "@/lib/mock/log-seed";
 import type { SkillDetail as Detail } from "@/lib/skill-detail-data";
+import { AI_NOTICE } from "@/lib/ai-notice";
 
 // 기술 상세 (T-10b, FLOW 4 · DESIGN 6) — 세팅 과정 · 내 숙련도(바꾸면 하단 "숙련도 저장", D-27) · 내 정리 모음.
 export function SkillDetail({ skill }: { skill: Detail }) {
@@ -88,6 +89,8 @@ export function SkillDetail({ skill }: { skill: Detail }) {
               <li key={s}>{s}</li>
             ))}
           </ol>
+          {/* 사람 검증 전이라는 안내(D-86) */}
+          <p className="text-[12px] leading-relaxed text-muted-foreground">{AI_NOTICE}</p>
           <YoutubeLink nameEn={skill.nameEn} />
           {/* 내가 만든 기술은 승인 때 운영자가 고친다 — 보완 제안은 공용 기술만 */}
           {!skill.mine && <SuggestEdit slug={skill.slug} steps={skill.steps} pending={skill.suggestionPending} />}

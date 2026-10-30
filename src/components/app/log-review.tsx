@@ -18,6 +18,7 @@ import { PositionPicture } from "@/components/app/position-picture";
 import { generateTechnique } from "@/app/app/log/actions";
 import { forgetPicker } from "@/lib/picker-store";
 import { MINE_LABEL, type Level, type MatchedTechnique, type Term } from "@/lib/mock/log-seed";
+import { AI_NOTICE } from "@/lib/ai-notice";
 
 export type AiStatus = "ok" | "mock" | "none";
 
@@ -429,6 +430,8 @@ function TechniqueCard({
             </ol>
             {/* 좌우는 오른손잡이 기준(D-74) */}
             <span className="pl-5 text-[12px] font-medium text-muted-foreground">오른손잡이 기준 · 왼손잡이는 좌우 반대로</span>
+            {/* 사람 검증 전이라는 안내(D-86) */}
+            <span className="pl-5 text-[12px] leading-relaxed text-muted-foreground">{AI_NOTICE}</span>
           </div>
         )}
 
