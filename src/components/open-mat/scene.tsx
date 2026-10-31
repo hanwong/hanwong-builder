@@ -383,18 +383,22 @@ function Character({ player, mine, act, pose }: { player: Player; mine: boolean;
           <Gi position-y={0.55} line={1.05}>
             <capsuleGeometry args={[0.22, 0.22, 4, 14]} />
           </Gi>
-          <mesh position-y={0.36} material={HEM}>
-            <cylinderGeometry args={[0.24, 0.255, 0.08, 16]} />
+          {/* 아래 자락은 도복 흰색(깃 선이 자락 끝까지 보이게) + 끝단만 테두리 색 */}
+          <mesh position-y={0.36} material={GI}>
+            <cylinderGeometry args={[0.24, 0.255, 0.08, 20]} />
+          </mesh>
+          <mesh position-y={0.325} material={HEM}>
+            <cylinderGeometry args={[0.258, 0.258, 0.018, 20]} />
           </mesh>
           <mesh position-y={0.43} material={belt}>
-            <cylinderGeometry args={[0.235, 0.235, 0.065, 16]} />
+            <cylinderGeometry args={[0.25, 0.25, 0.065, 20]} />
           </mesh>
           {/* 띠 매듭은 배 가운데, 두 끝은 '人' 자로 벌어져 자락 아래까지(본인이 보낸 그림, 2026-10-31) */}
-          <mesh position={[0, 0.43, 0.245]} material={belt}>
+          <mesh position={[0, 0.43, 0.26]} material={belt}>
             <boxGeometry args={[0.065, 0.05, 0.03]} />
           </mesh>
           {[-1, 1].map((side) => (
-            <mesh key={side} position={[side * 0.045, 0.34, 0.262]} rotation={[-0.08, 0, side * 0.55]} material={belt}>
+            <mesh key={side} position={[side * 0.045, 0.34, 0.27]} rotation={[-0.08, 0, side * 0.55]} material={belt}>
               <boxGeometry args={[0.032, 0.17, 0.02]} />
             </mesh>
           ))}
@@ -406,8 +410,12 @@ function Character({ player, mine, act, pose }: { player: Player; mine: boolean;
           <mesh position={[0.026, 0.725, 0.2]} rotation={[-0.3, 0, -0.53]} material={HEM}>
             <boxGeometry args={[0.04, 0.11, 0.03]} />
           </mesh>
-          <mesh position={[-0.047, 0.575, 0.21]} rotation={[0, 0, -0.42]} material={HEM}>
-            <boxGeometry args={[0.04, 0.245, 0.03]} />
+          {/* 긴 선은 띠 밑으로 지나 상의 자락 끝(y 0.32)까지 — 띠 위 · 자락 위 두 토막으로, 몸 곡면을 따라 살짝 돌린다 */}
+          <mesh position={[-0.062, 0.54, 0.205]} rotation={[0, -0.28, -0.42]} material={HEM}>
+            <boxGeometry args={[0.04, 0.31, 0.03]} />
+          </mesh>
+          <mesh position={[-0.141, 0.36, 0.205]} rotation={[0, -0.6, -0.42]} material={HEM}>
+            <boxGeometry args={[0.04, 0.09, 0.03]} />
           </mesh>
           {/* 팔(어깨에서 돈다) — 소매 · 소매 끝 · 손 */}
           {([
