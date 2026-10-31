@@ -1,6 +1,8 @@
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
+import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
+import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { MAT, beltColor } from "@/components/open-mat/colors";
 import type { Act, ActEvent, Player } from "@/components/open-mat/use-mat";
 
@@ -269,7 +271,7 @@ function Character({ player, mine, act, pose }: { player: Player; mine: boolean;
 
   useFrame((state, dt) => {
     const g = root.current;
-    if (!g || !body.current || !armR.current || !armL.current) return;
+    if (!g) return;
     const t = state.clock.elapsedTime;
     if (act !== lastAct.current) {
       lastAct.current = act;
@@ -291,6 +293,8 @@ function Character({ player, mine, act, pose }: { player: Player; mine: boolean;
       pose.position.copy(g.position);
       pose.rotation.copy(g.rotation);
     }
+    // 아래는 모델을 받기 전 잠깐 보이는 단순 캐릭터의 움직임
+    if (!body.current || !armR.current || !armL.current) return;
     const bob = walking ? Math.abs(Math.sin(t * 10)) * 0.06 : Math.sin(t * 2) * 0.01;
     body.current.position.y = bob;
     // 동작
@@ -308,6 +312,8 @@ function Character({ player, mine, act, pose }: { player: Player; mine: boolean;
       <mesh rotation-x={-Math.PI / 2} position-y={0.02} material={SHADOW}>
         <circleGeometry args={[0.32, 20]} />
       </mesh>
+      <Suspense
+        fallback={
       <group ref={body}>
         {/* 다리 */}
         <mesh position={[-0.1, 0.16, 0]} material={GI_SHADE}>
@@ -351,11 +357,115 @@ function Character({ player, mine, act, pose }: { player: Player; mine: boolean;
           <sphereGeometry args={[0.27, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
         </mesh>
         <Face />
-        <NameTag text={mine ? `나 · ${player.nickname}` : player.nickname} mine={mine} />
+      </group>
+        }
+      >
+        <KidModel act={act} belt={player.belt} />
+      </Suspense>
+      <NameTag text={mine ? `나 · ${player.nickname}` : player.nickname} mine={mine} />
+    </group>
+  );
+}
+
+// Higgsfield 로 만든 도복 캐릭터(2026-10-31, D-88) — Tripo 모델 + Meshy 리깅, 동작 5개(idle · walk · oss · fistbump · tap)를
+// 한 파일(public/models/kid.glb, 약 1MB)에 합쳤다. 모두 같은 파일을 받아 사람마다 복제(뼈대 포함)해 쓴다.
+// 모델은 +x 를 보고 있어 -90도 돌려 +z(우리 '앞')에 맞추고, 원래 흰 띠 위에 벨트 색 띠를 덧씌운다(엉덩이 뼈를 따라감).
+const KID_URL = "/models/kid.glb";
+const KID_SCALE = 1.25;
+// 모델 좌표(돌리기 · 키우기 전): 띠는 높이 0.40, 앞뒤(x) -0.10~0.19, 좌우(z) ±0.17 정도 — 엉덩이 뼈(0.028, 0.262, 0.047)에서의 차이
+const BELT_FROM_HIPS = new THREE.Vector3(0.017, 0.138, -0.047);
+// 동작 클립 이름 → 재생 속도(오스 원본은 7.7초라 빠르게)
+const ACT_CLIP: Record<Act, { clip: string; speed: number }> = {
+  oss: { clip: "oss", speed: 3.4 },
+  fistbump: { clip: "fistbump", speed: 1.1 },
+  tap: { clip: "tap", speed: 1.3 },
+};
+
+function KidModel({ act, belt }: { act: Act | null; belt: string }) {
+  const gltf = useGLTF(KID_URL);
+  const model = useMemo(() => cloneSkinned(gltf.scene), [gltf.scene]);
+  const mixer = useMemo(() => new THREE.AnimationMixer(model), [model]);
+  const actions = useMemo(
+    () =>
+      new Map(
+        gltf.animations.map((c) => {
+          // 받아 온 서 있기(idle) 클립은 몸이 좌우로 80도쯤 돌아가며 둘러봐서(엉덩이 · 척추 비틀기) 쓰지 않고,
+          // 인사(oss) 클립 첫 장면(바로 선 자세)을 멈춰 세워 서 있기로 쓴다
+          const oss = gltf.animations.find((a) => a.name === "oss");
+          const clip = c.name === "idle" && oss ? THREE.AnimationUtils.subclip(oss, "idle", 0, 2, 30) : c;
+          return [c.name, mixer.clipAction(clip)] as const;
+        }),
+      ),
+    [gltf.animations, mixer],
+  );
+  const hips = useMemo(() => model.getObjectByName("Hips") ?? null, [model]);
+  const wrap = useRef<THREE.Group>(null);
+  const beltRef = useRef<THREE.Group>(null);
+  const beltMat = useMemo(() => new THREE.MeshLambertMaterial({ color: beltColor(belt), side: THREE.DoubleSide }), [belt]);
+  const state = useRef({ clip: "", actUntil: 0, lastAct: null as Act | null });
+  const prev = useMemo(() => new THREE.Vector3(), []);
+  const tmp = useMemo(() => new THREE.Vector3(), []);
+
+  useEffect(() => {
+    actions.get("idle")?.play();
+    state.current.clip = "idle";
+    return () => void mixer.stopAllAction();
+  }, [actions, mixer]);
+
+  useFrame(({ clock }, dt) => {
+    const w = wrap.current;
+    if (!w || !w.parent) return;
+    const t = clock.elapsedTime;
+    // 걷는지: 이 캐릭터(부모 그룹)가 이번 프레임에 움직였는지
+    w.parent.getWorldPosition(tmp);
+    const speed = dt > 0 ? tmp.distanceTo(prev) / dt : 0;
+    prev.copy(tmp);
+    const fadeTo = (name: string, speedScale = 1, once = false) => {
+      const next = actions.get(name);
+      if (!next || state.current.clip === name) return;
+      next.reset().setEffectiveTimeScale(speedScale).setEffectiveWeight(1);
+      next.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity);
+      next.fadeIn(0.18).play();
+      actions.get(state.current.clip)?.fadeOut(0.18);
+      state.current.clip = name;
+    };
+    if (act && act !== state.current.lastAct) {
+      const a = ACT_CLIP[act];
+      const clip = actions.get(a.clip)?.getClip();
+      state.current.actUntil = t + (clip ? clip.duration / a.speed : 1.5) - 0.2;
+      state.current.clip = ""; // 같은 동작을 다시 눌러도 처음부터
+      fadeTo(a.clip, a.speed, true);
+    }
+    state.current.lastAct = act;
+    if (t >= state.current.actUntil) fadeTo(speed > 0.3 ? "walk" : "idle", speed > 0.3 ? 1.35 : 1);
+    mixer.update(dt);
+    // 띠: 엉덩이 뼈 자리를 따라간다(모델 좌표)
+    if (hips && beltRef.current) {
+      hips.getWorldPosition(tmp);
+      model.worldToLocal(tmp);
+      beltRef.current.position.copy(tmp).add(BELT_FROM_HIPS);
+    }
+  });
+
+  return (
+    <group ref={wrap} rotation-y={-Math.PI / 2} scale={KID_SCALE}>
+      <primitive object={model} />
+      <group ref={beltRef}>
+        <mesh scale={[0.158, 1, 0.178]} material={beltMat}>
+          <cylinderGeometry args={[1, 1, 0.042, 28, 1, true]} />
+        </mesh>
+        {/* 앞 매듭 · 늘어진 끝 */}
+        <mesh position={[0.165, -0.035, 0.03]} rotation-x={0.25} material={beltMat}>
+          <boxGeometry args={[0.02, 0.07, 0.028]} />
+        </mesh>
+        <mesh position={[0.165, -0.035, -0.02]} rotation-x={-0.25} material={beltMat}>
+          <boxGeometry args={[0.02, 0.07, 0.028]} />
+        </mesh>
       </group>
     </group>
   );
 }
+useGLTF.preload(KID_URL);
 
 // 내 캐릭터 뒤에서 따라다니는 고정 시점 카메라(본인 요청 2026-10-31). 끌어서 돌리기 없음.
 // 벽 패드에 가리지 않게 카메라 자리는 방 안쪽으로 묶는다. 휴대폰 세로 화면에서 옆 사람도 보이게 조금 뒤 · 위 · 넓게.
