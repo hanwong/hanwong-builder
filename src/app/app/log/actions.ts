@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { isLive } from "@/lib/matching";
-import { getLibrary, getOwnTechniques, type Candidate, type OwnCandidate } from "@/lib/matching/library";
+import { getLibrary, getOwnTechniques, type Candidate, type OwnCandidate, type Position } from "@/lib/matching/library";
 import { exactMatch, searchLibrary, searchList } from "@/lib/matching/search";
 import { draftNames, mapFields } from "@/lib/admin/drafter";
 import { MAX_BODY } from "@/lib/log-limits";
@@ -91,12 +91,14 @@ export async function pickerData(): Promise<PickerData> {
   };
 }
 
-// 내용 생성 (D-57) — 목록 밖 이름 하나를 AI 로 기술 카드로. 하루 3번(성공한 AI 호출만 셈).
+// 기술 카드 만들기 (D-57, 버튼 이름 2026-10-31) — 목록 밖 이름 하나를 AI 로 기술 카드로. 하루 3번(성공한 AI 호출만 셈).
 // 이미 있는 기술과 이름이 똑같으면 AI 를 부르지 않고 그 기술을 돌려준다(비용 0).
+// AI 가 만들지 못하면(모름 · 기술 이름 아님 · 오늘 횟수 다 씀 · 키 없음) 포지션 목록을 함께 돌려줘,
+// 사용자가 관리자 화면처럼 포지션을 고르고 내용을 직접 적어 만들 수 있게 한다(createOwnTechnique, 2026-10-31 본인 요청).
 const DAILY_USER_DRAFTS = 3;
 export type GenerateResult =
   | { ok: true; kind: "new" | "existing"; technique: MatchedTechnique; left: number }
-  | { ok: false; message: string };
+  | { ok: false; message: string; positions?: Position[] };
 
 export async function generateTechnique(name: string): Promise<GenerateResult> {
   const supabase = await createSupabaseServer();
@@ -114,7 +116,8 @@ export async function generateTechnique(name: string): Promise<GenerateResult> {
     return { ok: true, kind: "existing", technique, left: -1 };
   }
 
-  if (!isLive()) return { ok: false, message: "AI 키가 없어 지금은 만들 수 없어요(연습용 예시)." };
+  const manual = (message: string): GenerateResult => ({ ok: false, message, positions: lib.positions });
+  if (!isLive()) return manual("AI 키가 없어 지금은 자동으로 만들 수 없어요. 아래에 직접 적어 만들 수 있어요.");
   const since = `${seoulToday()}T00:00:00+09:00`;
   const { count } = await supabase
     .from("ai_calls")
@@ -123,7 +126,7 @@ export async function generateTechnique(name: string): Promise<GenerateResult> {
     .gte("called_at", since);
   const used = count ?? 0;
   if (used >= DAILY_USER_DRAFTS)
-    return { ok: false, message: `내용 생성은 하루 ${DAILY_USER_DRAFTS}번이에요. 내일 다시 눌러 주세요.` };
+    return manual(`자동으로 만들기는 하루 ${DAILY_USER_DRAFTS}번이에요. 아래에 직접 적어 만들 수 있어요.`);
 
   let d;
   try {
@@ -143,12 +146,11 @@ export async function generateTechnique(name: string): Promise<GenerateResult> {
     return { ok: true, kind: "existing", technique, left };
   }
   if (d.kind !== "new" || !d.position || !d.nameKo || !d.nameEn || d.steps.length < 3) {
-    return {
-      ok: false,
-      message: d.note.startsWith("확신 없음")
-        ? `AI 가 이 기술을 정확히 몰라 지어내지 않았어요 — ${d.note.replace(/^확신 없음\s*[—-]?\s*/, "")}. 이름은 그대로 남아요.`
-        : `기술 이름으로 보기 어려워 만들지 않았어요${d.note ? ` — ${d.note}` : ""}. 이름은 그대로 남아요.`,
-    };
+    return manual(
+      d.note.startsWith("확신 없음")
+        ? `AI 가 이 기술을 정확히 몰라 지어내지 않았어요 — ${d.note.replace(/^확신 없음\s*[—-]?\s*/, "")}. 아래에 직접 적어 만들 수 있어요.`
+        : `AI 가 기술 이름으로 보지 않았어요${d.note ? ` — ${d.note}` : ""}. 아래에 직접 적어 만들 수 있어요.`,
+    );
   }
 
   const { data: pos } = await supabase.from("positions").select("id, slug, name_ko").eq("slug", d.position).maybeSingle();
@@ -190,6 +192,63 @@ export async function generateTechnique(name: string): Promise<GenerateResult> {
       position: pos.name_ko,
       positionSlug: pos.slug,
       steps: d.steps,
+      level: "beginner",
+      draft: true,
+      mine: "pending",
+    },
+  };
+}
+
+// 직접 적어 기술 카드 만들기 (2026-10-31 본인 요청) — AI 가 만들지 못했을 때, 사용자가 포지션 · 이름 · 세팅 과정을 적는다.
+// AI 를 부르지 않는다(비용 0). AI 로 만든 카드와 똑같이 나만 보이는 '승인 대기' 내 기술이 되고, 운영자가 고쳐 승인하면 공용이 된다.
+// 영어 이름은 모르는 경우가 많아 한국어 이름을 그대로 넣어 두고(빈칸이면 유튜브 검색 · 화면이 어색해서), 운영자가 승인할 때 고친다.
+export type OwnTechniqueInput = { position: string; nameKo: string; steps: string[] };
+export async function createOwnTechnique(name: string, input: OwnTechniqueInput): Promise<GenerateResult> {
+  const supabase = await createSupabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "로그인이 풀렸어요. 다시 로그인해 주세요." };
+  const clean = (v: unknown, max: number) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : "");
+  const written = clean(name, 100);
+  const nameKo = clean(input?.nameKo, 60) || written.slice(0, 60);
+  const steps = (Array.isArray(input?.steps) ? input.steps : []).map((x) => clean(x, 120)).filter(Boolean).slice(0, 5);
+  if (!nameKo) return { ok: false, message: "기술 이름을 적어 주세요." };
+  if (steps.length < 1) return { ok: false, message: "세팅 과정을 한 줄 이상 적어 주세요." };
+  const { data: pos } = await supabase.from("positions").select("id, slug, name_ko").eq("slug", clean(input?.position, 40)).maybeSingle();
+  if (!pos) return { ok: false, message: "포지션을 골라 주세요." };
+
+  const slug = `my-technique-${crypto.randomUUID().slice(0, 8)}`;
+  const nk = (s: string) => s.replace(/\s+/g, "").toLowerCase();
+  const { error } = await supabase.from("techniques").insert({
+    owner_id: user.id,
+    owner_status: "pending",
+    is_reviewed: false,
+    position_id: pos.id,
+    slug,
+    name_ko: nameKo,
+    name_en: nameKo,
+    aliases: written && nk(written) !== nk(nameKo) ? [written] : [],
+    steps,
+    source: "사용자 직접 입력",
+    sort_order: 9999,
+  });
+  if (error) {
+    console.error("own technique insert failed:", error.code ?? "", (error.message ?? "").slice(0, 80));
+    return { ok: false, message: "저장하지 못했어요. 다시 눌러 주세요." };
+  }
+  revalidatePath("/app/skills");
+  return {
+    ok: true,
+    kind: "new",
+    left: -1,
+    technique: {
+      id: slug,
+      nameKo,
+      nameEn: nameKo,
+      position: pos.name_ko,
+      positionSlug: pos.slug,
+      steps,
       level: "beginner",
       draft: true,
       mine: "pending",
