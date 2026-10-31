@@ -1,5 +1,5 @@
-import { useLayoutEffect, useMemo, useRef } from "react";
-import { Canvas, useFrame, type ThreeElements, type ThreeEvent } from "@react-three/fiber";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { Canvas, useFrame, useThree, type ThreeElements, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 import { MAT, beltColor } from "@/components/open-mat/colors";
 import type { Act, ActEvent, Player, Stance } from "@/components/open-mat/use-mat";
@@ -433,7 +433,8 @@ function Character({ player, mine, act, pose }: { player: Player; mine: boolean;
   );
 }
 
-// 내 캐릭터 뒤에서 따라다니는 고정 시점 카메라(본인 요청 2026-10-31). 끌어서 돌리기 없음.
+// 내 캐릭터 뒤에서 따라다니는 카메라(본인 요청 2026-10-31). 화면을 옆으로 끌면 캐릭터 둘레로 돌아간다(본인 요청 2026-10-31 "드래그 해서 카메라 돌릴수도"),
+// 다시 걷기 시작하면 천천히 캐릭터 뒤로 돌아온다. 살짝 누르기(6px 미만)는 걷기로 둔다(Room 의 e.delta).
 // 벽 패드에 가리지 않게 카메라 자리는 방 안쪽으로 묶는다. 휴대폰 세로 화면에서 옆 사람도 보이게 조금 뒤 · 위 · 넓게.
 const BEHIND = 4.4;
 const HEIGHT = 2.8;
@@ -442,10 +443,43 @@ function FollowCamera({ pose }: { pose: Pose }) {
   const look = useRef(new THREE.Vector3(0, 0.8, 0));
   const want = useMemo(() => new THREE.Vector3(), []);
   const aim = useMemo(() => new THREE.Vector3(), []);
+  const yaw = useRef(0); // 끌어서 돌린 각도(캐릭터 뒤 기준)
+  const last = useRef(new THREE.Vector3(0, -1, 0));
+  const el = useThree((s) => s.gl.domElement);
+  useEffect(() => {
+    let id: number | null = null;
+    let x = 0;
+    const down = (e: PointerEvent) => {
+      if (id !== null) return; // 손가락 하나만
+      id = e.pointerId;
+      x = e.clientX;
+    };
+    const move = (e: PointerEvent) => {
+      if (e.pointerId !== id) return;
+      yaw.current -= (e.clientX - x) * 0.008;
+      x = e.clientX;
+    };
+    const up = (e: PointerEvent) => {
+      if (e.pointerId === id) id = null;
+    };
+    el.addEventListener("pointerdown", down);
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      el.removeEventListener("pointerdown", down);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+  }, [el]);
   useFrame(({ camera }, dt) => {
     if (pose.position.y < 0) return;
-    const fx = Math.sin(pose.rotation.y);
-    const fz = Math.cos(pose.rotation.y);
+    // 걷는 중이면 돌린 각도를 천천히 풀어 다시 뒤에서 본다
+    if (last.current.distanceTo(pose.position) > dt * 0.5) yaw.current *= Math.exp(-dt * 1.5);
+    last.current.copy(pose.position);
+    const fx = Math.sin(pose.rotation.y + yaw.current);
+    const fz = Math.cos(pose.rotation.y + yaw.current);
     const p = { pos: pose.position };
     want.set(
       Math.max(-CAM_LIMIT, Math.min(CAM_LIMIT, p.pos.x - fx * BEHIND)),
