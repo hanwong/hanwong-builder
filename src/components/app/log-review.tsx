@@ -141,38 +141,13 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
         {customNames.map((name) => (
           <Card key={name} className="rounded-2xl ring-border" size="sm">
             <CardContent className="flex flex-wrap items-center gap-2">
-              <span className="text-[17px] font-semibold">{name}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 rounded-full shadow-none"
-                disabled={generating !== null || saving}
-                onClick={() => generate(name)}
-              >
-                {generating === name ? (
-                  <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />
-                ) : (
-                  <Sparkles data-icon="inline-start" aria-hidden />
-                )}
-                {generating === name ? "만드는 중…" : "기술 카드 만들기"}
-              </Button>
-              {!manual[name] && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 rounded-full text-muted-foreground"
-                  disabled={generating !== null || saving}
-                  onClick={() => writeOwn(name)}
-                >
-                  <PencilLine data-icon="inline-start" aria-hidden />
-                  직접 만들기
-                </Button>
-              )}
+              {/* 첫 줄: 이름 · 빼기 / 둘째 줄: 기술 카드 만들기(AI) · 직접 만들기 */}
+              <span className="min-w-0 flex-1 truncate text-[17px] font-semibold">{name}</span>
               <Button
                 variant="ghost"
                 size="icon-sm"
                 aria-label={`${name} 빼기`}
-                className="ml-auto rounded-full text-muted-foreground"
+                className="rounded-full text-muted-foreground"
                 onClick={() => {
                   setCustomNames((l) => l.filter((n) => n !== name));
                   setManual((m) => withoutKey(m, name));
@@ -180,6 +155,34 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
               >
                 <X />
               </Button>
+              <div className="flex w-full flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 rounded-full shadow-none"
+                  disabled={generating !== null || saving}
+                  onClick={() => generate(name)}
+                >
+                  {generating === name ? (
+                    <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />
+                  ) : (
+                    <Sparkles data-icon="inline-start" aria-hidden />
+                  )}
+                  {generating === name ? "만드는 중…" : "기술 카드 만들기"}
+                </Button>
+                {!manual[name] && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 rounded-full shadow-none"
+                    disabled={generating !== null || saving}
+                    onClick={() => writeOwn(name)}
+                  >
+                    <PencilLine data-icon="inline-start" aria-hidden />
+                    직접 만들기
+                  </Button>
+                )}
+              </div>
               {manual[name] && (
                 <ManualTechniqueForm
                   name={name}
