@@ -5,17 +5,30 @@ import { Download, Loader2, Share2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useFloatingDialog } from "@/lib/use-floating-dialog";
 
 type Card = { file: File; url: string };
+type Part = "techniques" | "body" | "sparring";
+// 카드에 넣을 것(2026-10-31 본인 요청) — 체크로 넣고 빼기
+const PARTS: { key: Part; label: string }[] = [
+  { key: "techniques", label: "기술 카드" },
+  { key: "body", label: "내 글" },
+  { key: "sparring", label: "스파링" },
+];
 
 // 기록 공유 (D-51) — 서버가 그 기록으로 만든 스토리 크기 이미지를 미리 보여 주고, 휴대폰 공유 창으로 보내거나 저장한다.
 // 이미지는 서버 · 어디에도 남지 않는다. 미리 받아 둔 파일로 공유해야 아이폰에서 '누른 직후' 조건을 지킨다.
 export function ShareLog({ id, loggedOn }: { id: string; loggedOn: string }) {
   const [open, setOpen] = useState(false);
-  const [withBody, setWithBody] = useState(true);
+  const [parts, setParts] = useState<Record<Part, boolean>>({ techniques: true, body: true, sparring: true });
+  const [bg, setBg] = useState<"clear" | "white">("clear"); // 배경: 투명(기본) · 흰색
+  const query = new URLSearchParams([
+    ...PARTS.filter((p) => !parts[p.key]).map((p) => [p.key, "0"]),
+    ...(bg === "white" ? [["bg", "white"]] : []),
+  ]).toString();
   const [card, setCard] = useState<Card | null>(null);
   const [failed, setFailed] = useState(false);
   const floating = useFloatingDialog(open);
@@ -24,7 +37,7 @@ export function ShareLog({ id, loggedOn }: { id: string; loggedOn: string }) {
     if (!open) return;
     let url = "";
     let gone = false;
-    fetch(`/app/log/${id}/card${withBody ? "" : "?body=0"}`, { cache: "no-store" })
+    fetch(`/app/log/${id}/card${query ? `?${query}` : ""}`, { cache: "no-store" })
       .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(String(r.status)))))
       .then((blob) => {
         if (gone) return;
@@ -38,7 +51,7 @@ export function ShareLog({ id, loggedOn }: { id: string; loggedOn: string }) {
       setCard(null);
       setFailed(false);
     };
-  }, [open, withBody, id, loggedOn]);
+  }, [open, query, id, loggedOn]);
 
   const canShare =
     !!card && typeof navigator !== "undefined" && !!navigator.canShare?.({ files: [card.file] });
@@ -71,12 +84,36 @@ export function ShareLog({ id, loggedOn }: { id: string; loggedOn: string }) {
               <X />
             </Button>
           </div>
-          <DialogDescription className="sr-only">공유할 기록 이미지를 미리 보고 내 글을 넣거나 뺄 수 있어요.</DialogDescription>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="share-body" className="text-[15px]">
-              내 글 넣기
-            </Label>
-            <Switch id="share-body" checked={withBody} onCheckedChange={setWithBody} />
+          <DialogDescription className="sr-only">공유할 기록 이미지를 미리 보고 넣을 내용과 배경을 고를 수 있어요.</DialogDescription>
+          {/* 넣을 것 — 기술 카드 · 내 글 · 스파링 체크 */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            {PARTS.map((p) => (
+              <div key={p.key} className="flex items-center gap-2">
+                <Checkbox
+                  id={`share-${p.key}`}
+                  checked={parts[p.key]}
+                  onCheckedChange={(v) => setParts((x) => ({ ...x, [p.key]: v === true }))}
+                />
+                <Label htmlFor={`share-${p.key}`} className="text-[15px]">
+                  {p.label}
+                </Label>
+              </div>
+            ))}
+          </div>
+          {/* 배경 — 투명(사진 위에 붙이기) · 흰색 */}
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[15px] font-medium">배경</span>
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              size="sm"
+              value={bg}
+              onValueChange={(v) => v && setBg(v as "clear" | "white")}
+              aria-label="배경"
+            >
+              <ToggleGroupItem value="clear" className="px-3">투명</ToggleGroupItem>
+              <ToggleGroupItem value="white" className="px-3">흰색</ToggleGroupItem>
+            </ToggleGroup>
           </div>
 
           <div className="flex justify-center">

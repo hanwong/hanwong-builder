@@ -43,9 +43,18 @@ function picture(slug: string) {
 }
 
 export type ShareItem = { name: string; position: string; positionSlug: string | null };
+// 배경(2026-10-31 본인 요청): 투명(사진 위에 붙이기) · 흰색
+export type ShareBackground = "clear" | "white";
 
 export async function shareCardImage(
-  { loggedOn, body, items, sparring }: { loggedOn: string; body: string; items: ShareItem[]; sparring: number },
+  {
+    loggedOn,
+    body,
+    items,
+    sparring,
+    background = "clear",
+    emptyNote = true,
+  }: { loggedOn: string; body: string; items: ShareItem[]; sparring: number; background?: ShareBackground; emptyNote?: boolean },
   headers: Record<string, string>,
 ) {
   // 메모 줄바꿈은 그대로(본인 요청) — 줄 끝 공백만 지우고, 빈 줄은 한 줄까지만
@@ -69,7 +78,7 @@ export async function shareCardImage(
   const height =
     96 +
     shown.reduce((h, t) => h + cardHeight(t), 0) + Math.max(0, shown.length - 1) * 24 +
-    (more > 0 ? 24 + 41 : 0) + (all.length === 0 && !sparring ? 48 : 0) +
+    (more > 0 ? 24 + 41 : 0) + (all.length === 0 && !sparring && emptyNote ? 48 : 0) +
     (sparring ? (all.length ? 32 : 0) + SPARRING_H : 0) +
     (text ? 48 + bodyLines * 57 : 0) +
     56 + 36 + 80;
@@ -83,7 +92,7 @@ export async function shareCardImage(
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          background: "rgba(250, 249, 244, 0.3)", // 반투명 — 사진 위에 붙이면 비친다(본인 요청)
+          background: background === "white" ? "#FFFFFF" : "transparent", // 투명 — 사진 위에 붙이면 비친다 / 흰색(본인 요청)
           color: C.ink,
           padding: `96px ${PAD_X}px 80px`,
           fontFamily: "Pretendard",
@@ -114,7 +123,7 @@ export async function shareCardImage(
             </div>
           ))}
           {more > 0 && <div style={{ display: "flex", height: 41, fontSize: 34, fontWeight: 500, color: C.muted, paddingLeft: 12 }}>{`외 ${more}개`}</div>}
-          {all.length === 0 && !sparring && (
+          {all.length === 0 && !sparring && emptyNote && (
             <div style={{ display: "flex", height: 48, fontSize: 40, fontWeight: 500, color: C.muted }}>기술 이름 없이 기록했어요</div>
           )}
         </div>
