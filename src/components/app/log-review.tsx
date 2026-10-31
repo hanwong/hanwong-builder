@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, type Dispatch, type ReactNode, type SetStateAction } from "react";
-import { ArrowLeft, ChevronDown, Loader2, Mic, MicOff, Minus, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, Loader2, Mic, MicOff, Minus, PencilLine, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { BottomAction } from "@/components/app/bottom-action";
@@ -18,7 +18,7 @@ import { LevelPicker } from "@/components/app/level-picker";
 import { TechniquePicker } from "@/components/app/technique-picker";
 import { YoutubeLink } from "@/components/app/youtube-link";
 import { PositionPicture } from "@/components/app/position-picture";
-import { createOwnTechnique, generateTechnique, type GenerateResult } from "@/app/app/log/actions";
+import { createOwnTechnique, generateTechnique, techniquePositions, type GenerateResult } from "@/app/app/log/actions";
 import { forgetPicker } from "@/lib/picker-store";
 import { MINE_LABEL, type Level, type MatchedTechnique, type Term } from "@/lib/mock/log-seed";
 import { AI_NOTICE } from "@/lib/ai-notice";
@@ -79,6 +79,18 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
       return;
     }
     created(name, res);
+  }
+  // 직접 만들기 — AI 를 부르지 않고 바로 적는 칸을 연다(2026-10-31 본인 요청)
+  async function writeOwn(name: string) {
+    if (manual[name]) return;
+    setGenerating(name);
+    const positions = await techniquePositions().catch(() => []);
+    setGenerating(null);
+    if (!positions.length) {
+      toast.error("포지션 목록을 받지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
+      return;
+    }
+    setManual((m) => ({ ...m, [name]: positions }));
   }
   function created(name: string, res: Extract<GenerateResult, { ok: true }>) {
     setManual((m) => withoutKey(m, name));
@@ -144,6 +156,18 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
                 )}
                 {generating === name ? "만드는 중…" : "기술 카드 만들기"}
               </Button>
+              {!manual[name] && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 rounded-full text-muted-foreground"
+                  disabled={generating !== null || saving}
+                  onClick={() => writeOwn(name)}
+                >
+                  <PencilLine data-icon="inline-start" aria-hidden />
+                  직접 만들기
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="icon-sm"

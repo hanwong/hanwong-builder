@@ -200,6 +200,16 @@ export async function generateTechnique(name: string): Promise<GenerateResult> {
   };
 }
 
+// 직접 적기 칸에 쓸 포지션 목록 — "직접 만들기" 버튼으로 AI 없이 바로 열 때(2026-10-31 본인 요청)
+export async function techniquePositions(): Promise<Position[]> {
+  const supabase = await createSupabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+  return (await getLibrary(supabase)).positions;
+}
+
 // 직접 적어 기술 카드 만들기 (2026-10-31 본인 요청) — AI 가 만들지 못했을 때, 사용자가 포지션 · 이름 · 세팅 과정을 적는다.
 // AI 를 부르지 않는다(비용 0). AI 로 만든 카드와 똑같이 나만 보이는 '승인 대기' 내 기술이 되고, 운영자가 고쳐 승인하면 공용이 된다.
 // 영어 이름은 모르는 경우가 많아 한국어 이름을 그대로 넣어 두고(빈칸이면 유튜브 검색 · 화면이 어색해서), 운영자가 승인할 때 고친다.
