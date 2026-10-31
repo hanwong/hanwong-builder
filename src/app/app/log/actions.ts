@@ -93,7 +93,7 @@ export async function pickerData(): Promise<PickerData> {
 
 // 기술 카드 만들기 (D-57, 버튼 이름 2026-10-31) — 목록 밖 이름 하나를 AI 로 기술 카드로. 하루 3번(성공한 AI 호출만 셈).
 // 이미 있는 기술과 이름이 똑같으면 AI 를 부르지 않고 그 기술을 돌려준다(비용 0).
-// AI 가 만들지 못하면(모름 · 기술 이름 아님 · 오늘 횟수 다 씀 · 키 없음) 포지션 목록을 함께 돌려줘,
+// AI 가 만들지 못하면(모름 · 기술 이름 아님 · 오늘 횟수 다 씀 · 키 없음 · AI 호출 실패) 포지션 목록을 함께 돌려줘,
 // 사용자가 관리자 화면처럼 포지션을 고르고 내용을 직접 적어 만들 수 있게 한다(createOwnTechnique, 2026-10-31 본인 요청).
 const DAILY_USER_DRAFTS = 3;
 export type GenerateResult =
@@ -133,7 +133,8 @@ export async function generateTechnique(name: string): Promise<GenerateResult> {
     [d] = await draftNames([written], lib); // AI 에는 이름만 보낸다(글 · 누가 적었는지 안 보냄)
   } catch (e) {
     console.error("generateTechnique failed:", e instanceof Error ? e.name + " " + e.message.slice(0, 120) : "unknown");
-    return { ok: false, message: "만들지 못했어요. 잠시 뒤 다시 눌러 주세요." };
+    // AI 를 부르지 못해도(크레딧 부족 · 잠깐 장애) 직접 적어 만들 수 있게 한다
+    return manual("지금은 AI 로 만들 수 없어요. 아래에 직접 적어 만들 수 있어요.");
   }
   const { error: countError } = await supabase.from("ai_calls").insert({ user_id: user.id, kind: "user_draft" });
   if (countError) console.error("ai_calls user_draft insert failed:", countError.code ?? "");
