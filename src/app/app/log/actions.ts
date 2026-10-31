@@ -52,7 +52,7 @@ export async function searchTechniques(query: string): Promise<MatchedTechnique[
   return withLevels(supabase, [...mine, ...searchLibrary(lib, q, 8 - mine.length)]);
 }
 
-export type PickerTechnique = MatchedTechnique & { aliases: string[] };
+export type PickerTechnique = MatchedTechnique & { aliases: string[]; kind: string | null };
 export type PickerData = { positions: { slug: string; nameKo: string }[]; techniques: PickerTechnique[] };
 
 // 기술 고르기 전체(D-56, 속도) — 기록 화면을 열 때 한 번 받아 두고, 포지션 목록 · 검색은 브라우저에서 바로 한다.
@@ -84,6 +84,7 @@ export async function pickerData(): Promise<PickerData> {
       positionSlug: t.positionSlug,
       steps: t.steps,
       aliases: t.aliases,
+      kind: t.kind,
       level: prev.get(t.slug) ?? "beginner",
       draft: t.draft,
       ...(t.ownerStatus ? { mine: t.ownerStatus } : {}),

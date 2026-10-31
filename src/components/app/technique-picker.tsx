@@ -11,10 +11,23 @@ import { loadPicker, PICKER_PICTURE, searchPicker, type PickerStore } from "@/li
 import { useFloatingDialog } from "@/lib/use-floating-dialog";
 import type { MatchedTechnique } from "@/lib/mock/log-seed";
 
-// 기술 고르기 (D-56) — 위 검색상자 · 아래 포지션 그림 칸. 그림을 누르면 그 포지션 기술 목록에서 여러 개 체크.
+// 기술 고르기 (D-56) — 위 검색상자 · 아래 포지션 그림 칸. 그림을 누르면 그 포지션 기술 목록(종류 칩으로 좁히기, D-96)에서 여러 개 체크.
 // 찾는 게 없으면 이름만 직접 추가 — 운영자 확인 후 기술 카드로 바뀐다(D-32).
 // 떠 있는 팝업(T-35): 뒤 화면은 붙잡아 두고, 키보드 위 보이는 영역 안에 맞춘다.
+// 이름을 몰라도 찾게(D-96): 포지션(어디서) → 종류 칩(무엇을). 칩 이름은 초보자 말로, 이 순서로.
 type View = { kind: "grid" } | { kind: "position"; slug: string; nameKo: string };
+const KIND_CHIP: [string, string][] = [
+  ["submission", "조르기 · 꺾기"],
+  ["sweep", "뒤집기(스윕)"],
+  ["pass", "가드 넘기(패스)"],
+  ["escape", "빠져나오기"],
+  ["back_take", "백 잡기"],
+  ["transition", "자세 옮기기"],
+  ["control", "누르기"],
+  ["defense", "막기"],
+  ["takedown", "넘기기(테이크다운)"],
+  ["guard_pull", "가드 풀링"],
+];
 
 export function TechniquePicker({
   selected,
@@ -28,6 +41,7 @@ export function TechniquePicker({
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<View>({ kind: "grid" });
   const [query, setQuery] = useState("");
+  const [kind, setKind] = useState<string | null>(null); // 종류 칩 — null 이면 전체
   const [store, setStore] = useState<PickerStore | null>(null);
   const [failed, setFailed] = useState(false);
   const floating = useFloatingDialog(open);
@@ -60,13 +74,16 @@ export function TechniquePicker({
 
   function showPosition(p: { slug: string; nameKo: string }) {
     setView({ kind: "position", slug: p.slug, nameKo: p.nameKo });
+    setKind(null);
     scrollRef.current?.scrollTo(0, 0);
   }
 
   const slug = view.kind === "position" ? view.slug : null;
   const positions = store?.positions ?? null;
   const searchList = useMemo(() => (store && searching ? searchPicker(store, text) : []), [store, searching, text]);
-  const positionList = slug && store ? (store.byPosition.get(slug) ?? []) : undefined;
+  const positionAll = slug && store ? (store.byPosition.get(slug) ?? []) : undefined;
+  const kinds = positionAll ? KIND_CHIP.filter(([k]) => positionAll.some((t) => t.kind === k)) : [];
+  const positionList = positionAll && kind ? positionAll.filter((t) => t.kind === kind) : positionAll;
   const loading = searching && !store;
 
   return (
@@ -94,7 +111,7 @@ export function TechniquePicker({
             <Plus className="size-5" strokeWidth={2} aria-hidden />
             배운 기술 고르기
           </span>
-          <span className="text-[13px] font-medium text-muted-foreground">포지션 그림이나 이름으로 찾아요</span>
+          <span className="text-[13px] font-medium text-muted-foreground">이름을 몰라도 포지션 그림으로 찾아요</span>
         </button>
       ) : (
         <button
@@ -136,7 +153,13 @@ export function TechniquePicker({
             <DialogTitle className="text-[17px] font-semibold">
               {view.kind === "position" && !searching ? view.nameKo : "배운 기술 고르기"}
             </DialogTitle>
-            <Button variant="ghost" size="icon" aria-label="닫기" className="-mr-1 ml-auto rounded-full" onClick={close}>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="닫기"
+              className="-mr-1 ml-auto rounded-full"
+              onClick={close}
+            >
               <X />
             </Button>
           </div>
@@ -190,7 +213,13 @@ export function TechniquePicker({
               ) : (
                 <ul className="flex flex-col">
                   {searchList.map((t) => (
-                    <TechniqueRow key={t.id} t={t} sub={`${t.position} · ${t.nameEn}`} on={selected.includes(t.id)} onToggle={onToggle} />
+                    <TechniqueRow
+                      key={t.id}
+                      t={t}
+                      sub={`${t.position} · ${t.nameEn}`}
+                      on={selected.includes(t.id)}
+                      onToggle={onToggle}
+                    />
                   ))}
                   {searchList.length === 0 && (
                     <li className="px-2 py-1 text-[13px] font-medium text-muted-foreground">목록에서 찾지 못했어요.</li>
@@ -209,32 +238,41 @@ export function TechniquePicker({
                       <Plus className="size-4 shrink-0" aria-hidden />
                       <span className="min-w-0 truncate">‘{text}’ 직접 추가</span>
                     </Button>
-                    <p className="mt-1 px-1 text-[12px] font-medium text-muted-foreground">저장하면 내 기술에 추가되고, 관리자가 확인 후 기술 카드가 돼요.</p>
+                    <p className="mt-1 px-1 text-[12px] font-medium text-muted-foreground">
+                      저장하면 내 기술에 추가되고, 관리자가 확인 후 기술 카드가 돼요.
+                    </p>
                   </li>
                 </ul>
               )
             ) : view.kind === "grid" ? (
               positions ? (
-                <ul className="grid grid-cols-3 gap-2">
-                  {positions.map((p) => (
-                    <li key={p.slug}>
-                      <button
-                        type="button"
-                        onClick={() => showPosition(p)}
-                        className="flex w-full flex-col items-center gap-1 rounded-xl p-1 text-center transition-colors hover:bg-muted"
-                      >
-                        <Image
-                          src={`/positions/${p.slug}.png`}
-                          alt=""
-                          width={PICKER_PICTURE}
-                          height={PICKER_PICTURE}
-                          className="aspect-square h-auto w-full rounded-xl bg-[#FAF9F4] ring-1 ring-border"
-                        />
-                        <span className="line-clamp-2 text-[12px] leading-tight font-medium break-keep">{p.nameKo}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  <p className="px-1 pb-2 text-[13px] font-medium text-muted-foreground break-keep">
+                    이름을 몰라도 괜찮아요 — 어디서 했는지 그림을 누르고, 무엇을 했는지 고르세요.
+                  </p>
+                  <ul className="grid grid-cols-3 gap-2">
+                    {positions.map((p) => (
+                      <li key={p.slug}>
+                        <button
+                          type="button"
+                          onClick={() => showPosition(p)}
+                          className="flex w-full flex-col items-center gap-1 rounded-xl p-1 text-center transition-colors hover:bg-muted"
+                        >
+                          <Image
+                            src={`/positions/${p.slug}.png`}
+                            alt=""
+                            width={PICKER_PICTURE}
+                            height={PICKER_PICTURE}
+                            className="aspect-square h-auto w-full rounded-xl bg-[#FAF9F4] ring-1 ring-border"
+                          />
+                          <span className="line-clamp-2 text-[12px] leading-tight font-medium break-keep">
+                            {p.nameKo}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
               ) : (
                 <div className="grid grid-cols-3 gap-2" aria-busy="true">
                   {Array.from({ length: 9 }, (_, i) => (
@@ -243,11 +281,46 @@ export function TechniquePicker({
                 </div>
               )
             ) : positionList ? (
-              <ul className="flex flex-col">
-                {positionList.map((t) => (
-                  <TechniqueRow key={t.id} t={t} sub={t.nameEn} on={selected.includes(t.id)} onToggle={onToggle} />
-                ))}
-              </ul>
+              <>
+                {kinds.length > 1 && (
+                  <div className="pb-2">
+                    <p className="px-1 pb-1.5 text-[13px] font-medium text-muted-foreground">무엇을 했어요?</p>
+                    <div className="flex flex-wrap gap-1.5" role="group" aria-label="기술 종류">
+                      {[[null, "전체"] as const, ...kinds].map(([k, label]) => (
+                        <button
+                          key={label}
+                          type="button"
+                          aria-pressed={kind === k}
+                          onClick={() => {
+                            setKind(k);
+                            scrollRef.current?.scrollTo(0, 0);
+                          }}
+                          className={cn(
+                            "h-8 rounded-full border px-3 text-[13px] font-medium transition-colors",
+                            kind === k
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border bg-card hover:bg-muted",
+                          )}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <ul className="flex flex-col">
+                  {positionList.map((t) => (
+                    // 이름을 몰라도 알아보게 — 영어 이름 대신 세팅 과정 첫 줄(D-96)
+                    <TechniqueRow
+                      key={t.id}
+                      t={t}
+                      sub={t.steps[0] ?? t.nameEn}
+                      on={selected.includes(t.id)}
+                      onToggle={onToggle}
+                    />
+                  ))}
+                </ul>
+              </>
             ) : (
               <p className="flex items-center gap-1.5 px-1 py-2 text-[13px] font-medium text-muted-foreground">
                 <Loader2 className="size-3.5 animate-spin" aria-hidden />

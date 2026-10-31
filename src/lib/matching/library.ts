@@ -19,6 +19,7 @@ export type Candidate = {
   aliases: string[];
   steps: string[];
   draft: boolean;
+  kind: string | null; // 종류(D-81) — 서브미션 · 스윕 · 패스 … 기술 고르기의 '무엇을 했어요?'(D-96)
 };
 
 export type Position = { slug: string; nameKo: string };
@@ -59,6 +60,7 @@ function fromJson(): Library {
       aliases: t.aliases,
       steps: t.steps,
       draft: t.draft !== false,
+      kind: t.kind ?? null,
     })),
   );
 }
@@ -68,7 +70,7 @@ async function fromDb(supabase: SupabaseClient<Database>): Promise<Library> {
     supabase.from("positions").select("id, slug, name_ko, sort_order").order("sort_order"),
     supabase
       .from("techniques")
-      .select("slug, name_ko, name_en, aliases, steps, is_reviewed, sort_order, position_id")
+      .select("slug, name_ko, name_en, aliases, steps, is_reviewed, sort_order, position_id, kind")
       .is("owner_id", null) // 사용자가 만든 '내 기술'(D-57)은 공용 목록 · 캐시에 넣지 않는다
       .range(0, 9999),
   ]);
@@ -91,6 +93,7 @@ async function fromDb(supabase: SupabaseClient<Database>): Promise<Library> {
         aliases: t.aliases ?? [],
         steps: t.steps,
         draft: !t.is_reviewed,
+        kind: t.kind,
       };
     }),
   );
@@ -129,6 +132,7 @@ export async function getOwnTechniques(supabase: SupabaseClient<Database>, userI
     aliases: t.aliases ?? [],
     steps: t.steps,
     draft: true,
+    kind: null,
     ownerStatus: t.owner_status === "rejected" ? "rejected" : "pending",
   }));
 }
