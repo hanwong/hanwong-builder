@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Switch } from "@/components/ui/switch";
 import { useFloatingDialog } from "@/lib/use-floating-dialog";
 
 type Card = { file: File; url: string };
@@ -24,10 +24,10 @@ const PARTS: { key: Part; label: string }[] = [
 export function ShareLog({ id, loggedOn }: { id: string; loggedOn: string }) {
   const [open, setOpen] = useState(false);
   const [parts, setParts] = useState<Record<Part, boolean>>({ techniques: true, body: true, sparring: true });
-  const [bg, setBg] = useState<"clear" | "white">("clear"); // 배경: 투명(기본) · 흰색
+  const [clear, setClear] = useState(false); // 배경: 흰색(기본) ↔ 투명 스위치(2026-10-31 본인 요청)
   const query = new URLSearchParams([
     ...PARTS.filter((p) => !parts[p.key]).map((p) => [p.key, "0"]),
-    ...(bg === "white" ? [["bg", "white"]] : []),
+    ...(clear ? [] : [["bg", "white"]]),
   ]).toString();
   const [card, setCard] = useState<Card | null>(null);
   const [failed, setFailed] = useState(false);
@@ -100,20 +100,12 @@ export function ShareLog({ id, loggedOn }: { id: string; loggedOn: string }) {
               </div>
             ))}
           </div>
-          {/* 배경 — 투명(사진 위에 붙이기) · 흰색 */}
+          {/* 배경 — 끄면 흰색(기본), 켜면 투명(사진 위에 붙이기) */}
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[15px] font-medium">배경</span>
-            <ToggleGroup
-              type="single"
-              variant="outline"
-              size="sm"
-              value={bg}
-              onValueChange={(v) => v && setBg(v as "clear" | "white")}
-              aria-label="배경"
-            >
-              <ToggleGroupItem value="clear" className="px-3">투명</ToggleGroupItem>
-              <ToggleGroupItem value="white" className="px-3">흰색</ToggleGroupItem>
-            </ToggleGroup>
+            <Label htmlFor="share-clear" className="text-[15px]">
+              배경 투명
+            </Label>
+            <Switch id="share-clear" checked={clear} onCheckedChange={setClear} />
           </div>
 
           <div className="flex justify-center">
@@ -123,7 +115,9 @@ export function ShareLog({ id, loggedOn }: { id: string; loggedOn: string }) {
               <img
                 src={card.url}
                 alt="공유할 기록 이미지 미리보기"
-                className="max-h-[min(46dvh,380px)] w-auto max-w-full rounded-xl bg-muted ring-1 ring-border"
+                className="max-h-[min(46dvh,380px)] w-auto max-w-full rounded-xl ring-1 ring-border"
+                // 투명이면 뒤에 격자를 깔아 비치는 걸 보이게(2026-10-31 본인 요청)
+                style={clear ? CHECKER : undefined}
               />
             ) : (
               <div className="flex aspect-[3/4] h-[min(46dvh,380px)] flex-col items-center justify-center gap-2 rounded-xl bg-muted px-4 text-center text-[13px] text-muted-foreground ring-1 ring-border">
@@ -159,6 +153,12 @@ export function ShareLog({ id, loggedOn }: { id: string; loggedOn: string }) {
     </>
   );
 }
+
+// 투명 배경 미리보기용 격자(선 색 · 흰 카드색 8px 칸)
+const CHECKER = {
+  backgroundImage: "conic-gradient(var(--border) 25%, var(--card) 0 50%, var(--border) 0 75%, var(--card) 0)",
+  backgroundSize: "16px 16px",
+};
 
 // 열린 네모 밖으로 휘어져 나가는 화살표 — lucide 선 굵기 · 둥근 끝과 맞춘 공유 아이콘
 function ShareOutIcon({ className }: { className?: string }) {
