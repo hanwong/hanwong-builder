@@ -217,6 +217,35 @@ const GI = new THREE.MeshLambertMaterial({ color: MAT.gi });
 const GI_SHADE = new THREE.MeshLambertMaterial({ color: MAT.giShade });
 const HAIR = new THREE.MeshLambertMaterial({ color: MAT.hair });
 const SHADOW = new THREE.MeshBasicMaterial({ color: MAT.shadow, transparent: true, opacity: 0.12 });
+// 얼굴(본인 요청 2026-10-31) — 눈 · 코 · 웃는 입 · 볼터치. 머리(반지름 0.27, 가운데 y 1.02) 앞면(+z, 캐릭터가 보는 쪽)에 붙인다
+const EYE = new THREE.MeshBasicMaterial({ color: MAT.eye });
+const NOSE = new THREE.MeshLambertMaterial({ color: MAT.nose });
+const MOUTH = new THREE.MeshBasicMaterial({ color: MAT.mouth });
+const CHEEK = new THREE.MeshBasicMaterial({ color: MAT.cheek, transparent: true, opacity: 0.55, depthWrite: false });
+
+function Face() {
+  return (
+    <group>
+      {[-1, 1].map((side) => (
+        <mesh key={`eye${side}`} position={[side * 0.09, 1.045, 0.247]} scale={[1, 1.25, 0.5]} material={EYE}>
+          <sphereGeometry args={[0.03, 10, 8]} />
+        </mesh>
+      ))}
+      <mesh position={[0, 0.985, 0.266]} scale={[1, 0.8, 0.8]} material={NOSE}>
+        <sphereGeometry args={[0.024, 10, 8]} />
+      </mesh>
+      {/* 웃는 입 — 도넛의 아래 반쪽 */}
+      <mesh position={[0, 0.94, 0.252]} rotation={[-0.35, 0, Math.PI]} material={MOUTH}>
+        <torusGeometry args={[0.045, 0.011, 6, 14, Math.PI]} />
+      </mesh>
+      {[-1, 1].map((side) => (
+        <mesh key={`cheek${side}`} position={[side * 0.155, 0.975, 0.215]} rotation-y={side * 0.62} material={CHEEK}>
+          <circleGeometry args={[0.034, 16]} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
 
 // 내 캐릭터의 지금 자리 · 바라보는 방향 — 따라오는 카메라가 읽는다. 값은 메서드(copy · set)로만 바꾼다(React 규칙).
 // 처음엔 y = -1 로 두고, 내 캐릭터가 한 번 그려지면 0 이 된다(= 준비됨).
@@ -320,6 +349,7 @@ function Character({ player, mine, act, pose }: { player: Player; mine: boolean;
         <mesh position={[0, 1.1, -0.03]} scale={[1.02, 0.8, 1.02]} material={HAIR}>
           <sphereGeometry args={[0.27, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
         </mesh>
+        <Face />
         <NameTag text={mine ? `나 · ${player.nickname}` : player.nickname} mine={mine} />
       </group>
     </group>

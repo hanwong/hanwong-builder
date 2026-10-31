@@ -22,6 +22,10 @@ export const MAT = {
   giShade: "#E4E3DE",
   skin: "#E9C4A2",
   hair: "#2B2A26",
+  eye: "#2B2A26",
+  nose: "#D9A988", // 피부보다 조금 진하게
+  mouth: "#8A4B3C",
+  cheek: "#F2A39B", // 볼터치
   shadow: "#000000",
 };
 
