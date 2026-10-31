@@ -9,7 +9,7 @@ import { AI_NOTICE } from "@/lib/ai-notice";
 
 const NOTICE = `리리롤(rereroll.xyz) 기술 목록 · 오른손잡이 기준(왼손잡이는 좌우 반대). ${AI_NOTICE} 일부 내용은 BJJGraph(© Diogo Seca, bjjgraph.org)를 참고해 우리 말로 새로 썼어요.`;
 
-const INSTRUCTIONS = `리리롤 주짓수 기술 사전 · 지도. 한국어 이름으로 찾는다(영어 이름 · 다른 이름도 됨).
+export const INSTRUCTIONS = `리리롤 주짓수 기술 사전 · 지도. 한국어 이름으로 찾는다(영어 이름 · 다른 이름도 됨).
 - 이름을 모르면 rereroll_search 부터. 질문 낱말(예: "하프가드 크로스페이스 방어")을 그대로 넣어도 세팅 과정 · 방어 내용까지 찾는다.
 - "어떻게 해?" → rereroll_get_technique. "막는 법" → rereroll_get_technique(perspective="defender") 와, 그 자세의 아래쪽 기술(rereroll_position_options role=bottom).
 - "여기서 뭘 해야 해? / 제일 중요한 게 뭐야?" → rereroll_get_position(role=top|bottom) 으로 목표 · 핵심 · "상대가 ~하면 → 기술" 을 먼저, 기술 목록은 rereroll_position_options.

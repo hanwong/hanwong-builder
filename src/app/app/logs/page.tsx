@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { cookies } from "next/headers";
+import { MessageCircleQuestion } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LogList } from "@/components/app/log-list";
@@ -9,6 +10,8 @@ import { LogsCalendar } from "@/components/app/logs-calendar";
 import { LogsView, ViewSwitch } from "@/components/app/logs-view";
 import { getLogs, getLogsInMonth, LOGS_PAGE } from "@/lib/logs-data";
 import { seoulToday } from "@/lib/seoul-date";
+import { createSupabaseServer } from "@/lib/supabase/server";
+import { isOperator } from "@/lib/admin/admin-data";
 
 export const metadata: Metadata = {
   title: "기록 — Re:Re:롤",
@@ -20,7 +23,12 @@ type Params = Promise<{ n?: string; view?: string; m?: string }>;
 export default function LogsPage({ searchParams }: { searchParams: Params }) {
   return (
     <div className="flex flex-col gap-5 pb-16">
-      <h1 className="text-[22px] font-bold tracking-tight">기록</h1>
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-[22px] font-bold tracking-tight">기록</h1>
+        <Suspense>
+          <AskButton />
+        </Suspense>
+      </div>
       <Suspense
         fallback={
           <>
@@ -32,6 +40,20 @@ export default function LogsPage({ searchParams }: { searchParams: Params }) {
         <Content searchParams={searchParams} />
       </Suspense>
     </div>
+  );
+}
+
+// 질문하기(D-100) — 지금은 운영자에게만 보인다
+async function AskButton() {
+  await cookies();
+  if (!(await isOperator(await createSupabaseServer()))) return null;
+  return (
+    <Button asChild variant="outline" className="h-9 gap-1 rounded-full px-3.5 text-[14px] shadow-none">
+      <Link href="/app/ask">
+        <MessageCircleQuestion className="size-4" strokeWidth={2} aria-hidden />
+        질문하기
+      </Link>
+    </Button>
   );
 }
 

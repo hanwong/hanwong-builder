@@ -26,7 +26,9 @@ export function LogsCalendar({ month, rows, today }: { month: string; rows: LogR
   const loading = shownMonth !== month;
   const days = [...new Set(rows.map((r) => r.loggedOn))]; // 최신순
   const [picked, setPicked] = useState<string | null>(days[0] ?? null);
-  const sparring = rows.reduce((n, r) => n + r.sparring, 0);
+  const classes = rows.filter((r) => r.kind === "log"); // 수업 합계에 질문은 안 셈(D-101)
+  const classDays = new Set(classes.map((r) => r.loggedOn)).size;
+  const sparring = classes.reduce((n, r) => n + r.sparring, 0);
   const dayRows = picked ? rows.filter((r) => r.loggedOn === picked) : [];
 
   return (
@@ -35,7 +37,13 @@ export function LogsCalendar({ month, rows, today }: { month: string; rows: LogR
         {loading
           ? "불러오는 중…"
           : rows.length > 0
-            ? `이번 달 ${days.length}번 수업${sparring > 0 ? ` · 스파링 ${sparring}판` : ""}`
+            ? `이번 달 ${[
+                classDays > 0 && `${classDays}번 수업`,
+                sparring > 0 && `스파링 ${sparring}판`,
+                rows.length > classes.length && `질문 ${rows.length - classes.length}개`,
+              ]
+                .filter(Boolean)
+                .join(" · ")}`
             : "이 달은 기록이 없어요"}
       </span>
       <div className="rounded-2xl bg-card ring-1 ring-border">
