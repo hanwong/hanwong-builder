@@ -3,10 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Hand, HandFist, LogOut, Settings2, Users } from "lucide-react";
+import { Hand, HandFist, LogOut, Music, Settings2, Users, VolumeX } from "lucide-react";
 import { createSupabaseBrowser } from "@/lib/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { ROOM_SIZE, useMat, type Act } from "@/components/open-mat/use-mat";
+import { useMusic } from "@/components/open-mat/use-music";
 
 // 온라인 오픈매트 화면(D-88, FLOW `/open-mat`). 3D 는 브라우저에서만 그린다(ssr: false).
 const MatScene = dynamic(() => import("@/components/open-mat/scene"), { ssr: false, loading: () => <Center text="매트를 까는 중…" /> });
@@ -34,6 +35,7 @@ export function OpenMat() {
   const { me, room, players, status, toasts, acts, moveTo, doAct, setMe } = useMat();
   const [canDraw] = useState(() => (typeof window === "undefined" ? true : webgl()));
   const [settings, setSettings] = useState(false);
+  const music = useMusic();
 
   // '내 기록 알리기'(로그인한 사람만) — 로그인 계정 정보에 끈 상태만 둔다(user_metadata.open_mat_quiet)
   async function toggleAnnounce(on: boolean) {
@@ -73,6 +75,16 @@ export function OpenMat() {
           <span className="text-[13px] font-semibold tabular-nums" aria-label={`지금 ${players.length}명`}>
             {players.length}/{ROOM_SIZE}
           </span>
+          {/* 배경 음악 켜기 · 끄기 */}
+          <button
+            type="button"
+            onClick={music.toggle}
+            aria-label={music.on ? "음악 끄기" : "음악 켜기"}
+            aria-pressed={music.on}
+            className="ml-1 flex size-8 items-center justify-center rounded-full hover:bg-muted"
+          >
+            {music.on ? <Music className="size-4" aria-hidden /> : <VolumeX className="size-4 text-muted-foreground" aria-hidden />}
+          </button>
           {me?.member && (
             <button
               type="button"
@@ -87,8 +99,14 @@ export function OpenMat() {
         </div>
       </div>
 
+      {music.on && (
+        <p className="pointer-events-none absolute right-4 top-16 rounded-full bg-card px-3 py-1 text-[12px] font-medium text-muted-foreground ring-1 ring-border">
+          ♪ {music.track.title} · {music.track.artist} (Pixabay)
+        </p>
+      )}
+
       {settings && me?.member && (
-        <div className="absolute right-4 top-16 w-64 rounded-2xl bg-card p-4 ring-1 ring-border">
+        <div className="absolute right-4 top-24 w-64 rounded-2xl bg-card p-4 ring-1 ring-border">
           <label className="flex items-center justify-between gap-3 text-[15px] font-medium">
             내 기록 알리기
             <Switch checked={me.announce} onCheckedChange={toggleAnnounce} />
