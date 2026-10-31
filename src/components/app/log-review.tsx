@@ -141,7 +141,7 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
         {customNames.map((name) => (
           <Card key={name} className="rounded-2xl ring-border" size="sm">
             <CardContent className="flex flex-wrap items-center gap-2">
-              {/* 첫 줄: 이름 · 빼기 / 둘째 줄: 기술 카드 만들기(AI) · 직접 만들기 */}
+              {/* 첫 줄: 이름 · 빼기 / 둘째 줄: '기술 카드 생성' — AI로 만들기 · 직접 만들기 (2026-10-31 본인 요청) */}
               <span className="min-w-0 flex-1 truncate text-[17px] font-semibold">{name}</span>
               <Button
                 variant="ghost"
@@ -155,6 +155,7 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
               >
                 <X />
               </Button>
+              <p className="w-full text-[13px] font-semibold text-muted-foreground">기술 카드 생성</p>
               <div className="flex w-full flex-wrap gap-2">
                 <Button
                   variant="outline"
@@ -168,7 +169,7 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
                   ) : (
                     <Sparkles data-icon="inline-start" aria-hidden />
                   )}
-                  {generating === name ? "만드는 중…" : "기술 카드 만들기"}
+                  {generating === name ? "만드는 중…" : "AI로 만들기"}
                 </Button>
                 {!manual[name] && (
                   <Button
