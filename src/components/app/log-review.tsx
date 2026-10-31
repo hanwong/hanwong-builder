@@ -119,7 +119,6 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
           <Card key={name} className="rounded-2xl ring-border" size="sm">
             <CardContent className="flex flex-wrap items-center gap-2">
               <span className="text-[17px] font-semibold">{name}</span>
-              <Badge variant="outline">목록 추가 대기</Badge>
               <Button
                 variant="outline"
                 size="sm"
