@@ -2,20 +2,22 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import { createSupabaseBrowser } from "@/lib/supabase/client";
+import { createBrowserClient } from "@supabase/ssr";
+import type { Database } from "@/lib/database.types";
 import { isKnownBelt } from "@/components/open-mat/colors";
 
 // 온라인 오픈매트 실시간 연결(D-88). Supabase Realtime 하나로:
-// - presence: 매트에 누가 있는지 + 각자 걸어갈 자리(x, z). 누를 때만 보내 메시지 수를 적게
-// - broadcast: 동작(오스 · 하이파이브 · 탭) — 받은 쪽에서 캐릭터를 움직이고 알림을 띄운다
+// - presence: 매트에 누가 있는지(들어올 때 한 번만 올린다). 위치를 여기 다시 올리면 받는 쪽에서 '나갔다 → 들어왔다'로 보여
+//   캐릭터가 사라졌다 생기고 '들어왔어요' 알림이 떠서(2026-10-31 신고 "상대가 돌아다니면 접속이 끊어져"), 걷기는 broadcast 로 보낸다
+// - broadcast: 걷기(move) · 동작(오스 · 콤파치 · 탭) — 받은 쪽에서 캐릭터를 움직이고 알림을 띄운다
 // - postgres_changes: 기록 알림(open_mat_events 새 줄, 별명 + 기술 이름만)
 
 export const ROOM_SIZE = 12;
 const MAX_ROOMS = 30;
 export const MAT_HALF = 4.6; // 매트 안쪽 반 너비 — 이 안에서만 걷는다
 
-export type Act = "oss" | "highfive" | "tap";
-export const ACT_LABEL: Record<Act, string> = { oss: "오스로 인사했어요", highfive: "하이파이브했어요", tap: "탭을 쳤어요" };
+export type Act = "oss" | "fistbump" | "tap";
+export const ACT_LABEL: Record<Act, string> = { oss: "오스로 인사했어요", fistbump: "콤파치를 했어요", tap: "탭을 쳤어요" };
 
 export type Me = { id: string; nickname: string; belt: string; member: boolean; announce: boolean };
 export type Player = { id: string; nickname: string; belt: string; x: number; z: number };
@@ -48,6 +50,7 @@ export function useMat() {
   const seq = useRef(0);
   const lastAct = useRef(0);
   const lastMove = useRef(0);
+  const spots = useRef(new Map<string, { x: number; z: number }>()); // 걷기로 바뀐 자리(id → 목표) — 명단의 처음 자리보다 우선
 
   const toast = useCallback((text: string, mine = false) => {
     const id = ++seq.current;
@@ -62,7 +65,13 @@ export function useMat() {
   }, []);
 
   useEffect(() => {
-    const supabase = createSupabaseBrowser();
+    // 매트 전용 연결 — 하트비트(연결 유지 신호)를 웹 워커에서 보내, 다른 창에 가려지거나 최소화된 브라우저가
+    // 타이머를 늦춰도 서버가 연결을 끊지 않게 한다(2026-10-31 "한쪽 브라우저에서 접속이 끊어져"). 로그인은 같은 쿠키를 읽는다.
+    const supabase = createBrowserClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+      { isSingleton: false, realtime: { worker: true } },
+    );
     let alive = true;
     let joined: RealtimeChannel | null = null;
 
@@ -96,21 +105,36 @@ export function useMat() {
           const list: Player[] = [];
           for (const metas of Object.values(state)) {
             const p = metas[metas.length - 1];
-            if (p && typeof p.id === "string")
+            if (p && typeof p.id === "string") {
+              const at = spots.current.get(p.id);
               list.push({
                 id: p.id,
                 nickname: String(p.nickname).slice(0, 20),
                 belt: isKnownBelt(p.belt) ? p.belt : "white",
-                x: clamp(Number(p.x) || 0),
-                z: clamp(Number(p.z) || 0),
+                x: clamp(at?.x ?? (Number(p.x) || 0)),
+                z: clamp(at?.z ?? (Number(p.z) || 0)),
               });
+            }
           }
           setPlayers(list.slice(0, ROOM_SIZE + 4));
         };
         ch.on("presence", { event: "sync" }, sync);
-        ch.on("presence", { event: "join" }, ({ newPresences }) => {
-          if (probing) return;
-          for (const p of newPresences as unknown as PresencePayload[]) if (p.id !== mine.id) toast(`${p.nickname}님이 매트에 들어왔어요`);
+        ch.on("presence", { event: "join" }, ({ key, currentPresences, newPresences }) => {
+          if (probing || key === mine.id || currentPresences.length) return; // 이미 있던 사람(다시 연결)은 알림 없이
+          const p = newPresences[0] as unknown as PresencePayload | undefined;
+          if (p) toast(`${p.nickname}님이 매트에 들어왔어요`);
+          // 새로 온 사람은 내 지금 자리를 모르니 한 번 알려 준다
+          if (self.current) void ch.send({ type: "broadcast", event: "move", payload: { id: mine.id, x: self.current.x, z: self.current.z } });
+        });
+        ch.on("presence", { event: "leave" }, ({ key, currentPresences }) => {
+          if (!currentPresences.length) spots.current.delete(key);
+        });
+        ch.on("broadcast", { event: "move" }, ({ payload }) => {
+          if (probing || typeof payload?.id !== "string" || payload.id === mine.id) return;
+          const x = clamp(Number(payload.x) || 0);
+          const z = clamp(Number(payload.z) || 0);
+          spots.current.set(payload.id, { x, z });
+          setPlayers((ps) => ps.map((p) => (p.id === payload.id ? { ...p, x, z } : p)));
         });
         ch.on("broadcast", { event: "act" }, ({ payload }) => {
           const act = payload?.act as Act;
@@ -198,8 +222,10 @@ export function useMat() {
     if (now - lastMove.current < 250) return; // 너무 잦은 전송 막기
     lastMove.current = now;
     self.current = { ...self.current, x: clamp(x), z: clamp(z) };
-    setPlayers((ps) => ps.map((p) => (p.id === self.current!.id ? { ...p, x: self.current!.x, z: self.current!.z } : p)));
-    void ch.track(self.current);
+    const { id, x: nx, z: nz } = self.current;
+    spots.current.set(id, { x: nx, z: nz });
+    setPlayers((ps) => ps.map((p) => (p.id === id ? { ...p, x: nx, z: nz } : p)));
+    void ch.send({ type: "broadcast", event: "move", payload: { id, x: nx, z: nz } }); // 명단(presence)은 건드리지 않는다
   }, []);
 
   const doAct = useCallback(

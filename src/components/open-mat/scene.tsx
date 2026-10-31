@@ -297,7 +297,8 @@ function Character({ player, mine, act, pose }: { player: Player; mine: boolean;
     const k = act ? Math.min(1, (t - actStart.current) / 1.4) : 1;
     const wave = act ? Math.sin(Math.PI * k) : 0;
     body.current.rotation.x = act === "oss" ? wave * 0.55 : 0; // 허리 숙여 인사
-    armR.current.rotation.x = act === "highfive" ? -wave * 2.6 : act === "tap" ? -0.6 - Math.abs(Math.sin(t * 18)) * 0.5 * wave : walking ? Math.sin(t * 10) * 0.5 : 0;
+    armR.current.rotation.x = act === "fistbump" ? -wave * 1.55 : // 콤파치: 오른팔을 앞으로 쭉 내밀었다 거둔다
+       act === "tap" ? -0.6 - Math.abs(Math.sin(t * 18)) * 0.5 * wave : walking ? Math.sin(t * 10) * 0.5 : 0;
     armL.current.rotation.x = act === "oss" ? wave * 0.4 : walking ? -Math.sin(t * 10) * 0.5 : 0;
     body.current.position.y += act === "tap" ? -wave * 0.12 : 0;
   });

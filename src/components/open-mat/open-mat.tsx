@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Hand, HandMetal, LogOut, Settings2, Users } from "lucide-react";
+import { Hand, HandFist, LogOut, Settings2, Users } from "lucide-react";
 import { createSupabaseBrowser } from "@/lib/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { ROOM_SIZE, useMat, type Act } from "@/components/open-mat/use-mat";
@@ -26,7 +26,7 @@ const webgl = () => {
 
 const ACTS: { act: Act; label: string; Icon: typeof Hand }[] = [
   { act: "oss", label: "오스", Icon: Hand },
-  { act: "highfive", label: "하이파이브", Icon: HandMetal },
+  { act: "fistbump", label: "콤파치", Icon: HandFist }, // 주먹 맞대기 인사(본인 요청 2026-10-31, 하이파이브 대신)
   { act: "tap", label: "탭", Icon: Hand },
 ];
 
