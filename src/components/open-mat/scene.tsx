@@ -252,7 +252,7 @@ function Face() {
 type Pose = THREE.Object3D;
 
 // 도복(본인 요청 2026-10-31 "몸이랑 구분되어 보이고 소매나 바짓단이 보이도록") — 흰 도복과 맨살(목 · 손목 · 발)이 갈라져 보이게,
-// 깃(V자 옷깃) · 소매 끝 · 바짓단 · 상의 자락을 조금 진한 흰색 테두리로 두르고, 도복 조각에 먹색 외곽선(뒤집은 껍데기)을 얇게 준다.
+// 깃(y자 옷깃) · 소매 끝 · 바짓단 · 상의 자락을 조금 진한 흰색 테두리로 두르고, 도복 조각에 먹색 외곽선(뒤집은 껍데기)을 얇게 준다.
 const OUTLINE = new THREE.MeshBasicMaterial({ color: MAT.giLine, side: THREE.BackSide });
 const HEM = new THREE.MeshLambertMaterial({ color: MAT.giHem });
 
@@ -392,15 +392,20 @@ function Character({ player, mine, act, pose }: { player: Player; mine: boolean;
           <mesh position={[0.08, 0.36, 0.22]} rotation-z={0.3} material={belt}>
             <boxGeometry args={[0.05, 0.15, 0.03]} />
           </mesh>
-          {/* 옷깃(V자) — 목 아래 맨살이 조금 보이고 두꺼운 깃이 가슴에서 겹친다 */}
+          {/* 옷깃 — 목 아래 맨살이 조금 보이고 깃이 가슴에서 겹친다 */}
           <mesh position={[0, 0.74, 0.17]} rotation-x={-0.25} material={SKIN}>
             <coneGeometry args={[0.07, 0.14, 3]} />
           </mesh>
-          {[-1, 1].map((side) => (
-            <mesh key={side} position={[side * 0.045, 0.66, 0.205]} rotation={[-0.2, 0, side * 0.5]} material={HEM}>
-              <boxGeometry args={[0.045, 0.26, 0.03]} />
-            </mesh>
-          ))}
+          {/* 깃 선은 'y' 모양(본인이 보낸 그림, 2026-10-31): 목 아래 두 짧은 선이 가운데서 만나고, 한 줄이 왼쪽 아래(띠)까지 비스듬히 */}
+          <mesh position={[-0.022, 0.725, 0.2]} rotation={[-0.3, 0, 0.46]} material={HEM}>
+            <boxGeometry args={[0.04, 0.105, 0.03]} />
+          </mesh>
+          <mesh position={[0.026, 0.725, 0.2]} rotation={[-0.3, 0, -0.53]} material={HEM}>
+            <boxGeometry args={[0.04, 0.11, 0.03]} />
+          </mesh>
+          <mesh position={[-0.047, 0.575, 0.21]} rotation={[0, 0, -0.42]} material={HEM}>
+            <boxGeometry args={[0.04, 0.245, 0.03]} />
+          </mesh>
           {/* 팔(어깨에서 돈다) — 소매 · 소매 끝 · 손 */}
           {([
             [armR, 1],
