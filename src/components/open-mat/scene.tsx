@@ -389,9 +389,15 @@ function Character({ player, mine, act, pose }: { player: Player; mine: boolean;
           <mesh position-y={0.43} material={belt}>
             <cylinderGeometry args={[0.235, 0.235, 0.065, 16]} />
           </mesh>
-          <mesh position={[0.08, 0.36, 0.22]} rotation-z={0.3} material={belt}>
-            <boxGeometry args={[0.05, 0.15, 0.03]} />
+          {/* 띠 매듭은 배 가운데, 두 끝은 '人' 자로 벌어져 자락 아래까지(본인이 보낸 그림, 2026-10-31) */}
+          <mesh position={[0, 0.43, 0.245]} material={belt}>
+            <boxGeometry args={[0.065, 0.05, 0.03]} />
           </mesh>
+          {[-1, 1].map((side) => (
+            <mesh key={side} position={[side * 0.045, 0.34, 0.262]} rotation={[-0.08, 0, side * 0.55]} material={belt}>
+              <boxGeometry args={[0.032, 0.17, 0.02]} />
+            </mesh>
+          ))}
           {/* 옷깃 — 깃이 가슴에서 겹친다(목 아래 맨살은 빼 달라 하심, 2026-10-31) */}
           {/* 깃 선은 'y' 모양(본인이 보낸 그림, 2026-10-31): 목 아래 두 짧은 선이 가운데서 만나고, 한 줄이 왼쪽 아래(띠)까지 비스듬히 */}
           <mesh position={[-0.022, 0.725, 0.2]} rotation={[-0.3, 0, 0.46]} material={HEM}>
