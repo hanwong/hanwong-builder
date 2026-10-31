@@ -400,7 +400,7 @@ export async function saveLog(input: SaveInput): Promise<SaveResult> {
   return { ok: true, linked: chosen.length };
 }
 
-// 저장한 기록 고치기 (D-25) — 글 · 용어 · 기술 연결 · 숙련도. 날짜는 그대로.
+// 저장한 기록 고치기 (D-25) — 날짜 · 글 · 용어 · 기술 연결 · 숙련도. 날짜는 오늘까지(새 기록과 같은 기준).
 // 새로 들어온 기술은 숙련도를 쓰고, 뺀 기술이 다른 기록에도 없으면 숙련도를 지운다.
 export async function updateLog(logId: string, input: SaveInput): Promise<SaveResult> {
   const supabase = await createSupabaseServer();
@@ -426,7 +426,7 @@ export async function updateLog(logId: string, input: SaveInput): Promise<SaveRe
 
   const { error: updateError } = await supabase
     .from("class_logs")
-    .update({ body: v.body, terms: v.terms, ai_status: v.aiStatus, sparring_rounds: v.sparringRounds })
+    .update({ logged_on: v.loggedOn, body: v.body, terms: v.terms, ai_status: v.aiStatus, sparring_rounds: v.sparringRounds })
     .eq("id", logId);
   if (updateError) return fail("class_logs update", updateError);
 

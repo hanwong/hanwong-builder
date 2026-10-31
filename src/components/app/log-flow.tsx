@@ -3,7 +3,7 @@
 import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { LogReview } from "@/components/app/log-review";
+import { LogDateInput, LogReview } from "@/components/app/log-review";
 import { saveLog } from "@/app/app/log/actions";
 import { seoulToday } from "@/lib/seoul-date";
 import { forgetPicker } from "@/lib/picker-store";
@@ -37,16 +37,7 @@ export function LogFlow() {
       key={round}
       youtube={false}
       initial={{ loggedOn: "", body: "", techniques: [], customNames: [], terms: [], aiStatus: "none", sparringRounds: 0 }}
-      date={
-        <input
-          type="date"
-          value={loggedOn}
-          max={today || undefined}
-          onChange={(e) => setDate(e.target.value)}
-          aria-label="수업 날짜"
-          className="h-9 rounded-full border border-input bg-card px-3 text-[13px] font-medium text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-        />
-      }
+      date={<LogDateInput value={loggedOn} today={today} onChange={setDate} />}
       onSave={async (value) => {
         const res = await saveLog({
           loggedOn,

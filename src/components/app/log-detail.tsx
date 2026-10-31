@@ -1,28 +1,35 @@
 "use client";
 
+import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { LogReview } from "@/components/app/log-review";
+import { LogDateInput, LogReview } from "@/components/app/log-review";
 import { ShareLog } from "@/components/app/share-log";
 import { deleteLog, updateLog } from "@/app/app/log/actions";
-import { formatKoreanDate } from "@/lib/seoul-date";
+import { formatKoreanDate, seoulToday } from "@/lib/seoul-date";
 import { forgetPicker } from "@/lib/picker-store";
 import type { SavedLog } from "@/lib/log-data";
+
+const noSubscribe = () => () => {};
 
 // 저장한 기록 보기 · 고치기 (D-25) — 새 기록과 같은 화면(D-56).
 export function LogDetail({ log }: { log: SavedLog }) {
   const router = useRouter();
   // 들어온 곳(기록 목록 · 홈 · 기술 상세)으로 돌아간다. 주소로 바로 열어 돌아갈 곳이 없으면 기록 목록으로.
   const goBack = () => (window.history.length > 1 ? router.back() : router.push("/app/logs"));
+  // 날짜도 고칠 수 있다(본인 요청 2026-10-31) — 새 기록과 같은 날짜 고르기
+  const [loggedOn, setLoggedOn] = useState(log.loggedOn);
+  const today = useSyncExternalStore(noSubscribe, seoulToday, () => "");
   return (
     <LogReview
       initial={{ ...log, loggedOn: formatKoreanDate(log.loggedOn) }}
+      date={<LogDateInput value={loggedOn} today={today} onChange={(v) => setLoggedOn(v || log.loggedOn)} />}
       saveLabel="고친 내용 저장"
       onBack={goBack}
       headerAction={<ShareLog id={log.id} loggedOn={log.loggedOn} />}
       onSave={async (value) => {
         const res = await updateLog(log.id, {
-          loggedOn: log.loggedOn,
+          loggedOn,
           body: value.body,
           aiStatus: value.aiStatus,
           techniques: value.techniques.map((t) => ({ slug: t.id, level: t.level })),

@@ -565,3 +565,17 @@ function withoutKey<T>(m: Record<string, T>, key: string): Record<string, T> {
   delete next[key];
   return next;
 }
+
+// 수업 날짜 고르기 — 새 기록 · 기록 고치기 둘 다(오늘 뒤 날짜는 못 고른다)
+export function LogDateInput({ value, today, onChange }: { value: string; today: string; onChange: (v: string) => void }) {
+  return (
+    <input
+      type="date"
+      value={value}
+      max={today || undefined}
+      onChange={(e) => onChange(e.target.value)}
+      aria-label="수업 날짜"
+      className="h-9 rounded-full border border-input bg-card px-3 text-[13px] font-medium text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+    />
+  );
+}
