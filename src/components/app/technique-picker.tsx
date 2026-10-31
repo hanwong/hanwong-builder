@@ -209,7 +209,7 @@ export function TechniquePicker({
                       <Plus className="size-4 shrink-0" aria-hidden />
                       <span className="min-w-0 truncate">‘{text}’ 직접 추가</span>
                     </Button>
-                    <p className="mt-1 px-1 text-[12px] font-medium text-muted-foreground">확인 후 기술 카드가 돼요</p>
+                    <p className="mt-1 px-1 text-[12px] font-medium text-muted-foreground">내 기술에 추가되고, 관리자가 확인 후 기술 카드가 돼요</p>
                   </li>
                 </ul>
               )
