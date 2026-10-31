@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree, type ThreeElements, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
+import { DecalGeometry } from "three/examples/jsm/geometries/DecalGeometry.js";
 import { MAT, beltColor } from "@/components/open-mat/colors";
 import type { Act, ActEvent, Player, Stance } from "@/components/open-mat/use-mat";
 
@@ -256,6 +257,57 @@ type Pose = THREE.Object3D;
 const OUTLINE = new THREE.MeshBasicMaterial({ color: MAT.giLine, side: THREE.BackSide });
 const HEM = new THREE.MeshLambertMaterial({ color: MAT.giHem });
 
+// 옷깃 선(본인이 보낸 그림, 2026-10-31): 'y' 모양 — 목 아래 두 짧은 선이 가슴 가운데서 만나고, 한 줄이 마주 본 사람 기준
+// 왼쪽 아래로 띠 밑을 지나 상의 자락 끝까지. 몸통 · 자락 앞면에 붙인 그림(decal)이라 도복 면과 이어져 보인다.
+// 모든 캐릭터가 같은 모양이라 한 번만 만들어 나눠 쓴다(캐릭터 몸 기준 좌표).
+const LAPEL_BOX = { x: 0, y: 0.55, w: 0.5, h: 0.56 }; // 그림을 붙일 앞면 범위
+const LAPEL_LINES: [number, number][][] = [
+  [
+    [-0.045, 0.79],
+    [0, 0.68],
+    [0.055, 0.79],
+  ],
+  [
+    [0, 0.68],
+    [-0.162, 0.315],
+  ],
+];
+let lapelCache: { torso: THREE.BufferGeometry; skirt: THREE.BufferGeometry; material: THREE.Material } | null = null;
+function lapel() {
+  if (lapelCache) return lapelCache;
+  const px = 512; // 1m 당 픽셀
+  const c = document.createElement("canvas");
+  c.width = LAPEL_BOX.w * px;
+  c.height = LAPEL_BOX.h * px;
+  const g = c.getContext("2d")!;
+  g.strokeStyle = MAT.giHem;
+  g.lineWidth = 0.034 * px;
+  g.lineJoin = "round";
+  g.lineCap = "butt";
+  const at = ([x, y]: [number, number]) => [(x - LAPEL_BOX.x + LAPEL_BOX.w / 2) * px, (LAPEL_BOX.y + LAPEL_BOX.h / 2 - y) * px] as const;
+  for (const line of LAPEL_LINES) {
+    g.beginPath();
+    line.forEach((p, i) => (i ? g.lineTo(...at(p)) : g.moveTo(...at(p))));
+    g.stroke();
+  }
+  const map = new THREE.CanvasTexture(c);
+  map.colorSpace = THREE.SRGBColorSpace;
+  const material = new THREE.MeshLambertMaterial({ map, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 });
+  // 몸통 · 자락과 똑같은 모양을 같은 자리에 두고 앞(+z)에서 비춰 그림 조각을 만든다
+  const decal = (geo: THREE.BufferGeometry, y: number) => {
+    const m = new THREE.Mesh(geo);
+    m.position.y = y;
+    m.updateMatrixWorld();
+    return new DecalGeometry(m, new THREE.Vector3(LAPEL_BOX.x, LAPEL_BOX.y, 0.2), new THREE.Euler(), new THREE.Vector3(LAPEL_BOX.w, LAPEL_BOX.h, 0.3));
+  };
+  lapelCache = {
+    torso: decal(new THREE.CapsuleGeometry(0.22, 0.22, 4, 14), 0.55),
+    skirt: decal(new THREE.CylinderGeometry(0.24, 0.255, 0.08, 20), 0.36),
+    material,
+  };
+  return lapelCache;
+}
+
 // 도복 조각 하나 + 외곽선
 function Gi({ children, material = GI, line = 1.07, ...props }: { children: React.ReactNode; material?: THREE.Material; line?: number } & ThreeElements["group"]) {
   return (
@@ -402,21 +454,9 @@ function Character({ player, mine, act, pose }: { player: Player; mine: boolean;
               <boxGeometry args={[0.032, 0.17, 0.02]} />
             </mesh>
           ))}
-          {/* 옷깃 — 깃이 가슴에서 겹친다(목 아래 맨살은 빼 달라 하심, 2026-10-31) */}
-          {/* 깃 선은 'y' 모양(본인이 보낸 그림, 2026-10-31): 목 아래 두 짧은 선이 가운데서 만나고, 한 줄이 왼쪽 아래(띠)까지 비스듬히 */}
-          <mesh position={[-0.022, 0.725, 0.2]} rotation={[-0.3, 0, 0.46]} material={HEM}>
-            <boxGeometry args={[0.04, 0.105, 0.03]} />
-          </mesh>
-          <mesh position={[0.026, 0.725, 0.2]} rotation={[-0.3, 0, -0.53]} material={HEM}>
-            <boxGeometry args={[0.04, 0.11, 0.03]} />
-          </mesh>
-          {/* 긴 선은 띠 밑으로 지나 상의 자락 끝(y 0.32)까지 — 띠 위 · 자락 위 두 토막으로, 몸 곡면을 따라 살짝 돌린다 */}
-          <mesh position={[-0.062, 0.54, 0.205]} rotation={[0, -0.28, -0.42]} material={HEM}>
-            <boxGeometry args={[0.04, 0.31, 0.03]} />
-          </mesh>
-          <mesh position={[-0.141, 0.36, 0.205]} rotation={[0, -0.6, -0.42]} material={HEM}>
-            <boxGeometry args={[0.04, 0.09, 0.03]} />
-          </mesh>
+          {/* 옷깃 선 — 도복 면에 직접 그린다(면 위로 튀어나오지 않게, 2026-10-31 본인 요청) */}
+          <mesh geometry={lapel().torso} material={lapel().material} />
+          <mesh geometry={lapel().skirt} material={lapel().material} />
           {/* 팔(어깨에서 돈다) — 소매 · 소매 끝 · 손 */}
           {([
             [armR, 1],
