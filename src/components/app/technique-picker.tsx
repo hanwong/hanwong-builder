@@ -195,18 +195,21 @@ export function TechniquePicker({
                   {searchList.length === 0 && (
                     <li className="px-2 py-1 text-[13px] font-medium text-muted-foreground">목록에서 찾지 못했어요.</li>
                   )}
-                  <li>
-                    <button
+                  <li className="px-2 pt-2">
+                    {/* 목록에 없을 때 직접 추가 — 눈에 띄는 버튼으로(본인 요청 2026-10-31) */}
+                    <Button
                       type="button"
+                      variant="outline"
                       onClick={() => {
                         onCustom(text);
                         close(); // 이름을 넣으면 팝업을 닫고 기록 화면의 카드로 돌아간다
                       }}
-                      className="flex w-full items-center gap-1.5 rounded-xl px-2 py-2.5 text-left text-[14px] text-muted-foreground transition-colors hover:bg-muted"
+                      className="h-11 w-full justify-start gap-1.5 rounded-xl text-[15px] font-semibold"
                     >
                       <Plus className="size-4 shrink-0" aria-hidden />
-                      <span className="min-w-0 truncate">‘{text}’ 이름으로 직접 추가 (확인 후 기술 카드가 돼요)</span>
-                    </button>
+                      <span className="min-w-0 truncate">‘{text}’ 직접 추가</span>
+                    </Button>
+                    <p className="mt-1 px-1 text-[12px] font-medium text-muted-foreground">확인 후 기술 카드가 돼요</p>
                   </li>
                 </ul>
               )
