@@ -330,7 +330,24 @@ const STANCE_POSE: Record<Stance, { hip: number; lean: number; leg: number; knee
   top: { hip: -0.13, lean: 0.4, leg: 0, knee: 1.5, legSpread: 0.15, arm: -1.15 }, // 두 무릎을 꿇고 상체를 숙여 두 손을 앞으로(탑)
 };
 
-function Character({ player, mine, act, pose }: { player: Player; mine: boolean; act: Act | null; pose: Pose }) {
+// 바라보는 방향을 face 쪽으로 부드럽게 돌린다(가까운 쪽으로 돈다)
+function turnTo(g: THREE.Group, face: number, dt: number) {
+  g.rotation.y += (((face - g.rotation.y + Math.PI * 3) % (Math.PI * 2)) - Math.PI) * Math.min(1, dt * 10);
+}
+
+function Character({
+  player,
+  mine,
+  act,
+  pose,
+  partner,
+}: {
+  player: Player;
+  mine: boolean;
+  act: Act | null;
+  pose: Pose;
+  partner: { x: number; z: number } | null;
+}) {
   const root = useRef<THREE.Group>(null);
   const hips = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
@@ -369,8 +386,10 @@ function Character({ player, mine, act, pose }: { player: Player; mine: boolean;
       const step = Math.min(dist, dt * 2.2);
       g.position.x += (dx / dist) * step;
       g.position.z += (dz / dist) * step;
-      const face = Math.atan2(dx, dz);
-      g.rotation.y += (((face - g.rotation.y + Math.PI * 3) % (Math.PI * 2)) - Math.PI) * Math.min(1, dt * 10);
+      turnTo(g, Math.atan2(dx, dz), dt);
+    } else if (partner && (act === "oss" || act === "fistbump")) {
+      // 오스 · 콤파치는 가장 가까운 상대를 돌아보고 한다(본인 요청 2026-10-31)
+      turnTo(g, Math.atan2(partner.x - g.position.x, partner.z - g.position.z), dt);
     }
     if (mine) {
       pose.position.copy(g.position);
@@ -565,6 +584,14 @@ export default function MatScene({
   onPick: (x: number, z: number) => void;
 }) {
   const actOf = (id: string) => acts.find((a) => a.player === id)?.act ?? null;
+  // 가장 가까운 다른 사람 — 오스 · 콤파치 때 그쪽을 돌아본다
+  const partnerOf = (p: Player) => {
+    let best: Player | null = null;
+    for (const o of players) {
+      if (o.id !== p.id && (!best || Math.hypot(o.x - p.x, o.z - p.z) < Math.hypot(best.x - p.x, best.z - p.z))) best = o;
+    }
+    return best && { x: best.x, z: best.z };
+  };
   const pose = useMemo<Pose>(() => {
     const o = new THREE.Object3D();
     o.position.set(0, -1, 0);
@@ -582,7 +609,7 @@ export default function MatScene({
       <directionalLight position={[4, 8, 5]} intensity={1.3} />
       <Room onPick={onPick} />
       {players.map((p) => (
-        <Character key={p.id} player={p} mine={p.id === myId} act={actOf(p.id)} pose={pose} />
+        <Character key={p.id} player={p} mine={p.id === myId} act={actOf(p.id)} pose={pose} partner={partnerOf(p)} />
       ))}
       <FollowCamera pose={pose} />
     </Canvas>
