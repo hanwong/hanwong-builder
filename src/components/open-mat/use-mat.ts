@@ -9,7 +9,7 @@ import { isKnownBelt } from "@/components/open-mat/colors";
 // 온라인 오픈매트 실시간 연결(D-88). Supabase Realtime 하나로:
 // - presence: 매트에 누가 있는지(들어올 때 한 번만 올린다). 위치를 여기 다시 올리면 받는 쪽에서 '나갔다 → 들어왔다'로 보여
 //   캐릭터가 사라졌다 생기고 '들어왔어요' 알림이 떠서(2026-10-31 신고 "상대가 돌아다니면 접속이 끊어져"), 걷기는 broadcast 로 보낸다
-// - broadcast: 걷기(move) · 동작(오스 · 콤파치 · 탭) — 받은 쪽에서 캐릭터를 움직이고 알림을 띄운다
+// - broadcast: 걷기(move) · 동작(오스 · 콤파치 · 탭) · 앉은 자세(stance: 탑 · 가드) — 받은 쪽에서 캐릭터를 움직이고 알림을 띄운다
 // - postgres_changes: 기록 알림(open_mat_events 새 줄, 별명 + 기술 이름만)
 
 export const ROOM_SIZE = 12;
@@ -19,8 +19,13 @@ export const MAT_HALF = 4.6; // 매트 안쪽 반 너비 — 이 안에서만 �
 export type Act = "oss" | "fistbump" | "tap";
 export const ACT_LABEL: Record<Act, string> = { oss: "오스로 인사했어요", fistbump: "콤파치를 했어요", tap: "탭을 쳤어요" };
 
+// 앉은 자세(본인 요청 2026-10-31 "탑, 가드 넣어서 앉았다 일어났다") — 다시 누르거나 걸으면 일어선다
+export type Stance = "stand" | "guard" | "top";
+export const STANCE_LABEL: Record<Exclude<Stance, "stand">, string> = { guard: "가드 자세로 앉았어요", top: "탑 자세를 잡았어요" };
+const isStance = (v: unknown): v is Stance => v === "stand" || v === "guard" || v === "top";
+
 export type Me = { id: string; nickname: string; belt: string; member: boolean; announce: boolean };
-export type Player = { id: string; nickname: string; belt: string; x: number; z: number };
+export type Player = { id: string; nickname: string; belt: string; x: number; z: number; stance: Stance };
 export type Toast = { id: number; text: string; mine?: boolean };
 export type ActEvent = { id: number; player: string; act: Act };
 export type Status = "connecting" | "ready" | "reconnecting" | "full" | "error";
@@ -51,6 +56,8 @@ export function useMat() {
   const lastAct = useRef(0);
   const lastMove = useRef(0);
   const spots = useRef(new Map<string, { x: number; z: number }>()); // 걷기로 바뀐 자리(id → 목표) — 명단의 처음 자리보다 우선
+  const stances = useRef(new Map<string, Stance>()); // 앉은 자세(id → 자세), 없으면 서 있음
+  const lastStance = useRef(0);
 
   const toast = useCallback((text: string, mine = false) => {
     const id = ++seq.current;
@@ -113,6 +120,7 @@ export function useMat() {
                 belt: isKnownBelt(p.belt) ? p.belt : "white",
                 x: clamp(at?.x ?? (Number(p.x) || 0)),
                 z: clamp(at?.z ?? (Number(p.z) || 0)),
+                stance: stances.current.get(p.id) ?? "stand",
               });
             }
           }
@@ -125,16 +133,30 @@ export function useMat() {
           if (p) toast(`${p.nickname}님이 매트에 들어왔어요`);
           // 새로 온 사람은 내 지금 자리를 모르니 한 번 알려 준다
           if (self.current) void ch.send({ type: "broadcast", event: "move", payload: { id: mine.id, x: self.current.x, z: self.current.z } });
+          const st = stances.current.get(mine.id);
+          if (st && st !== "stand") void ch.send({ type: "broadcast", event: "stance", payload: { id: mine.id, stance: st } });
         });
         ch.on("presence", { event: "leave" }, ({ key, currentPresences }) => {
-          if (!currentPresences.length) spots.current.delete(key);
+          if (!currentPresences.length) {
+            spots.current.delete(key);
+            stances.current.delete(key);
+          }
         });
         ch.on("broadcast", { event: "move" }, ({ payload }) => {
           if (probing || typeof payload?.id !== "string" || payload.id === mine.id) return;
           const x = clamp(Number(payload.x) || 0);
           const z = clamp(Number(payload.z) || 0);
           spots.current.set(payload.id, { x, z });
-          setPlayers((ps) => ps.map((p) => (p.id === payload.id ? { ...p, x, z } : p)));
+          stances.current.delete(payload.id); // 걸으면 일어선다
+          setPlayers((ps) => ps.map((p) => (p.id === payload.id ? { ...p, x, z, stance: "stand" } : p)));
+        });
+        ch.on("broadcast", { event: "stance" }, ({ payload }) => {
+          const stance = payload?.stance;
+          if (probing || !isStance(stance) || typeof payload?.id !== "string" || payload.id === mine.id) return;
+          const who = ch.presenceState<PresencePayload>()[payload.id]?.at(-1);
+          stances.current.set(payload.id, stance);
+          setPlayers((ps) => ps.map((p) => (p.id === payload.id ? { ...p, stance } : p)));
+          if (who && stance !== "stand") toast(`${who.nickname}님이 ${STANCE_LABEL[stance]}`);
         });
         ch.on("broadcast", { event: "act" }, ({ payload }) => {
           const act = payload?.act as Act;
@@ -224,7 +246,8 @@ export function useMat() {
     self.current = { ...self.current, x: clamp(x), z: clamp(z) };
     const { id, x: nx, z: nz } = self.current;
     spots.current.set(id, { x: nx, z: nz });
-    setPlayers((ps) => ps.map((p) => (p.id === id ? { ...p, x: nx, z: nz } : p)));
+    stances.current.delete(id); // 걸으면 일어선다(받는 쪽도 move 를 받으면 일으킨다)
+    setPlayers((ps) => ps.map((p) => (p.id === id ? { ...p, x: nx, z: nz, stance: "stand" } : p)));
     void ch.send({ type: "broadcast", event: "move", payload: { id, x: nx, z: nz } }); // 명단(presence)은 건드리지 않는다
   }, []);
 
@@ -242,5 +265,23 @@ export function useMat() {
     [play, toast],
   );
 
-  return { me, room, players, status, toasts, acts, moveTo, doAct, setMe };
+  // 탑 · 가드: 누르면 그 자세로 앉고, 같은 버튼을 다시 누르면 일어선다
+  const toggleStance = useCallback(
+    (want: Exclude<Stance, "stand">) => {
+      const ch = channel.current;
+      if (!ch || !self.current) return;
+      const now = Date.now();
+      if (now - lastStance.current < 500) return;
+      lastStance.current = now;
+      const id = self.current.id;
+      const stance: Stance = stances.current.get(id) === want ? "stand" : want;
+      stances.current.set(id, stance);
+      setPlayers((ps) => ps.map((p) => (p.id === id ? { ...p, stance } : p)));
+      if (stance !== "stand") toast(`나 · ${STANCE_LABEL[stance]}`, true);
+      void ch.send({ type: "broadcast", event: "stance", payload: { id, stance } });
+    },
+    [toast],
+  );
+
+  return { me, room, players, status, toasts, acts, moveTo, doAct, toggleStance, setMe };
 }

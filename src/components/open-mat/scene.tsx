@@ -1,12 +1,10 @@
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
-import { useGLTF } from "@react-three/drei";
+import { useLayoutEffect, useMemo, useRef } from "react";
+import { Canvas, useFrame, type ThreeElements, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
-import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { MAT, beltColor } from "@/components/open-mat/colors";
-import type { Act, ActEvent, Player } from "@/components/open-mat/use-mat";
+import type { Act, ActEvent, Player, Stance } from "@/components/open-mat/use-mat";
 
-// 오픈매트 3D(D-88, DESIGN '온라인 오픈매트') — 모델 파일 없이 기본 도형으로 그린 2등신 도복 캐릭터와 매트 방.
+// 오픈매트 3D(D-88, DESIGN '온라인 오픈매트') — 모델 파일 없이 기본 도형으로 그린 2등신 도복 캐릭터와 매트 방(3D 모델 캐릭터는 써 본 뒤 되돌림, 2026-10-31).
 // 휴대폰 성능: 그림자 · 반사 없음, 빛 둘, 도형 조각 수 적게, 화면 배율 최대 1.75.
 
 const ROOM = 6.6; // 방 반 너비 — 벽까지. 걷는 곳(use-mat 의 MAT_HALF)보다 조금 넓게
@@ -253,13 +251,44 @@ function Face() {
 // 처음엔 y = -1 로 두고, 내 캐릭터가 한 번 그려지면 0 이 된다(= 준비됨).
 type Pose = THREE.Object3D;
 
+// 도복(본인 요청 2026-10-31 "몸이랑 구분되어 보이고 소매나 바짓단이 보이도록") — 흰 도복과 맨살(목 · 손목 · 발)이 갈라져 보이게,
+// 깃(V자 옷깃) · 소매 끝 · 바짓단 · 상의 자락을 조금 진한 흰색 테두리로 두르고, 도복 조각에 먹색 외곽선(뒤집은 껍데기)을 얇게 준다.
+const OUTLINE = new THREE.MeshBasicMaterial({ color: MAT.giLine, side: THREE.BackSide });
+const HEM = new THREE.MeshLambertMaterial({ color: MAT.giHem });
+
+// 도복 조각 하나 + 외곽선
+function Gi({ children, material = GI, line = 1.07, ...props }: { children: React.ReactNode; material?: THREE.Material; line?: number } & ThreeElements["group"]) {
+  return (
+    <group {...props}>
+      <mesh material={material}>{children}</mesh>
+      <mesh material={OUTLINE} scale={line}>
+        {children}
+      </mesh>
+    </group>
+  );
+}
+
+// 앉기 자세(본인 요청 2026-10-31 "탑, 가드 넣어서 앉았다 일어났다") — 엉덩이 높이 · 몸 기울기 · 다리 · 팔 각도
+// 다리는 허벅지(엉덩이에서 돎) + 정강이(무릎에서 돎) 두 마디
+const STANCE_POSE: Record<Stance, { hip: number; lean: number; leg: number; knee: number; legSpread: number; arm: number }> = {
+  stand: { hip: 0, lean: 0, leg: 0, knee: 0, legSpread: 0, arm: 0 },
+  guard: { hip: -0.24, lean: -0.45, leg: -1.75, knee: 1.75, legSpread: 0.55, arm: -1.0 }, // 매트에 엉덩이를 대고 앉아 무릎을 세워 벌림(가드)
+  top: { hip: -0.13, lean: 0.4, leg: 0, knee: 1.5, legSpread: 0.15, arm: -1.15 }, // 두 무릎을 꿇고 상체를 숙여 두 손을 앞으로(탑)
+};
+
 function Character({ player, mine, act, pose }: { player: Player; mine: boolean; act: Act | null; pose: Pose }) {
   const root = useRef<THREE.Group>(null);
+  const hips = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
   const armR = useRef<THREE.Group>(null);
   const armL = useRef<THREE.Group>(null);
+  const legR = useRef<THREE.Group>(null);
+  const legL = useRef<THREE.Group>(null);
+  const kneeR = useRef<THREE.Group>(null);
+  const kneeL = useRef<THREE.Group>(null);
   const actStart = useRef(0);
   const lastAct = useRef<Act | null>(null);
+  const cur = useRef({ ...STANCE_POSE.stand }); // 지금 자세 — 목표 자세로 부드럽게 앉았다 일어난다
   const belt = useMemo(() => new THREE.MeshLambertMaterial({ color: beltColor(player.belt) }), [player.belt]);
   // 처음 나타날 때만 그 자리에 둔다. 그 뒤 목표가 바뀌면 아래 useFrame 이 걸어서 따라간다
   // (position 을 속성으로 주면 다시 그릴 때마다 목표로 순간이동한다)
@@ -271,7 +300,7 @@ function Character({ player, mine, act, pose }: { player: Player; mine: boolean;
 
   useFrame((state, dt) => {
     const g = root.current;
-    if (!g) return;
+    if (!g || !hips.current || !body.current || !armR.current || !armL.current || !legR.current || !legL.current || !kneeR.current || !kneeL.current) return;
     const t = state.clock.elapsedTime;
     if (act !== lastAct.current) {
       lastAct.current = act;
@@ -293,18 +322,32 @@ function Character({ player, mine, act, pose }: { player: Player; mine: boolean;
       pose.position.copy(g.position);
       pose.rotation.copy(g.rotation);
     }
-    // 아래는 모델을 받기 전 잠깐 보이는 단순 캐릭터의 움직임
-    if (!body.current || !armR.current || !armL.current) return;
-    const bob = walking ? Math.abs(Math.sin(t * 10)) * 0.06 : Math.sin(t * 2) * 0.01;
-    body.current.position.y = bob;
+    // 자세: 걷는 동안엔 서고, 아니면 고른 자세로 약 0.4초에 걸쳐 앉는다
+    const goal = STANCE_POSE[walking ? "stand" : player.stance];
+    const c = cur.current;
+    const k = Math.min(1, dt * 7);
+    for (const key of Object.keys(c) as (keyof typeof c)[]) c[key] += (goal[key] - c[key]) * k;
+    const seated = Math.min(1, Math.abs(c.hip) / 0.16); // 앉은 정도(0 서 있음 ~ 1 앉음)
+
+    const bob = walking ? Math.abs(Math.sin(t * 10)) * 0.06 : Math.sin(t * 2) * 0.01 * (1 - seated);
+    hips.current.position.y = c.hip + bob;
     // 동작
-    const k = act ? Math.min(1, (t - actStart.current) / 1.4) : 1;
-    const wave = act ? Math.sin(Math.PI * k) : 0;
-    body.current.rotation.x = act === "oss" ? wave * 0.55 : 0; // 허리 숙여 인사
-    armR.current.rotation.x = act === "fistbump" ? -wave * 1.55 : // 콤파치: 오른팔을 앞으로 쭉 내밀었다 거둔다
-       act === "tap" ? -0.6 - Math.abs(Math.sin(t * 18)) * 0.5 * wave : walking ? Math.sin(t * 10) * 0.5 : 0;
-    armL.current.rotation.x = act === "oss" ? wave * 0.4 : walking ? -Math.sin(t * 10) * 0.5 : 0;
-    body.current.position.y += act === "tap" ? -wave * 0.12 : 0;
+    const a = act ? Math.min(1, (t - actStart.current) / 1.4) : 1;
+    const wave = act ? Math.sin(Math.PI * a) : 0;
+    body.current.rotation.x = c.lean + (act === "oss" ? wave * 0.55 : 0); // 허리 숙여 인사
+    const swing = walking ? Math.sin(t * 10) * 0.5 : 0;
+    armR.current.rotation.x =
+      act === "fistbump" ? -wave * 1.55 : // 콤파치: 오른팔을 앞으로 쭉 내밀었다 거둔다
+      act === "tap" ? -0.6 - Math.abs(Math.sin(t * 18)) * 0.5 * wave :
+      c.arm + swing;
+    armL.current.rotation.x = act === "oss" ? wave * 0.4 : c.arm - swing;
+    legR.current.rotation.x = c.leg - swing * 0.8;
+    legL.current.rotation.x = c.leg + swing * 0.8;
+    legR.current.rotation.z = c.legSpread;
+    legL.current.rotation.z = -c.legSpread;
+    kneeR.current.rotation.x = c.knee + Math.max(0, swing) * 0.6;
+    kneeL.current.rotation.x = c.knee + Math.max(0, -swing) * 0.6;
+    body.current.position.y = act === "tap" ? -wave * 0.12 : 0;
   });
 
   return (
@@ -312,160 +355,83 @@ function Character({ player, mine, act, pose }: { player: Player; mine: boolean;
       <mesh rotation-x={-Math.PI / 2} position-y={0.02} material={SHADOW}>
         <circleGeometry args={[0.32, 20]} />
       </mesh>
-      <Suspense
-        fallback={
-      <group ref={body}>
-        {/* 다리 */}
-        <mesh position={[-0.1, 0.16, 0]} material={GI_SHADE}>
-          <capsuleGeometry args={[0.08, 0.14, 4, 8]} />
-        </mesh>
-        <mesh position={[0.1, 0.16, 0]} material={GI_SHADE}>
-          <capsuleGeometry args={[0.08, 0.14, 4, 8]} />
-        </mesh>
-        {/* 몸통(도복) + 띠 */}
-        <mesh position-y={0.5} material={GI}>
-          <capsuleGeometry args={[0.22, 0.26, 4, 12]} />
-        </mesh>
-        <mesh position-y={0.4} material={belt}>
-          <cylinderGeometry args={[0.235, 0.235, 0.07, 16]} />
-        </mesh>
-        <mesh position={[0.08, 0.33, 0.2]} rotation-z={0.3} material={belt}>
-          <boxGeometry args={[0.05, 0.16, 0.03]} />
-        </mesh>
-        {/* 팔(어깨에서 돈다) */}
-        <group ref={armR} position={[0.27, 0.66, 0]}>
-          <mesh position-y={-0.14} material={GI}>
-            <capsuleGeometry args={[0.065, 0.18, 4, 8]} />
+      <group ref={hips}>
+        {/* 다리(엉덩이에서 돈다) — 도복 바지 · 바짓단 · 맨발 */}
+        {([
+          [legR, kneeR, 1],
+          [legL, kneeL, -1],
+        ] as const).map(([ref, knee, side]) => (
+          <group key={side} ref={ref} position={[side * 0.1, 0.32, 0]}>
+            <Gi position-y={-0.07} material={GI_SHADE}>
+              <cylinderGeometry args={[0.09, 0.088, 0.15, 10]} />
+            </Gi>
+            <group ref={knee} position-y={-0.14}>
+              <Gi position-y={-0.05} material={GI_SHADE}>
+                <cylinderGeometry args={[0.088, 0.09, 0.11, 10]} />
+              </Gi>
+              <mesh position-y={-0.1} material={HEM}>
+                <cylinderGeometry args={[0.097, 0.097, 0.035, 10]} />
+              </mesh>
+              <mesh position={[0, -0.145, 0.03]} scale={[1, 0.7, 1.4]} material={SKIN}>
+                <sphereGeometry args={[0.06, 10, 8]} />
+              </mesh>
+            </group>
+          </group>
+        ))}
+        <group ref={body}>
+          {/* 상의(도복) + 아래 자락 + 띠 */}
+          <Gi position-y={0.55} line={1.05}>
+            <capsuleGeometry args={[0.22, 0.22, 4, 14]} />
+          </Gi>
+          <mesh position-y={0.36} material={HEM}>
+            <cylinderGeometry args={[0.24, 0.255, 0.08, 16]} />
           </mesh>
-          <mesh position-y={-0.3} material={SKIN}>
-            <sphereGeometry args={[0.06, 10, 8]} />
+          <mesh position-y={0.43} material={belt}>
+            <cylinderGeometry args={[0.235, 0.235, 0.065, 16]} />
           </mesh>
+          <mesh position={[0.08, 0.36, 0.22]} rotation-z={0.3} material={belt}>
+            <boxGeometry args={[0.05, 0.15, 0.03]} />
+          </mesh>
+          {/* 옷깃(V자) — 목 아래 맨살이 조금 보이고 두꺼운 깃이 가슴에서 겹친다 */}
+          <mesh position={[0, 0.74, 0.17]} rotation-x={-0.25} material={SKIN}>
+            <coneGeometry args={[0.07, 0.14, 3]} />
+          </mesh>
+          {[-1, 1].map((side) => (
+            <mesh key={side} position={[side * 0.045, 0.66, 0.205]} rotation={[-0.2, 0, side * 0.5]} material={HEM}>
+              <boxGeometry args={[0.045, 0.26, 0.03]} />
+            </mesh>
+          ))}
+          {/* 팔(어깨에서 돈다) — 소매 · 소매 끝 · 손 */}
+          {([
+            [armR, 1],
+            [armL, -1],
+          ] as const).map(([ref, side]) => (
+            <group key={side} ref={ref} position={[side * 0.27, 0.7, 0]}>
+              <Gi position-y={-0.12}>
+                <cylinderGeometry args={[0.07, 0.08, 0.22, 10]} />
+              </Gi>
+              <mesh position-y={-0.235} material={HEM}>
+                <cylinderGeometry args={[0.085, 0.085, 0.035, 10]} />
+              </mesh>
+              <mesh position-y={-0.3} material={SKIN}>
+                <sphereGeometry args={[0.058, 10, 8]} />
+              </mesh>
+            </group>
+          ))}
+          {/* 머리 */}
+          <mesh position-y={1.02} material={SKIN}>
+            <sphereGeometry args={[0.27, 18, 14]} />
+          </mesh>
+          <mesh position={[0, 1.1, -0.03]} scale={[1.02, 0.8, 1.02]} material={HAIR}>
+            <sphereGeometry args={[0.27, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
+          </mesh>
+          <Face />
         </group>
-        <group ref={armL} position={[-0.27, 0.66, 0]}>
-          <mesh position-y={-0.14} material={GI}>
-            <capsuleGeometry args={[0.065, 0.18, 4, 8]} />
-          </mesh>
-          <mesh position-y={-0.3} material={SKIN}>
-            <sphereGeometry args={[0.06, 10, 8]} />
-          </mesh>
-        </group>
-        {/* 머리 */}
-        <mesh position-y={1.02} material={SKIN}>
-          <sphereGeometry args={[0.27, 18, 14]} />
-        </mesh>
-        <mesh position={[0, 1.1, -0.03]} scale={[1.02, 0.8, 1.02]} material={HAIR}>
-          <sphereGeometry args={[0.27, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        </mesh>
-        <Face />
       </group>
-        }
-      >
-        <KidModel act={act} belt={player.belt} />
-      </Suspense>
       <NameTag text={mine ? `나 · ${player.nickname}` : player.nickname} mine={mine} />
     </group>
   );
 }
-
-// Higgsfield 로 만든 도복 캐릭터(2026-10-31, D-88) — Tripo 모델 + Meshy 리깅, 동작 5개(idle · walk · oss · fistbump · tap)를
-// 한 파일(public/models/kid.glb, 약 1MB)에 합쳤다. 모두 같은 파일을 받아 사람마다 복제(뼈대 포함)해 쓴다.
-// 모델은 +x 를 보고 있어 -90도 돌려 +z(우리 '앞')에 맞추고, 원래 흰 띠 위에 벨트 색 띠를 덧씌운다(엉덩이 뼈를 따라감).
-const KID_URL = "/models/kid.glb";
-const KID_SCALE = 1.25;
-// 모델 좌표(돌리기 · 키우기 전): 띠는 높이 0.40, 앞뒤(x) -0.10~0.19, 좌우(z) ±0.17 정도 — 엉덩이 뼈(0.028, 0.262, 0.047)에서의 차이
-const BELT_FROM_HIPS = new THREE.Vector3(0.017, 0.138, -0.047);
-// 동작 클립 이름 → 재생 속도(오스 원본은 7.7초라 빠르게)
-const ACT_CLIP: Record<Act, { clip: string; speed: number }> = {
-  oss: { clip: "oss", speed: 3.4 },
-  fistbump: { clip: "fistbump", speed: 1.1 },
-  tap: { clip: "tap", speed: 1.3 },
-};
-
-function KidModel({ act, belt }: { act: Act | null; belt: string }) {
-  const gltf = useGLTF(KID_URL);
-  const model = useMemo(() => cloneSkinned(gltf.scene), [gltf.scene]);
-  const mixer = useMemo(() => new THREE.AnimationMixer(model), [model]);
-  const actions = useMemo(
-    () =>
-      new Map(
-        gltf.animations.map((c) => {
-          // 받아 온 서 있기(idle) 클립은 몸이 좌우로 80도쯤 돌아가며 둘러봐서(엉덩이 · 척추 비틀기) 쓰지 않고,
-          // 인사(oss) 클립 첫 장면(바로 선 자세)을 멈춰 세워 서 있기로 쓴다
-          const oss = gltf.animations.find((a) => a.name === "oss");
-          const clip = c.name === "idle" && oss ? THREE.AnimationUtils.subclip(oss, "idle", 0, 2, 30) : c;
-          return [c.name, mixer.clipAction(clip)] as const;
-        }),
-      ),
-    [gltf.animations, mixer],
-  );
-  const hips = useMemo(() => model.getObjectByName("Hips") ?? null, [model]);
-  const wrap = useRef<THREE.Group>(null);
-  const beltRef = useRef<THREE.Group>(null);
-  const beltMat = useMemo(() => new THREE.MeshLambertMaterial({ color: beltColor(belt), side: THREE.DoubleSide }), [belt]);
-  const state = useRef({ clip: "", actUntil: 0, lastAct: null as Act | null });
-  const prev = useMemo(() => new THREE.Vector3(), []);
-  const tmp = useMemo(() => new THREE.Vector3(), []);
-
-  useEffect(() => {
-    actions.get("idle")?.play();
-    state.current.clip = "idle";
-    return () => void mixer.stopAllAction();
-  }, [actions, mixer]);
-
-  useFrame(({ clock }, dt) => {
-    const w = wrap.current;
-    if (!w || !w.parent) return;
-    const t = clock.elapsedTime;
-    // 걷는지: 이 캐릭터(부모 그룹)가 이번 프레임에 움직였는지
-    w.parent.getWorldPosition(tmp);
-    const speed = dt > 0 ? tmp.distanceTo(prev) / dt : 0;
-    prev.copy(tmp);
-    const fadeTo = (name: string, speedScale = 1, once = false) => {
-      const next = actions.get(name);
-      if (!next || state.current.clip === name) return;
-      next.reset().setEffectiveTimeScale(speedScale).setEffectiveWeight(1);
-      next.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity);
-      next.fadeIn(0.18).play();
-      actions.get(state.current.clip)?.fadeOut(0.18);
-      state.current.clip = name;
-    };
-    if (act && act !== state.current.lastAct) {
-      const a = ACT_CLIP[act];
-      const clip = actions.get(a.clip)?.getClip();
-      state.current.actUntil = t + (clip ? clip.duration / a.speed : 1.5) - 0.2;
-      state.current.clip = ""; // 같은 동작을 다시 눌러도 처음부터
-      fadeTo(a.clip, a.speed, true);
-    }
-    state.current.lastAct = act;
-    if (t >= state.current.actUntil) fadeTo(speed > 0.3 ? "walk" : "idle", speed > 0.3 ? 1.35 : 1);
-    mixer.update(dt);
-    // 띠: 엉덩이 뼈 자리를 따라간다(모델 좌표)
-    if (hips && beltRef.current) {
-      hips.getWorldPosition(tmp);
-      model.worldToLocal(tmp);
-      beltRef.current.position.copy(tmp).add(BELT_FROM_HIPS);
-    }
-  });
-
-  return (
-    <group ref={wrap} rotation-y={-Math.PI / 2} scale={KID_SCALE}>
-      <primitive object={model} />
-      <group ref={beltRef}>
-        <mesh scale={[0.158, 1, 0.178]} material={beltMat}>
-          <cylinderGeometry args={[1, 1, 0.042, 28, 1, true]} />
-        </mesh>
-        {/* 앞 매듭 · 늘어진 끝 */}
-        <mesh position={[0.165, -0.035, 0.03]} rotation-x={0.25} material={beltMat}>
-          <boxGeometry args={[0.02, 0.07, 0.028]} />
-        </mesh>
-        <mesh position={[0.165, -0.035, -0.02]} rotation-x={-0.25} material={beltMat}>
-          <boxGeometry args={[0.02, 0.07, 0.028]} />
-        </mesh>
-      </group>
-    </group>
-  );
-}
-useGLTF.preload(KID_URL);
 
 // 내 캐릭터 뒤에서 따라다니는 고정 시점 카메라(본인 요청 2026-10-31). 끌어서 돌리기 없음.
 // 벽 패드에 가리지 않게 카메라 자리는 방 안쪽으로 묶는다. 휴대폰 세로 화면에서 옆 사람도 보이게 조금 뒤 · 위 · 넓게.

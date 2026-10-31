@@ -3,10 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Hand, HandFist, LogOut, Music, Settings2, Users, VolumeX } from "lucide-react";
+import { ArrowDownToLine, Hand, HandFist, LogOut, Music, Settings2, Shield, Users, VolumeX } from "lucide-react";
 import { createSupabaseBrowser } from "@/lib/supabase/client";
 import { Switch } from "@/components/ui/switch";
-import { ROOM_SIZE, useMat, type Act } from "@/components/open-mat/use-mat";
+import { ROOM_SIZE, useMat, type Act, type Stance } from "@/components/open-mat/use-mat";
 import { useMusic } from "@/components/open-mat/use-music";
 
 // 온라인 오픈매트 화면(D-88, FLOW `/open-mat`). 3D 는 브라우저에서만 그린다(ssr: false).
@@ -30,9 +30,15 @@ const ACTS: { act: Act; label: string; Icon: typeof Hand }[] = [
   { act: "fistbump", label: "콤파치", Icon: HandFist }, // 주먹 맞대기 인사(본인 요청 2026-10-31, 하이파이브 대신)
   { act: "tap", label: "탭", Icon: Hand },
 ];
+// 앉은 자세(본인 요청 2026-10-31) — 누르면 앉고, 다시 누르면(또는 걸으면) 일어선다
+const STANCES: { stance: Exclude<Stance, "stand">; label: string; Icon: typeof Hand }[] = [
+  { stance: "top", label: "탑", Icon: ArrowDownToLine },
+  { stance: "guard", label: "가드", Icon: Shield },
+];
 
 export function OpenMat() {
-  const { me, room, players, status, toasts, acts, moveTo, doAct, setMe } = useMat();
+  const { me, room, players, status, toasts, acts, moveTo, doAct, toggleStance, setMe } = useMat();
+  const myStance = players.find((p) => p.id === me?.id)?.stance ?? "stand";
   const [canDraw] = useState(() => (typeof window === "undefined" ? true : webgl()));
   const [settings, setSettings] = useState(false);
   const music = useMusic();
@@ -133,16 +139,31 @@ export function OpenMat() {
             매트를 누르면 그쪽으로 걸어가요
           </p>
         )}
-        <div className="flex items-center gap-1 rounded-full bg-card p-1.5 ring-1 ring-border">
+        <div className="flex items-center gap-0.5 rounded-full bg-card p-1.5 ring-1 ring-border">
           {ACTS.map(({ act, label, Icon }) => (
             <button
               key={act}
               type="button"
               disabled={status !== "ready"}
               onClick={() => doAct(act)}
-              className="flex min-w-20 flex-col items-center gap-0.5 rounded-full px-4 py-1.5 text-[13px] font-semibold hover:bg-muted disabled:opacity-40"
+              className="flex min-w-14 flex-col items-center gap-0.5 rounded-full px-2.5 py-1.5 text-[13px] font-semibold hover:bg-muted disabled:opacity-40"
             >
               <Icon className={`size-5 ${act === "tap" ? "rotate-90" : ""}`} strokeWidth={1.75} aria-hidden />
+              {label}
+            </button>
+          ))}
+          <span className="mx-0.5 h-8 w-px bg-border" aria-hidden />
+          {STANCES.map(({ stance, label, Icon }) => (
+            <button
+              key={stance}
+              type="button"
+              disabled={status !== "ready"}
+              onClick={() => toggleStance(stance)}
+              aria-pressed={myStance === stance}
+              aria-label={myStance === stance ? `${label} — 다시 누르면 일어나요` : label}
+              className="flex min-w-14 flex-col items-center gap-0.5 rounded-full px-2.5 py-1.5 text-[13px] font-semibold hover:bg-muted disabled:opacity-40 aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+            >
+              <Icon className="size-5" strokeWidth={1.75} aria-hidden />
               {label}
             </button>
           ))}

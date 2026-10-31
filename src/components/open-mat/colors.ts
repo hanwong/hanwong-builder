@@ -19,7 +19,9 @@ export const MAT = {
   matBorder: "#2B2A26", // 이름표 글자 · 내 이름표 바탕(먹색)
   wallTrim: "#D9D2C2", // 이름표 테두리
   gi: "#F7F7F4",
-  giShade: "#E4E3DE",
+  giShade: "#ECEBE6", // 바지(상의보다 살짝 어둡게)
+  giHem: "#D3D1C9", // 깃 · 소매 끝 · 바짓단 · 상의 자락 — 맨살 · 몸과 갈라져 보이게
+  giLine: "#5B5A55", // 도복 외곽선
   skin: "#E9C4A2",
   hair: "#2B2A26",
   eye: "#2B2A26",
