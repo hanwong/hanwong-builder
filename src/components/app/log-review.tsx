@@ -337,7 +337,7 @@ function MemoField({
         )}
       </div>
       <p className="text-[13px] font-medium text-muted-foreground">
-        {supported ? "마이크 버튼을 누르고 말해도 돼요." : "키보드의 마이크로 말해도 돼요."} 상대 이름은 적지 않아도 돼요.
+        {supported ? "마이크 버튼을 누르고 말해도 돼요." : "키보드의 마이크로 말해도 돼요."}
         {value.length > MAX_BODY * 0.8 && (
           <span className="ml-2 tabular-nums">
             {value.length} / {MAX_BODY}
