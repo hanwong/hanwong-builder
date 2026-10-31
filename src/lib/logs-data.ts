@@ -41,3 +41,22 @@ export async function getLogs(limit: number): Promise<{ rows: LogRow[]; total: n
   if (error) throw new Error(`logs: ${error.code ?? ""} ${error.message.slice(0, 80)}`);
   return { rows: (data ?? []).map(toLogRow), total: count ?? 0 };
 }
+
+// 기록 달력 (D-98) — 한 달(YYYY-MM)치 기록. 날짜순 정렬은 목록과 같게.
+export async function getLogsInMonth(month: string): Promise<LogRow[]> {
+  "use cache: private";
+  cacheLife({ stale: 300 });
+  const [y, m] = month.split("-").map(Number);
+  const next = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase
+    .from("class_logs")
+    .select(LOG_ROW_SELECT)
+    .gte("logged_on", `${month}-01`)
+    .lt("logged_on", next)
+    .order("logged_on", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(300);
+  if (error) throw new Error(`logs month: ${error.code ?? ""} ${error.message.slice(0, 80)}`);
+  return (data ?? []).map(toLogRow);
+}
