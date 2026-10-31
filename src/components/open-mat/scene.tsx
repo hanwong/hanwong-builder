@@ -260,6 +260,8 @@ const HEM = new THREE.MeshLambertMaterial({ color: MAT.giHem });
 // 옷깃 선(본인이 보낸 그림, 2026-10-31): 'y' 모양 — 목 아래 두 짧은 선이 가슴 가운데서 만나고, 한 줄이 마주 본 사람 기준
 // 왼쪽 아래로 띠 밑을 지나 상의 자락 끝까지. 몸통 · 자락 앞면에 붙인 그림(decal)이라 도복 면과 이어져 보인다.
 // 모든 캐릭터가 같은 모양이라 한 번만 만들어 나눠 쓴다(캐릭터 몸 기준 좌표).
+// 상의 아래 자락(띠 밑) — 몸통(반지름 0.22)과 같은 굵기로 y 0.44 → 0.32
+const SKIRT = { y: 0.38, h: 0.12, top: 0.221, bottom: 0.224 };
 const LAPEL_BOX = { x: 0, y: 0.55, w: 0.5, h: 0.56 }; // 그림을 붙일 앞면 범위
 const LAPEL_LINES: [number, number][][] = [
   [
@@ -269,7 +271,7 @@ const LAPEL_LINES: [number, number][][] = [
   ],
   [
     [0, 0.68],
-    [-0.162, 0.315],
+    [-0.162, 0.32],
   ],
 ];
 let lapelCache: { torso: THREE.BufferGeometry; skirt: THREE.BufferGeometry; material: THREE.Material } | null = null;
@@ -302,7 +304,7 @@ function lapel() {
   };
   lapelCache = {
     torso: decal(new THREE.CapsuleGeometry(0.22, 0.22, 4, 14), 0.55),
-    skirt: decal(new THREE.CylinderGeometry(0.24, 0.255, 0.08, 20), 0.36),
+    skirt: decal(new THREE.CylinderGeometry(SKIRT.top, SKIRT.bottom, SKIRT.h, 20), SKIRT.y),
     material,
   };
   return lapelCache;
@@ -435,12 +437,12 @@ function Character({ player, mine, act, pose }: { player: Player; mine: boolean;
           <Gi position-y={0.55} line={1.05}>
             <capsuleGeometry args={[0.22, 0.22, 4, 14]} />
           </Gi>
-          {/* 아래 자락은 도복 흰색(깃 선이 자락 끝까지 보이게) + 끝단만 테두리 색 */}
-          <mesh position-y={0.36} material={GI}>
-            <cylinderGeometry args={[0.24, 0.255, 0.08, 20]} />
+          {/* 아래 자락은 몸통과 같은 굵기로 곧게 이어 붙인다(띠 밑이 튀어나오지 않게, 2026-10-31 본인 요청) — 도복 흰색 + 끝단만 테두리 색 */}
+          <mesh position-y={SKIRT.y} material={GI}>
+            <cylinderGeometry args={[SKIRT.top, SKIRT.bottom, SKIRT.h, 20]} />
           </mesh>
-          <mesh position-y={0.325} material={HEM}>
-            <cylinderGeometry args={[0.258, 0.258, 0.018, 20]} />
+          <mesh position-y={SKIRT.y - SKIRT.h / 2 + 0.008} material={HEM}>
+            <cylinderGeometry args={[SKIRT.bottom + 0.002, SKIRT.bottom + 0.002, 0.016, 20]} />
           </mesh>
           <mesh position-y={0.43} material={belt}>
             <cylinderGeometry args={[0.25, 0.25, 0.065, 20]} />
@@ -450,7 +452,7 @@ function Character({ player, mine, act, pose }: { player: Player; mine: boolean;
             <boxGeometry args={[0.065, 0.05, 0.03]} />
           </mesh>
           {[-1, 1].map((side) => (
-            <mesh key={side} position={[side * 0.045, 0.34, 0.27]} rotation={[-0.08, 0, side * 0.55]} material={belt}>
+            <mesh key={side} position={[side * 0.045, 0.34, 0.24]} rotation={[-0.08, 0, side * 0.55]} material={belt}>
               <boxGeometry args={[0.032, 0.17, 0.02]} />
             </mesh>
           ))}
