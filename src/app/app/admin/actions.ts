@@ -1,5 +1,7 @@
 "use server";
 
+import { draftRow } from "@/lib/admin/save-draft";
+import { runGrowMap } from "@/lib/agent/grow-map";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { isLive } from "@/lib/matching";
@@ -60,27 +62,9 @@ export async function draftName(key: string): Promise<DraftNameResult> {
     return { ok: false, message: "초안을 만들지 못했어요 — 잠시 뒤 다시 눌러 주세요." };
   }
 
-  const [pos, tech] = await Promise.all([
-    d.position ? supabase.from("positions").select("id").eq("slug", d.position).maybeSingle() : null,
-    d.aliasOf ? supabase.from("techniques").select("id").eq("slug", d.aliasOf).maybeSingle() : null,
-  ]);
   const { data: row, error: insertError } = await supabase
     .from("technique_drafts")
-    .insert({
-      name_key: nameKey(item.custom_name),
-      custom_name: item.custom_name.slice(0, 100),
-      kind: d.kind,
-      alias_of: tech?.data?.id ?? null,
-      position_id: pos?.data?.id ?? null,
-      slug: d.slug,
-      name_ko: d.nameKo || null,
-      name_en: d.nameEn || null,
-      aliases: d.aliases,
-      steps: d.steps,
-      note: d.note || null,
-      tech_kind: d.techKind,
-      ...mapFields(d),
-    })
+    .insert(await draftRow(supabase, item.custom_name, d))
     .select(DRAFT_SELECT)
     .single();
   if (insertError) {
@@ -353,4 +337,13 @@ export async function rejectUserTechnique(id: string): Promise<AdminResult> {
   if (error) return { ok: false, message: "이미 처리됐거나 저장하지 못했어요." };
   revalidatePath("/app", "layout");
   return { ok: true, message: "버렸어요. 만든 사람에게만 계속 보여요." };
+}
+
+// 매일 지도 키우기 에이전트(D-102) — 운영 화면 '지금 한 번 돌리기'. 밤에 도는 것과 같고, 하루 한 번 규칙도 같다.
+export async function runAgentNow(): Promise<AdminResult & { summary?: string }> {
+  if (!(await operator())) return { ok: false, message: "운영자만 쓸 수 있어요." };
+  const res = await runGrowMap();
+  if (!res.ok) return { ok: false, message: res.message };
+  revalidatePath("/app/admin");
+  return { ok: true, summary: res.summary };
 }

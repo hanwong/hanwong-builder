@@ -186,6 +186,51 @@ export type Database = {
         }
         Relationships: []
       }
+      map_agent_runs: {
+        Row: {
+          created_at: string
+          drafted: string[]
+          finished_at: string | null
+          id: string
+          input_tokens: number
+          output_tokens: number
+          questions: number
+          run_on: string
+          searches: number
+          status: string
+          summary: string | null
+          topic: string | null
+        }
+        Insert: {
+          created_at?: string
+          drafted?: string[]
+          finished_at?: string | null
+          id?: string
+          input_tokens?: number
+          output_tokens?: number
+          questions?: number
+          run_on: string
+          searches?: number
+          status?: string
+          summary?: string | null
+          topic?: string | null
+        }
+        Update: {
+          created_at?: string
+          drafted?: string[]
+          finished_at?: string | null
+          id?: string
+          input_tokens?: number
+          output_tokens?: number
+          questions?: number
+          run_on?: string
+          searches?: number
+          status?: string
+          summary?: string | null
+          topic?: string | null
+        }
+        Relationships: []
+      }
       notices: {
         Row: {
           created_at: string

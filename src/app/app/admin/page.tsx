@@ -4,7 +4,10 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminDrafts } from "@/components/app/admin-drafts";
+import { AgentRuns } from "@/components/app/agent-runs";
 import { getAdminData } from "@/lib/admin/admin-data";
+import { createSupabaseServer } from "@/lib/supabase/server";
+import { seoulToday } from "@/lib/seoul-date";
 
 export const metadata: Metadata = {
   title: "목록 추가 대기 — Re:Re:롤",
@@ -39,7 +42,29 @@ async function Loader() {
     );
   }
   if (!data) notFound();
-  return <AdminDrafts data={data} />;
+  // 매일 지도 키우기 에이전트(D-102) — 최근 7일
+  const { data: runs } = await (
+    await createSupabaseServer()
+  )
+    .from("map_agent_runs")
+    .select("run_on, status, summary, searches")
+    .order("run_on", { ascending: false })
+    .limit(7);
+  const today = seoulToday();
+  return (
+    <div className="flex flex-col gap-6">
+      <AgentRuns
+        runs={(runs ?? []).map((r) => ({
+          runOn: r.run_on,
+          status: r.status,
+          summary: r.summary,
+          searches: r.searches,
+        }))}
+        ranToday={(runs ?? []).some((r) => r.run_on === today)}
+      />
+      <AdminDrafts data={data} />
+    </div>
+  );
 }
 
 function AdminSkeleton() {
