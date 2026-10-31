@@ -20,8 +20,9 @@ export function AgentRuns({ runs, ranToday }: { runs: AgentRun[]; ranToday: bool
       <div className="flex flex-col gap-0.5">
         <h2 className="text-[17px] font-semibold">지도 키우기 에이전트</h2>
         <p className="text-[13px] leading-relaxed text-muted-foreground">
-          매일 새벽 3시, 어제 질문 · 기록에 적힌 모르는 이름 · 오늘의 포지션을 웹에서 살펴 기술 초안을 최대 3개 아래
-          승인 대기에 넣어요. 승인해야 지도에 들어가요.
+          매일 새벽 3시 맥의 Claude Code 예약 작업이 어제 질문 · 기록에 적힌 모르는 이름 · 오늘의 포지션을 웹에서 살펴
+          기술 초안을 최대 3개 아래 승인 대기에 넣어요. 승인해야 지도에 들어가요. 아래 버튼은 서버에서 API 크레딧으로
+          돌려요.
         </p>
       </div>
       {runs.length > 0 ? (

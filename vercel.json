@@ -1,4 +1,1 @@
-{
-  "framework": "nextjs",
-  "crons": [{ "path": "/api/cron/grow-map", "schedule": "0 18 * * *" }]
-}
+{ "framework": "nextjs" }
