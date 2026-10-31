@@ -8,14 +8,31 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { loadPicker, PICKER_PICTURE, searchPicker, type PickerStore } from "@/lib/picker-store";
+import { POSITION_PLAIN } from "@/lib/position-plain";
 import { useFloatingDialog } from "@/lib/use-floating-dialog";
 import type { MatchedTechnique } from "@/lib/mock/log-seed";
 
 // 기술 고르기 (D-56) — 위 검색상자 · 아래 포지션 그림 칸. 그림을 누르면 그 포지션 기술 목록(종류 칩으로 좁히기, D-96)에서 여러 개 체크.
 // 찾는 게 없으면 이름만 직접 추가 — 운영자 확인 후 기술 카드로 바뀐다(D-32).
 // 떠 있는 팝업(T-35): 뒤 화면은 붙잡아 두고, 키보드 위 보이는 영역 안에 맞춘다.
-// 이름을 몰라도 찾게(D-96): 포지션(어디서) → 종류 칩(무엇을). 칩 이름은 초보자 말로, 이 순서로.
+// 이름을 몰라도 찾게(D-96 · D-97): 위치 칩(위 · 아래 · 서서) → 쉬운 설명이 붙은 포지션(어디서) → 종류 칩(무엇을).
+// 칩 이름은 초보자 말로, 이 순서로.
 type View = { kind: "grid" } | { kind: "position"; slug: string; nameKo: string };
+const ROLE_CHIP: [string, string][] = [
+  ["bottom", "아래(누워서)"],
+  ["top", "위"],
+  ["standing", "서서"],
+];
+// 그 위치에서 하는 기술인가 — 양쪽 기술 · 내가 만든 기술(위치 없음)은 어디서나
+const fits = (t: { role: string | null }, role: string | null) =>
+  !role || !t.role || t.role === role || t.role === "both";
+// 위치를 고르면 포지션을 두 묶음으로 — 그 위치 기술이 더 많은 곳(내 자세) 먼저, 나머지(상대가 유리한 자세)는 아래에
+const ROLE_GROUPS: Record<string, [string, string]> = {
+  bottom: ["내가 다리로 상대를 막고 있었어요", "상대에게 눌려 있었어요"],
+  top: ["내가 상대를 누르고 있었어요", "상대 다리(가드) 안에 있었어요"],
+  standing: ["서 있었어요", "그 밖"],
+};
+const ROLE_MIN = 3; // 한 포지션에 그 위치 기술이 이만큼 있어야 그 위치에서 보인다(클린치 '위' 1개 같은 것 빼기)
 const KIND_CHIP: [string, string][] = [
   ["submission", "조르기 · 꺾기"],
   ["sweep", "뒤집기(스윕)"],
@@ -42,6 +59,7 @@ export function TechniquePicker({
   const [view, setView] = useState<View>({ kind: "grid" });
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState<string | null>(null); // 종류 칩 — null 이면 전체
+  const [role, setRole] = useState<string | null>(null); // 위치 칩 — null 이면 전체
   const [store, setStore] = useState<PickerStore | null>(null);
   const [failed, setFailed] = useState(false);
   const floating = useFloatingDialog(open);
@@ -67,6 +85,7 @@ export function TechniquePicker({
   function show() {
     setQuery("");
     setView({ kind: "grid" });
+    setRole(null);
     setFailed(false);
     setOpen(true);
   }
@@ -79,9 +98,27 @@ export function TechniquePicker({
   }
 
   const slug = view.kind === "position" ? view.slug : null;
-  const positions = store?.positions ?? null;
+  // 포지션 묶음 — 위치를 안 골랐으면 한 묶음(제목 없음), 골랐으면 [내 자세, 상대가 유리한 자세]
+  const groups = useMemo(() => {
+    if (!store) return null;
+    if (!role) return [{ title: "", list: store.positions }];
+    const mine: typeof store.positions = [];
+    const theirs: typeof store.positions = [];
+    for (const p of store.positions) {
+      const list = (store.byPosition.get(p.slug) ?? []).filter((t) => t.role);
+      const here = list.filter((t) => fits(t, role)).length;
+      if (here < ROLE_MIN) continue;
+      (here * 2 >= list.length ? mine : theirs).push(p);
+    }
+    const [a, b] = ROLE_GROUPS[role];
+    return [
+      { title: a, list: mine },
+      { title: b, list: theirs },
+    ].filter((g) => g.list.length);
+  }, [store, role]);
   const searchList = useMemo(() => (store && searching ? searchPicker(store, text) : []), [store, searching, text]);
-  const positionAll = slug && store ? (store.byPosition.get(slug) ?? []) : undefined;
+  const positionAll = slug && store ? (store.byPosition.get(slug) ?? []).filter((t) => fits(t, role)) : undefined;
+  const roleLabel = ROLE_CHIP.find(([r]) => r === role)?.[1];
   const kinds = positionAll ? KIND_CHIP.filter(([k]) => positionAll.some((t) => t.kind === k)) : [];
   const positionList = positionAll && kind ? positionAll.filter((t) => t.kind === kind) : positionAll;
   const loading = searching && !store;
@@ -151,7 +188,9 @@ export function TechniquePicker({
               </Button>
             )}
             <DialogTitle className="text-[17px] font-semibold">
-              {view.kind === "position" && !searching ? view.nameKo : "배운 기술 고르기"}
+              {view.kind === "position" && !searching
+                ? `${view.nameKo}${roleLabel ? ` · ${roleLabel}` : ""}`
+                : "배운 기술 고르기"}
             </DialogTitle>
             <Button
               variant="ghost"
@@ -245,68 +284,74 @@ export function TechniquePicker({
                 </ul>
               )
             ) : view.kind === "grid" ? (
-              positions ? (
+              groups ? (
                 <>
                   <p className="px-1 pb-2 text-[13px] font-medium text-muted-foreground break-keep">
-                    이름을 몰라도 괜찮아요 — 어디서 했는지 그림을 누르고, 무엇을 했는지 고르세요.
+                    이름을 몰라도 괜찮아요 — 어디였는지 고르고, 비슷한 그림을 누르세요.
                   </p>
-                  <ul className="grid grid-cols-3 gap-2">
-                    {positions.map((p) => (
-                      <li key={p.slug}>
-                        <button
-                          type="button"
-                          onClick={() => showPosition(p)}
-                          className="flex w-full flex-col items-center gap-1 rounded-xl p-1 text-center transition-colors hover:bg-muted"
-                        >
-                          <Image
-                            src={`/positions/${p.slug}.png`}
-                            alt=""
-                            width={PICKER_PICTURE}
-                            height={PICKER_PICTURE}
-                            className="aspect-square h-auto w-full rounded-xl bg-[#FAF9F4] ring-1 ring-border"
-                          />
-                          <span className="line-clamp-2 text-[12px] leading-tight font-medium break-keep">
-                            {p.nameKo}
-                          </span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                  <Chips
+                    title="나는 어디였어요?"
+                    label="내 위치"
+                    items={ROLE_CHIP}
+                    value={role}
+                    onChange={(r) => {
+                      setRole(r);
+                      scrollRef.current?.scrollTo(0, 0);
+                    }}
+                  />
+                  {groups.map((g) => (
+                    <section key={g.title} className="pb-2">
+                      {g.title && <h3 className="px-1 pt-1 pb-1 text-[13px] font-semibold">{g.title}</h3>}
+                      <ul className="flex flex-col gap-1">
+                        {g.list.map((p) => (
+                          <li key={p.slug}>
+                            <button
+                              type="button"
+                              onClick={() => showPosition(p)}
+                              className="flex w-full min-w-0 items-center gap-3 rounded-xl p-1.5 text-left transition-colors hover:bg-muted"
+                            >
+                              <Image
+                                src={`/positions/${p.slug}.png`}
+                                alt=""
+                                width={PICKER_PICTURE}
+                                height={PICKER_PICTURE}
+                                className="size-14 shrink-0 rounded-xl bg-[#FAF9F4] ring-1 ring-border"
+                              />
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-[15px] font-semibold">{p.nameKo}</span>
+                                {POSITION_PLAIN[p.slug] && (
+                                  <span className="line-clamp-2 text-[13px] leading-snug text-muted-foreground break-keep">
+                                    {POSITION_PLAIN[p.slug]}
+                                  </span>
+                                )}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ))}
                 </>
               ) : (
-                <div className="grid grid-cols-3 gap-2" aria-busy="true">
-                  {Array.from({ length: 9 }, (_, i) => (
-                    <Skeleton key={i} className="aspect-square w-full rounded-xl" />
+                <div className="flex flex-col gap-2" aria-busy="true">
+                  {Array.from({ length: 6 }, (_, i) => (
+                    <Skeleton key={i} className="h-16 w-full rounded-xl" />
                   ))}
                 </div>
               )
             ) : positionList ? (
               <>
                 {kinds.length > 1 && (
-                  <div className="pb-2">
-                    <p className="px-1 pb-1.5 text-[13px] font-medium text-muted-foreground">무엇을 했어요?</p>
-                    <div className="flex flex-wrap gap-1.5" role="group" aria-label="기술 종류">
-                      {[[null, "전체"] as const, ...kinds].map(([k, label]) => (
-                        <button
-                          key={label}
-                          type="button"
-                          aria-pressed={kind === k}
-                          onClick={() => {
-                            setKind(k);
-                            scrollRef.current?.scrollTo(0, 0);
-                          }}
-                          className={cn(
-                            "h-8 rounded-full border px-3 text-[13px] font-medium transition-colors",
-                            kind === k
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-border bg-card hover:bg-muted",
-                          )}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <Chips
+                    title="무엇을 했어요?"
+                    label="기술 종류"
+                    items={kinds}
+                    value={kind}
+                    onChange={(k) => {
+                      setKind(k);
+                      scrollRef.current?.scrollTo(0, 0);
+                    }}
+                  />
                 )}
                 <ul className="flex flex-col">
                   {positionList.map((t) => (
@@ -335,6 +380,45 @@ export function TechniquePicker({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+// 고르기 칩 줄 — 맨 앞 '전체'(null) + 항목들. 고른 칩은 먹색으로 채운다(DESIGN 기술 고르기)
+function Chips({
+  title,
+  label,
+  items,
+  value,
+  onChange,
+}: {
+  title: string;
+  label: string;
+  items: [string, string][];
+  value: string | null;
+  onChange: (v: string | null) => void;
+}) {
+  return (
+    <div className="pb-2">
+      <p className="px-1 pb-1.5 text-[13px] font-medium text-muted-foreground">{title}</p>
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label={label}>
+        {[[null, "전체"] as const, ...items].map(([k, text]) => (
+          <button
+            key={text}
+            type="button"
+            aria-pressed={value === k}
+            onClick={() => onChange(k)}
+            className={cn(
+              "h-8 rounded-full border px-3 text-[13px] font-medium transition-colors",
+              value === k
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-card hover:bg-muted",
+            )}
+          >
+            {text}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
