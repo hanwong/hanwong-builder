@@ -374,9 +374,22 @@ export function TechniquePicker({
             )}
           </div>
 
-          <Button className="h-12 w-full shrink-0 rounded-full text-base shadow-none" onClick={close}>
-            {count > 0 ? `다 골랐어요 (${count}개)` : "닫기"}
-          </Button>
+          <div className="flex shrink-0 gap-2">
+            {/* 포지션 안에서는 엄지 닿는 아래에도 뒤로 가기(본인 요청 2026-10-31 "뒤로 가기가 맨위에 있어서 찾기 힘들어") */}
+            {view.kind === "position" && !searching && (
+              <Button
+                variant="outline"
+                className="h-12 shrink-0 gap-1 rounded-full px-4 text-base shadow-none"
+                onClick={() => setView({ kind: "grid" })}
+              >
+                <ArrowLeft className="size-4" strokeWidth={2} aria-hidden />
+                다른 포지션
+              </Button>
+            )}
+            <Button className="h-12 min-w-0 flex-1 rounded-full text-base shadow-none" onClick={close}>
+              {count > 0 ? `다 골랐어요 (${count}개)` : "닫기"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </>
