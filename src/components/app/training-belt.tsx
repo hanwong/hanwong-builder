@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition, type CSSProperties } from "react";
+import Link from "next/link";
 import { Settings, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -44,8 +45,8 @@ export function TrainingBelt({
   const [belt, setBeltState] = useState<Belt>(initialBelt);
   const [startedOn, setStartedOnState] = useState(initialStartedOn);
   const [picking, setPicking] = useState(false);
-  // 벨트 물결(D-65) — 이 탭에서 홈을 처음 열 때 한 번 + 띠를 누를 때마다. 번호를 바꿔 다시 돈다
-  const [wave, setWave] = useState(() => (wavePlayed ? 0 : 1));
+  // 벨트 물결(D-65) — 이 탭에서 홈을 처음 열 때 한 번(띠를 누르면 기록 달력으로 가서 다시 돌리지 않음, D-99)
+  const [wave] = useState(() => (wavePlayed ? 0 : 1));
   useEffect(() => {
     wavePlayed = true;
   }, []);
@@ -109,20 +110,17 @@ export function TrainingBelt({
           <Settings />
         </Button>
       </div>
-      {/* 벨트: 바깥 = 벨트 색, 위아래는 높이의 약 1%(≈ 너비의 0.17%) */}
-      <div
-        className="cursor-pointer rounded-[3px] outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      {/* 벨트: 바깥 = 벨트 색, 위아래는 높이의 약 1%(≈ 너비의 0.17%). 누르면 기록 달력(D-99) */}
+      <Link
+        href="/app/logs?view=cal"
+        className="block rounded-[3px] outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50"
         style={{
           backgroundColor: color,
           padding: "max(1px, 0.17%) 5%",
           // 화이트는 크림 바탕에 묻혀서 벨트 전체에 테두리(D-35)
           boxShadow: belt === "white" ? `0 0 0 1px ${BELT_WHITE_EDGE}` : undefined,
         }}
-        role="button"
-        tabIndex={0}
-        aria-label={`${label} 벨트, 최근 2년 동안 ${total}번 수련 — 누르면 물결`}
-        onClick={() => setWave((n) => n + 1)}
-        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setWave((n) => n + 1))}
+        aria-label={`${label} 벨트, 최근 2년 동안 ${total}번 수련 — 누르면 기록 달력`}
       >
         <div
           className="grid gap-[2px] p-[3px]"
@@ -135,7 +133,7 @@ export function TrainingBelt({
           }}
         >
           {/* 칸들이 세로줄(주) 단위로 밝아졌다 돌아오며 왼쪽에서 오른쪽으로 지나간다(D-65).
-              같은 세로줄 4칸은 같은 시각에 같은 정도로. key 에 물결 번호를 넣어 누를 때마다 처음부터 다시 */}
+              같은 세로줄 4칸은 같은 시각에 같은 정도로 */}
           {weeks.map((w, i) => (
             <span
               key={`${wave}-${w.start}`}
@@ -151,7 +149,7 @@ export function TrainingBelt({
             />
           ))}
         </div>
-      </div>
+      </Link>
 
       <div className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-1 text-[12px] font-medium text-muted-foreground" aria-hidden>
