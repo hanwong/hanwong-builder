@@ -1,7 +1,14 @@
 import "server-only";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { loadLibrary, type Concept, type Library, type Position, type PositionNote, type Technique } from "@/lib/mcp/library";
+import {
+  loadLibrary,
+  type Concept,
+  type Library,
+  type Position,
+  type PositionNote,
+  type Technique,
+} from "@/lib/mcp/library";
 import { linksOf, withLinks } from "@/lib/mcp/links";
 import { AI_NOTICE } from "@/lib/ai-notice";
 
@@ -33,23 +40,61 @@ const KIND_KO: Record<string, string> = {
 const ROLE_KO: Record<string, string> = { top: "위", bottom: "아래", standing: "서서", both: "위 · 아래" };
 
 const norm = (s: string) => s.toLowerCase().replace(/[\s·\-_()/,.]+/g, "");
-const STOP = new Set(["방법", "어떻게", "알려줘", "알려", "하는", "하는법", "법", "좀", "에서", "때", "할", "수", "있는", "뭐", "기술", "how", "to", "the", "from", "in"]);
+const STOP = new Set([
+  "방법",
+  "어떻게",
+  "알려줘",
+  "알려",
+  "하는",
+  "하는법",
+  "법",
+  "좀",
+  "에서",
+  "때",
+  "할",
+  "수",
+  "있는",
+  "뭐",
+  "기술",
+  "how",
+  "to",
+  "the",
+  "from",
+  "in",
+]);
 const DEFENSE_WORDS = ["방어", "막", "막는", "막기", "대처", "카운터", "탈출", "빠져"];
 
+// 한 글자라도 포지션 이름이면 남긴다("백 탈출") · 줄임말은 풀어서(D-104 빈 곳 찾기)
+const SHORT = new Set(["백"]);
+const SLANG: [RegExp, string][] = [[/크페/g, "크로스페이스"]];
+
 function tokens(q: string): string[] {
-  return q
+  let s = q.replace(/(^|\s)([a-zA-Z])\s+(?=[가-힣a-zA-Z])/g, "$1$2"); // "K 가드" → "K가드"
+  for (const [re, to] of SLANG) s = s.replace(re, to);
+  return s
     .split(/[\s,?!.]+/)
     .map((w) => w.replace(/(을|를|이|가|은|는|에서|에|으로|로|하는|할때|때)$/u, ""))
     .map(norm)
-    .filter((w) => w.length >= 2 && !STOP.has(w));
+    .filter((w) => (w.length >= 2 || SHORT.has(w)) && !STOP.has(w));
 }
 
-const GUARDS = ["closed-guard", "open-guard", "butterfly-guard", "de-la-riva", "spider-lasso", "lapel-guard", "x-guard", "half-guard", "deep-half"];
+const GUARDS = [
+  "closed-guard",
+  "open-guard",
+  "butterfly-guard",
+  "de-la-riva",
+  "spider-lasso",
+  "lapel-guard",
+  "x-guard",
+  "half-guard",
+  "deep-half",
+];
 
 /** "가드" 처럼 여러 포지션을 뜻하는 말은 묶음으로(경로 찾기 도착지). 아니면 포지션 하나. */
 function resolvePositionSet(lib: Library, q: string): Position[] {
   const n = norm(q);
-  if (["가드", "guard", "아무가드", "가드회복"].includes(n)) return GUARDS.map((s) => lib.posBySlug.get(s)!).filter(Boolean);
+  if (["가드", "guard", "아무가드", "가드회복"].includes(n))
+    return GUARDS.map((s) => lib.posBySlug.get(s)!).filter(Boolean);
   const p = resolvePosition(lib, q);
   return p ? [p] : [];
 }
@@ -58,19 +103,60 @@ function resolvePosition(lib: Library, q: string): Position | null {
   const n = norm(q);
   if (!n) return null;
   const alias: Record<string, string> = {
-    백: "back-control", 백컨트롤: "back-control", 사이드: "side-control", 하프: "half-guard", 하프가드: "half-guard",
-    딥하프: "deep-half", 클로즈드: "closed-guard", 풀가드: "closed-guard", 마운트: "mount", 남북: "north-south",
-    노스사우스: "north-south", 터틀: "turtle", 거북: "turtle", 니온밸리: "knee-on-belly", 곁누르기: "kesa-gatame",
-    케사: "kesa-gatame", 스탠딩: "standing", 서서: "standing", 테이크다운: "standing", 클린치: "clinch",
-    가드풀링: "clinch", 패스: "passing", 오픈가드: "open-guard", 버터플라이: "butterfly-guard", 데라히바: "de-la-riva",
-    스파이더: "spider-lasso", 라쏘: "spider-lasso", 라펠: "lapel-guard", x가드: "x-guard", 프론트헤드락: "front-headlock",
-    길로틴: "front-headlock", 서브미션: "submission-control",
-    가드: "closed-guard", 클로즈드가드: "closed-guard", 클로즈가드: "closed-guard",
-    버터플라이가드: "butterfly-guard", 데라히바가드: "de-la-riva", 리버스데라히바: "de-la-riva", 리버스데라히바가드: "de-la-riva",
-    dlr: "de-la-riva", 스파이더가드: "spider-lasso", 라쏘가드: "spider-lasso", 소매가드: "spider-lasso", 라펠가드: "lapel-guard",
-    엑스가드: "x-guard", 싱글레그x: "x-guard", slx: "x-guard", 딥하프가드: "deep-half", 백마운트: "back-control",
-    가드패스: "passing", 사이드컨트롤: "side-control", 니온벨리: "knee-on-belly",
-    크루시픽스: "turtle", 가드풀: "clinch",
+    백: "back-control",
+    백컨트롤: "back-control",
+    사이드: "side-control",
+    하프: "half-guard",
+    하프가드: "half-guard",
+    딥하프: "deep-half",
+    클로즈드: "closed-guard",
+    풀가드: "closed-guard",
+    마운트: "mount",
+    남북: "north-south",
+    노스사우스: "north-south",
+    터틀: "turtle",
+    거북: "turtle",
+    니온밸리: "knee-on-belly",
+    곁누르기: "kesa-gatame",
+    케사: "kesa-gatame",
+    스탠딩: "standing",
+    서서: "standing",
+    테이크다운: "standing",
+    클린치: "clinch",
+    가드풀링: "clinch",
+    패스: "passing",
+    오픈가드: "open-guard",
+    버터플라이: "butterfly-guard",
+    데라히바: "de-la-riva",
+    스파이더: "spider-lasso",
+    라쏘: "spider-lasso",
+    라펠: "lapel-guard",
+    x가드: "x-guard",
+    프론트헤드락: "front-headlock",
+    길로틴: "front-headlock",
+    서브미션: "submission-control",
+    가드: "closed-guard",
+    클로즈드가드: "closed-guard",
+    클로즈가드: "closed-guard",
+    버터플라이가드: "butterfly-guard",
+    데라히바가드: "de-la-riva",
+    리버스데라히바: "de-la-riva",
+    리버스데라히바가드: "de-la-riva",
+    dlr: "de-la-riva",
+    스파이더가드: "spider-lasso",
+    라쏘가드: "spider-lasso",
+    소매가드: "spider-lasso",
+    라펠가드: "lapel-guard",
+    엑스가드: "x-guard",
+    싱글레그x: "x-guard",
+    slx: "x-guard",
+    딥하프가드: "deep-half",
+    백마운트: "back-control",
+    가드패스: "passing",
+    사이드컨트롤: "side-control",
+    니온벨리: "knee-on-belly",
+    크루시픽스: "turtle",
+    가드풀: "clinch",
   };
   if (alias[n]) return lib.posBySlug.get(alias[n]) ?? null;
   const exact = lib.positions.find((p) => p.slug === q || norm(p.nameKo) === n || norm(p.nameEn) === n);
@@ -89,7 +175,9 @@ function resolveTechnique(lib: Library, q: string): Technique | { candidates: Te
   const n = norm(q);
   const bySlug = lib.bySlug.get(q.trim());
   if (bySlug) return bySlug;
-  const exact = lib.techniques.find((t) => norm(t.nameKo) === n || norm(t.nameEn) === n || t.aliases.some((a) => norm(a) === n));
+  const exact = lib.techniques.find(
+    (t) => norm(t.nameKo) === n || norm(t.nameEn) === n || t.aliases.some((a) => norm(a) === n),
+  );
   if (exact) return exact;
   const hits = search(lib, q).map((h) => h.t);
   if (hits.length === 1) return hits[0];
@@ -103,11 +191,17 @@ function search(lib: Library, q: string): Hit[] {
   if (!toks.length) return [];
   const posToks = toks.map((w) => resolvePosition(lib, w)?.slug ?? null);
   const wantsDefense = toks.some((w) => DEFENSE_WORDS.some((d) => w.startsWith(d)));
+  const whole = norm(q);
   const hits: Hit[] = [];
   for (const t of lib.techniques) {
     const name = norm(t.nameKo);
     const en = norm(t.nameEn);
     const al = t.aliases.map(norm);
+    // 질문 전체가 이름 · 다른 이름과 같으면 맨 앞에("백 탈출" = 백 이스케이프의 다른 이름)
+    if (name === whole || en === whole || al.includes(whole)) {
+      hits.push({ t, score: 1000, snippet: "", full: true } as Hit & { full: boolean });
+      continue;
+    }
     const fields: [string, string[]][] = [
       ["방어", t.defense],
       ["세팅", t.steps],
@@ -141,8 +235,11 @@ function search(lib: Library, q: string): Hit[] {
     });
     if (!score) continue;
     if (wantsDefense && t.defense.length) score += 5;
+    if (wantsDefense && (t.kind === "escape" || t.kind === "defense")) score += 25; // "탈출 · 막기" 를 물으면 탈출 · 방어 기술을 먼저
     if (posToks.includes(t.position)) score += 15; // 질문에 나온 포지션의 기술을 먼저
-    hits.push({ t, score: matchedAll ? score : Math.floor(score / 3), snippet, full: matchedAll } as Hit & { full: boolean });
+    hits.push({ t, score: matchedAll ? score : Math.floor(score / 3), snippet, full: matchedAll } as Hit & {
+      full: boolean;
+    });
   }
   // 모든 낱말이 맞은 카드가 있으면 그것만 — 일부만 맞은 카드는 뺀다
   const full = (hits as (Hit & { full: boolean })[]).filter((h) => h.full);
@@ -174,19 +271,26 @@ function searchExtra(lib: Library, q: string): string[] {
     toks.forEach((w, i) => {
       if (posHit[i]) return void (s += 15);
       const l = lines.find((x) => norm(x).includes(w));
-      if (l) (s += 10), (hitLine ||= l);
+      if (l) ((s += 10), (hitLine ||= l));
       else s -= 1000;
     });
-    if (s > 0 && hitLine) out.push({ s, line: `- 포지션 노트: ${p.nameKo} ${ROLE_NOTE[n.role]} [포지션 ${p.slug}]\n  ↳ ${hitLine}` });
+    if (s > 0 && hitLine)
+      out.push({ s, line: `- 포지션 노트: ${p.nameKo} ${ROLE_NOTE[n.role]} [포지션 ${p.slug}]\n  ↳ ${hitLine}` });
   }
-  return out.sort((a, b) => b.s - a.s).slice(0, 5).map((x) => x.line);
+  return out
+    .sort((a, b) => b.s - a.s)
+    .slice(0, 5)
+    .map((x) => x.line);
 }
 
 function resolveConcept(lib: Library, q: string): Concept | { candidates: Concept[] } {
   const n = norm(q);
-  const exact = lib.conceptBySlug.get(q.trim()) ?? lib.concepts.find((c) => norm(c.nameKo) === n || norm(c.nameEn) === n);
+  const exact =
+    lib.conceptBySlug.get(q.trim()) ?? lib.concepts.find((c) => norm(c.nameKo) === n || norm(c.nameEn) === n);
   if (exact) return exact;
-  const part = lib.concepts.filter((c) => norm(c.nameKo).includes(n) || norm(c.nameEn).includes(n) || n.includes(norm(c.nameKo)));
+  const part = lib.concepts.filter(
+    (c) => norm(c.nameKo).includes(n) || norm(c.nameEn).includes(n) || n.includes(norm(c.nameKo)),
+  );
   if (part.length === 1) return part[0];
   // 표기가 조금 달라도(쉼표 · 조사 · 괄호) 낱말이 이름에 많이 겹치는 카드로 — "포지션 먼저 서브미션 나중"
   const toks = tokens(q);
@@ -258,10 +362,20 @@ function renderTechnique(lib: Library, t: Technique, requested: "attacker" | "de
     if (t.ifBlocked.length) {
       out.push(`## 막히면\n${bullet(t.ifBlocked.map((l) => withLinks(lib, l)))}`);
       // 이어지는 기술을 한 번 더 부르지 않아도 하는 법의 뼈대가 보이게 — 기술마다 핵심 한 줄
-      const next = [...new Map(t.ifBlocked.flatMap((l) => linksOf(lib, l)).filter((k) => k.kind === "technique" && k.slug !== t.slug).map((k) => [k.slug, lib.bySlug.get(k.slug)!])).values()]
+      const next = [
+        ...new Map(
+          t.ifBlocked
+            .flatMap((l) => linksOf(lib, l))
+            .filter((k) => k.kind === "technique" && k.slug !== t.slug)
+            .map((k) => [k.slug, lib.bySlug.get(k.slug)!]),
+        ).values(),
+      ]
         .filter(Boolean)
         .slice(0, 4);
-      if (next.length) out.push(`### 이어지는 기술 한눈에\n${bullet(next.map((x) => `${x.nameKo} [${x.slug}] — ${x.keyPoints[0] ?? x.steps.slice(0, 2).join(" → ")}`))}`);
+      if (next.length)
+        out.push(
+          `### 이어지는 기술 한눈에\n${bullet(next.map((x) => `${x.nameKo} [${x.slug}] — ${x.keyPoints[0] ?? x.steps.slice(0, 2).join(" → ")}`))}`,
+        );
     }
   }
   if (perspective !== "attacker") {
@@ -296,9 +410,9 @@ export function createServer(): McpServer {
     {
       title: "기술 찾기",
       description:
-        "한국어 · 영어 이름, 다른 이름, 포지션 이름, 그리고 세팅 과정 · 핵심 · 막히면 · 방어 내용, 개념 카드 · 포지션 노트까지 찾는다. 질문 낱말을 그대로 넣어도 된다(예: \"하프가드 크로스페이스 방어\").",
+        '한국어 · 영어 이름, 다른 이름, 포지션 이름, 그리고 세팅 과정 · 핵심 · 막히면 · 방어 내용, 개념 카드 · 포지션 노트까지 찾는다. 질문 낱말을 그대로 넣어도 된다(예: "하프가드 크로스페이스 방어").',
       inputSchema: {
-        query: z.string().min(1).describe("찾을 말. 예: \"올드 스쿨\", \"하프가드 크로스페이스 방어\", \"kimura\""),
+        query: z.string().min(1).describe('찾을 말. 예: "올드 스쿨", "하프가드 크로스페이스 방어", "kimura"'),
         limit: z.number().int().min(1).max(30).optional().describe("최대 개수(기본 10)"),
       },
       annotations: readOnly,
@@ -307,7 +421,9 @@ export function createServer(): McpServer {
       const hits = search(lib, query);
       const extra = searchExtra(lib, query);
       if (!hits.length && !extra.length) return text(`"${query}" 에 맞는 기술이 없어요. 다른 낱말로 찾아보세요.`);
-      const lines = hits.slice(0, limit).map((h) => `- ${label(lib, h.t)} [${h.t.slug}]${h.snippet ? `\n  ↳ ${h.snippet}` : ""}`);
+      const lines = hits
+        .slice(0, limit)
+        .map((h) => `- ${label(lib, h.t)} [${h.t.slug}]${h.snippet ? `\n  ↳ ${h.snippet}` : ""}`);
       const parts = [`"${query}" — 기술 ${hits.length}개`, ...lines];
       if (extra.length) parts.push("", "개념 · 포지션 노트:", ...extra);
       return text(parts.join("\n"));
@@ -318,13 +434,16 @@ export function createServer(): McpServer {
     "rereroll_get_technique",
     {
       title: "기술 자세히",
-      description: "기술 하나의 세팅 과정 · 핵심 디테일 · 흔한 실수 · 막히면 · 방어하는 쪽(상대 입장)을 보여 준다. 오른손잡이 기준.",
+      description:
+        "기술 하나의 세팅 과정 · 핵심 디테일 · 흔한 실수 · 막히면 · 방어하는 쪽(상대 입장)을 보여 준다. 오른손잡이 기준.",
       inputSchema: {
-        name: z.string().min(1).describe("기술 이름 또는 slug. 예: \"올드 스쿨 스윕\", \"half-guard-pass\""),
+        name: z.string().min(1).describe('기술 이름 또는 slug. 예: "올드 스쿨 스윕", "half-guard-pass"'),
         perspective: z
           .enum(["attacker", "defender", "both"])
           .optional()
-          .describe("attacker = 이 기술을 쓰는 사람의 방법, defender = 이 기술을 당하는 상대가 막는 법, both(기본). 탈출 · 방어 기술은 그 자체가 막는 법이라 attacker 쪽이 답"),
+          .describe(
+            "attacker = 이 기술을 쓰는 사람의 방법, defender = 이 기술을 당하는 상대가 막는 법, both(기본). 탈출 · 방어 기술은 그 자체가 막는 법이라 attacker 쪽이 답",
+          ),
       },
       annotations: readOnly,
     },
@@ -332,7 +451,9 @@ export function createServer(): McpServer {
       const r = resolveTechnique(lib, name);
       if ("candidates" in r) {
         if (!r.candidates.length) return fail(`"${name}" 기술을 찾지 못했어요. rereroll_search 로 먼저 찾아보세요.`);
-        return text(`"${name}" 후보가 여러 개예요:\n${r.candidates.map((t) => `- ${label(lib, t)} [${t.slug}]`).join("\n")}`);
+        return text(
+          `"${name}" 후보가 여러 개예요:\n${r.candidates.map((t) => `- ${label(lib, t)} [${t.slug}]`).join("\n")}`,
+        );
       }
       return text(renderTechnique(lib, r, perspective));
     }),
@@ -344,9 +465,14 @@ export function createServer(): McpServer {
       title: "포지션에서 할 수 있는 것",
       description: "포지션 하나에서 시작하는 기술 목록. 위 · 아래(role)와 종류(kind)로 거를 수 있다.",
       inputSchema: {
-        position: z.string().min(1).describe("포지션 이름 또는 slug. 예: \"하프가드\", \"백\", \"side-control\""),
+        position: z.string().min(1).describe('포지션 이름 또는 slug. 예: "하프가드", "백", "side-control"'),
         role: z.enum(["top", "bottom", "standing"]).optional().describe("위 · 아래 · 서서"),
-        kind: kinds.optional().describe("종류: " + Object.entries(KIND_KO).map(([k, v]) => `${k}=${v}`).join(", ")),
+        kind: kinds.optional().describe(
+          "종류: " +
+            Object.entries(KIND_KO)
+              .map(([k, v]) => `${k}=${v}`)
+              .join(", "),
+        ),
       },
       annotations: readOnly,
     },
@@ -357,7 +483,9 @@ export function createServer(): McpServer {
         (t) => t.position === p.slug && (!role || t.role === role || t.role === "both") && (!kind || t.kind === kind),
       );
       if (!list.length) return text(`${p.nameKo} 에서 조건에 맞는 기술이 없어요.`);
-      return text(`${p.nameKo} — ${list.length}개${p.summary ? ` · ${p.summary}` : ""}\n${list.map((t) => `- ${label(lib, t)} [${t.slug}]`).join("\n")}\n\n${NOTICE}`);
+      return text(
+        `${p.nameKo} — ${list.length}개${p.summary ? ` · ${p.summary}` : ""}\n${list.map((t) => `- ${label(lib, t)} [${t.slug}]`).join("\n")}\n\n${NOTICE}`,
+      );
     }),
   );
 
@@ -365,50 +493,78 @@ export function createServer(): McpServer {
     "rereroll_find_paths",
     {
       title: "포지션 A → B 가는 길",
-      description: "출발 포지션에서 도착 포지션까지, 성공하면 이어지는 기술들로 가는 짧은 경로 몇 개.",
+      description:
+        '출발 포지션에서 도착 포지션까지, 성공하면 이어지는 기술들로 가는 짧은 경로 몇 개. 도착을 "서브미션" 으로 주면 탭으로 끝나는 길.',
       inputSchema: {
-        from: z.string().min(1).describe("출발 포지션. 예: \"하프가드\""),
-        to: z.string().min(1).describe("도착 포지션. 예: \"백\""),
+        from: z.string().min(1).describe('출발 포지션. 예: "하프가드"'),
+        to: z.string().min(1).describe('도착 포지션. 예: "백", "서브미션"(탭으로 끝나는 길)'),
         max_steps: z.number().int().min(1).max(4).optional().describe("최대 기술 수(기본 3)"),
         limit: z.number().int().min(1).max(10).optional().describe("경로 개수(기본 5)"),
       },
       annotations: readOnly,
     },
-    guard((lib, { from, to, max_steps = 3, limit = 5 }: { from: string; to: string; max_steps?: number; limit?: number }) => {
-      const a = resolvePosition(lib, from);
-      const bs = resolvePositionSet(lib, to);
-      if (!a || !bs.length) return fail(`포지션을 찾지 못했어요: ${!a ? from : to}`);
-      const goal = new Set(bs.map((p) => p.slug));
-      const b = { nameKo: bs.length > 1 ? `가드(${bs.map((p) => p.nameKo).join(" · ")})` : bs[0].nameKo };
-      // 방어 기술(위저 등)은 상대 공격을 막는 동작이라 길로 쓰지 않는다
-      const edges = new Map<string, Technique[]>();
-      for (const t of lib.techniques)
-        if (t.kind !== "defense") for (const e of t.endsAt) if (e !== t.position) (edges.get(t.position) ?? edges.set(t.position, []).get(t.position)!).push(t);
-      const paths: Technique[][] = [];
-      const seen = new Set<string>(); // 같은 기술 순서는 한 번만
-      let frontier: { at: string; path: Technique[] }[] = [{ at: a.slug, path: [] }];
-      for (let d = 0; d < max_steps && paths.length < limit; d++) {
-        const next: typeof frontier = [];
-        for (const f of frontier) {
-          for (const t of edges.get(f.at) ?? []) {
-            for (const e of t.endsAt) {
-              if (f.path.some((x) => x.position === e) || e === a.slug) continue;
-              const path = [...f.path, t];
-              if (goal.has(e)) {
-                const key = path.map((x) => x.slug).join(">");
-                if (paths.length < limit && !seen.has(key)) (seen.add(key), paths.push(path));
-              } else next.push({ at: e, path });
+    guard(
+      (
+        lib,
+        { from, to, max_steps = 3, limit = 5 }: { from: string; to: string; max_steps?: number; limit?: number },
+      ) => {
+        const a = resolvePosition(lib, from);
+        // "서브미션" 이 도착이면 서브미션 기술이 '탭' 으로 가는 길이 된다(D-104)
+        const TAP = "__tap";
+        const toTap = ["서브미션", "submission", "탭", "피니시", "마무리"].includes(norm(to));
+        const bs = toTap ? [] : resolvePositionSet(lib, to);
+        if (!a || (!toTap && !bs.length)) return fail(`포지션을 찾지 못했어요: ${!a ? from : to}`);
+        const goal = new Set(toTap ? [TAP] : bs.map((p) => p.slug));
+        const b = {
+          nameKo: toTap
+            ? "서브미션(탭)"
+            : bs.length > 1
+              ? `가드(${bs.map((p) => p.nameKo).join(" · ")})`
+              : bs[0].nameKo,
+        };
+        const ends = (t: Technique) => (toTap && t.kind === "submission" ? [TAP] : t.endsAt);
+        // 방어 기술(위저 등)은 상대 공격을 막는 동작이라 길로 쓰지 않는다
+        const edges = new Map<string, Technique[]>();
+        for (const t of lib.techniques)
+          if (t.kind !== "defense")
+            for (const e of ends(t))
+              if (e !== t.position) (edges.get(t.position) ?? edges.set(t.position, []).get(t.position)!).push(t);
+        const paths: Technique[][] = [];
+        const seen = new Set<string>(); // 같은 기술 순서는 한 번만
+        let frontier: { at: string; path: Technique[] }[] = [{ at: a.slug, path: [] }];
+        for (let d = 0; d < max_steps && paths.length < limit; d++) {
+          const next: typeof frontier = [];
+          for (const f of frontier) {
+            for (const t of edges.get(f.at) ?? []) {
+              for (const e of ends(t)) {
+                if (f.path.some((x) => x.position === e) || e === a.slug) continue;
+                const path = [...f.path, t];
+                if (goal.has(e)) {
+                  const key = path.map((x) => x.slug).join(">");
+                  if (paths.length < limit && !seen.has(key)) (seen.add(key), paths.push(path));
+                } else next.push({ at: e, path });
+              }
             }
           }
+          frontier = next.slice(0, 400);
         }
-        frontier = next.slice(0, 400);
-      }
-      if (!paths.length) return text(`${a.nameKo} → ${b.nameKo}: ${max_steps}단계 안의 경로를 찾지 못했어요.`);
-      const lines = paths.map(
-        (p, i) => `${i + 1}. ${p.map((t) => `${t.nameKo}(${lib.posBySlug.get(t.position)?.nameKo} → ${t.endsAt.map((s) => lib.posBySlug.get(s)?.nameKo).join("/")})`).join(" ⟶ ")}`,
-      );
-      return text(`${a.nameKo} → ${b.nameKo}\n${lines.join("\n")}\n\n자세한 방법은 rereroll_get_technique 로.\n${NOTICE}`);
-    }),
+        if (!paths.length) return text(`${a.nameKo} → ${b.nameKo}: ${max_steps}단계 안의 경로를 찾지 못했어요.`);
+        const lines = paths.map(
+          (p, i) =>
+            `${i + 1}. ${p
+              .map(
+                (t) =>
+                  `${t.nameKo}(${lib.posBySlug.get(t.position)?.nameKo} → ${ends(t)
+                    .map((s) => (s === TAP ? "탭" : lib.posBySlug.get(s)?.nameKo))
+                    .join("/")})`,
+              )
+              .join(" ⟶ ")}`,
+        );
+        return text(
+          `${a.nameKo} → ${b.nameKo}\n${lines.join("\n")}\n\n자세한 방법은 rereroll_get_technique 로.\n${NOTICE}`,
+        );
+      },
+    ),
   );
 
   server.registerTool(
@@ -416,17 +572,22 @@ export function createServer(): McpServer {
     {
       title: "포지션 자세히",
       description:
-        "포지션 하나의 설명 · 갈래(변형)와, 위 · 아래(서서) 각각의 목표 · 핵심 · \"상대가 ~하면 → 기술\" · 흔한 실수 · 드릴. \"여기서 뭘 해야 해?\" 에 먼저 쓴다. 오른손잡이 기준.",
+        '포지션 하나의 설명 · 갈래(변형)와, 위 · 아래(서서) 각각의 목표 · 핵심 · "상대가 ~하면 → 기술" · 흔한 실수 · 드릴. "여기서 뭘 해야 해?" 에 먼저 쓴다. 오른손잡이 기준.',
       inputSchema: {
-        position: z.string().min(1).describe("포지션 이름 또는 slug. 예: \"하프가드\", \"사이드\", \"mount\""),
-        role: z.enum(["top", "bottom", "both"]).optional().describe("위 · 아래 · 둘 다(기본). 스탠딩 · 클린치는 하나뿐"),
+        position: z.string().min(1).describe('포지션 이름 또는 slug. 예: "하프가드", "사이드", "mount"'),
+        role: z
+          .enum(["top", "bottom", "both"])
+          .optional()
+          .describe("위 · 아래 · 둘 다(기본). 스탠딩 · 클린치는 하나뿐"),
       },
       annotations: readOnly,
     },
     guard((lib, { position, role = "both" }: { position: string; role?: "top" | "bottom" | "both" }) => {
       const p = resolvePosition(lib, position);
       if (!p) return fail(`"${position}" 포지션을 찾지 못했어요. rereroll_list_positions 로 목록을 보세요.`);
-      const notes = lib.notes.filter((n) => n.position === p.slug && (role === "both" || n.role === role || n.role === "standing"));
+      const notes = lib.notes.filter(
+        (n) => n.position === p.slug && (role === "both" || n.role === role || n.role === "standing"),
+      );
       const count = lib.techniques.filter((t) => t.position === p.slug).length;
       const out = [
         `# ${p.nameKo} (${p.nameEn})`,
@@ -447,14 +608,19 @@ export function createServer(): McpServer {
       title: "개념 · 원리 자세히",
       description:
         "프레임 · 베이스 · 언더훅 · 압박 · 쿠즈시 · 포지션 서열 같은 원리, 포지션 스파링 · 지면서 배우기 같은 공부법 카드 하나. 무엇 · 왜 · 어떻게 · 흔한 오해 · 어디서 쓰나 · 관련 기술.",
-      inputSchema: { name: z.string().min(1).describe("개념 이름 또는 slug. 예: \"프레임\", \"언더훅\", \"positional-sparring\"") },
+      inputSchema: {
+        name: z.string().min(1).describe('개념 이름 또는 slug. 예: "프레임", "언더훅", "positional-sparring"'),
+      },
       annotations: readOnly,
     },
     guard((lib, { name }: { name: string }) => {
       const r = resolveConcept(lib, name);
       if ("candidates" in r) {
-        if (!r.candidates.length) return fail(`"${name}" 개념을 찾지 못했어요. rereroll_list_concepts 로 목록을 보세요.`);
-        return text(`"${name}" 후보:\n${r.candidates.map((c) => `- ${c.nameKo} (${c.nameEn}) [${c.slug}] — ${c.summary}`).join("\n")}`);
+        if (!r.candidates.length)
+          return fail(`"${name}" 개념을 찾지 못했어요. rereroll_list_concepts 로 목록을 보세요.`);
+        return text(
+          `"${name}" 후보:\n${r.candidates.map((c) => `- ${c.nameKo} (${c.nameEn}) [${c.slug}] — ${c.summary}`).join("\n")}`,
+        );
       }
       return text(renderConcept(lib, r));
     }),
@@ -465,7 +631,9 @@ export function createServer(): McpServer {
     {
       title: "개념 목록",
       description: "원리(몸 쓰는 법) · 공부법(훈련 · 마음가짐) 카드 목록과 한 줄 설명.",
-      inputSchema: { kind: z.enum(["principle", "learning"]).optional().describe("principle=원리 · learning=공부법(기본 둘 다)") },
+      inputSchema: {
+        kind: z.enum(["principle", "learning"]).optional().describe("principle=원리 · learning=공부법(기본 둘 다)"),
+      },
       annotations: readOnly,
     },
     guard((lib, { kind }: { kind?: "principle" | "learning" }) => {
@@ -473,7 +641,9 @@ export function createServer(): McpServer {
       if (!list.length) return text("아직 개념 카드가 없어요.");
       const group = (k: Concept["kind"], title: string) => {
         const g = list.filter((c) => c.kind === k);
-        return g.length ? `## ${title} ${g.length}개\n${g.map((c) => `- ${c.nameKo} [${c.slug}] — ${c.summary}`).join("\n")}` : "";
+        return g.length
+          ? `## ${title} ${g.length}개\n${g.map((c) => `- ${c.nameKo} [${c.slug}] — ${c.summary}`).join("\n")}`
+          : "";
       };
       return text([group("principle", "원리"), group("learning", "공부법"), NOTICE].filter(Boolean).join("\n\n"));
     }),
@@ -490,7 +660,14 @@ export function createServer(): McpServer {
     guard((lib) => {
       const n = new Map<string, number>();
       for (const t of lib.techniques) n.set(t.position, (n.get(t.position) ?? 0) + 1);
-      return text(lib.positions.map((p) => `- ${p.nameKo} (${p.nameEn}) [${p.slug}] — ${n.get(p.slug) ?? 0}개${p.summary ? ` · ${p.summary}` : ""}`).join("\n") + `\n\n${NOTICE}`);
+      return text(
+        lib.positions
+          .map(
+            (p) =>
+              `- ${p.nameKo} (${p.nameEn}) [${p.slug}] — ${n.get(p.slug) ?? 0}개${p.summary ? ` · ${p.summary}` : ""}`,
+          )
+          .join("\n") + `\n\n${NOTICE}`,
+      );
     }),
   );
 
