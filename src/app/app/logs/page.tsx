@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LogList } from "@/components/app/log-list";
 import { LogsCalendar } from "@/components/app/logs-calendar";
-import { LogsView, ViewSwitch } from "@/components/app/logs-view";
+import { LogsShell, ViewSkeleton, ViewSwitch } from "@/components/app/logs-view";
 import { getLogs, getLogsInMonth, LOGS_PAGE } from "@/lib/logs-data";
 import { seoulToday } from "@/lib/seoul-date";
 import { createSupabaseServer } from "@/lib/supabase/server";
@@ -29,6 +29,7 @@ export default function LogsPage({ searchParams }: { searchParams: Params }) {
           <AskButton />
         </Suspense>
       </div>
+      {/* 기본 화면 두 개는 주소를 읽지 않아 미리 받기에 들어간다 — 탭을 누르면 바로(2026-11-01) */}
       <Suspense
         fallback={
           <>
@@ -37,7 +38,23 @@ export default function LogsPage({ searchParams }: { searchParams: Params }) {
           </>
         }
       >
-        <Content searchParams={searchParams} />
+        <LogsShell
+          defaultList={
+            <Suspense fallback={<LogsSkeleton />}>
+              <Loader />
+            </Suspense>
+          }
+          defaultCal={
+            <Suspense fallback={<CalendarSkeleton />}>
+              <CalendarLoader />
+            </Suspense>
+          }
+          urlContent={
+            <Suspense fallback={<ViewSkeleton list={<LogsSkeleton />} cal={<CalendarSkeleton />} />}>
+              <Content searchParams={searchParams} />
+            </Suspense>
+          }
+        />
       </Suspense>
     </div>
   );
@@ -57,17 +74,12 @@ async function AskButton() {
   );
 }
 
-// 버튼 · 달 넘기기는 누르는 즉시 화면이 바뀌고(LogsView · LogsCalendar), 같은 Suspense 안이라 데이터가 올 때까지 그 화면을 유지
+// 주소에 값이 있을 때(더 보기 ?n= · 다른 달 ?m=)만. 기본 화면이면 LogsShell 이 기본 화면을 쓰니 아무것도 안 그린다
 async function Content({ searchParams }: { searchParams: Params }) {
   const { n, view, m } = await searchParams;
   const cal = view === "cal";
-  return (
-    <LogsView cal={cal} listSkeleton={<LogsSkeleton />} calSkeleton={<CalendarSkeleton />}>
-      <Suspense fallback={cal ? <CalendarSkeleton /> : <LogsSkeleton />}>
-        {cal ? <CalendarLoader m={m} /> : <Loader n={n} />}
-      </Suspense>
-    </LogsView>
-  );
+  if (cal ? !m : !n) return null;
+  return cal ? <CalendarLoader m={m} /> : <Loader n={n} />;
 }
 
 async function Loader({ n }: { n?: string }) {
