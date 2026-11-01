@@ -11,6 +11,7 @@ import {
 } from "@/lib/mcp/library";
 import { linksOf, withLinks } from "@/lib/mcp/links";
 import { AI_NOTICE } from "@/lib/ai-notice";
+import { KIND_KO, ROLE_KO, ROLE_NOTE } from "@/lib/mcp/labels";
 
 // 리리롤 MCP(D-81 · D-83) — 공용 기술 목록 · 포지션 노트 · 개념 카드를 읽기 전용으로 보여 주는 도구들. 사용자 기록 · 숙련도는 다루지 않는다.
 
@@ -25,20 +26,6 @@ export const INSTRUCTIONS = `리리롤 주짓수 기술 사전 · 지도. 한국
 - 기술에 "규정 · 안전" 이 있으면(하체 관절기 · 도복 전용 등) 답에 도복 · 노기 · 대회 허용 띠 · 안전을 꼭 함께 말한다.
 - 답 속 [slug] 는 그 기술로 바로 이어 볼 수 있다는 뜻 — 필요하면 rereroll_get_technique 로 따라간다.
 - 좌우는 모두 오른손잡이 기준. 답할 때마다 끝에 이 점과 "AI 가 추천한 내용이라 틀릴 수 있고, 사람(블랙벨트)이 검증하지 않았으니 코치에게 확인하라"는 안내를 짧게 꼭 붙인다.`;
-
-const KIND_KO: Record<string, string> = {
-  takedown: "테이크다운",
-  guard_pull: "가드 풀링",
-  sweep: "스윕",
-  pass: "패스",
-  submission: "서브미션",
-  escape: "탈출",
-  back_take: "백 테이크",
-  transition: "전환",
-  control: "자세 · 컨트롤",
-  defense: "방어",
-};
-const ROLE_KO: Record<string, string> = { top: "위", bottom: "아래", standing: "서서", both: "위 · 아래" };
 
 const norm = (s: string) => s.toLowerCase().replace(/[\s·\-_()/,.]+/g, "");
 const STOP = new Set([
@@ -249,7 +236,6 @@ function search(lib: Library, q: string): Hit[] {
   return pool.sort((a, b) => b.score - a.score).filter((h, _, all) => h.score >= Math.min(20, all[0].score));
 }
 
-const ROLE_NOTE: Record<PositionNote["role"], string> = { top: "위", bottom: "아래", standing: "서서" };
 
 // 개념 카드 · 포지션 노트에서도 찾는다(D-83) — 기술 검색과 같은 낱말 규칙, 모든 낱말이 맞아야
 function searchExtra(lib: Library, q: string): string[] {

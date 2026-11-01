@@ -305,6 +305,10 @@ export default function Home() {
             <Link href="/terms" className="underline-offset-4 hover:underline">
               서비스 약관
             </Link>
+            {" · "}
+            <Link href="/wiki" className="underline-offset-4 hover:underline">
+              기술 위키
+            </Link>
           </p>
         </div>
       </footer>
