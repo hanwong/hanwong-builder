@@ -186,6 +186,51 @@ export type Database = {
         }
         Relationships: []
       }
+      drills: {
+        Row: {
+          aliases: string[]
+          created_at: string
+          id: string
+          name_en: string
+          name_ko: string
+          related_techniques: string[]
+          slug: string
+          sort_order: number
+          steps: string[]
+          summary: string
+          tips: string[]
+          why: string[]
+        }
+        Insert: {
+          aliases?: string[]
+          created_at?: string
+          id?: string
+          name_en: string
+          name_ko: string
+          related_techniques?: string[]
+          slug: string
+          sort_order?: number
+          steps?: string[]
+          summary: string
+          tips?: string[]
+          why?: string[]
+        }
+        Update: {
+          aliases?: string[]
+          created_at?: string
+          id?: string
+          name_en?: string
+          name_ko?: string
+          related_techniques?: string[]
+          slug?: string
+          sort_order?: number
+          steps?: string[]
+          summary?: string
+          tips?: string[]
+          why?: string[]
+        }
+        Relationships: []
+      }
       map_agent_runs: {
         Row: {
           created_at: string

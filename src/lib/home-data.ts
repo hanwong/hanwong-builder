@@ -3,6 +3,7 @@ import { cacheLife } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { addDays, seoulToday } from "@/lib/seoul-date";
 import { BELT_WEEKS, isBelt, isStartMonth, type Belt } from "@/lib/belt";
+import { queryDrillChips, type DrillChip } from "@/lib/drills-data";
 
 // 홈(T-21)에 필요한 것만 읽는다. RLS 로 본인 것만 나온다(DB.md 5).
 export type HomeData = {
@@ -12,6 +13,7 @@ export type HomeData = {
   thisMonth: string; // 서울 기준 이번 달 'YYYY-MM' — "수련 N년째" 계산용
   sparring: { month: number; total: number }; // 스파링 판 수(D-64) — 이번 달 · 전체
   weeks: { start: string; count: number }[]; // 최근 104주(월요일 시작, 서울) — 오래된 주부터
+  drills: DrillChip[]; // 기본 드릴(D-112) — 화이트 벨트일 때만 채움
 };
 
 export async function getHomeData(): Promise<HomeData> {
@@ -26,12 +28,13 @@ export async function getHomeData(): Promise<HomeData> {
   const monday = addDays(today, -((new Date(Date.UTC(y, m - 1, d)).getUTCDay() + 6) % 7));
   const firstWeek = addDays(monday, -7 * (BELT_WEEKS - 1));
 
-  const [days, me, positions, levels] = await Promise.all([
+  const [days, me, positions, levels, drills] = await Promise.all([
     // 벨트(최근 2년)와 스파링(전체)을 한 번에 — 기록은 사람당 많아야 수천 개
     supabase.from("class_logs").select("logged_on, sparring_rounds").limit(10000),
     supabase.auth.getUser(),
     supabase.from("positions").select("slug, name_ko").order("sort_order"),
     supabase.from("technique_levels").select("techniques(positions(slug))").limit(5000),
+    queryDrillChips(supabase), // 12줄이라 벨트를 알기 전에 같이 받는다
   ]);
   const error = days.error ?? positions.error ?? levels.error;
   if (error) throw new Error(`home: ${error.code ?? ""} ${error.message.slice(0, 80)}`);
@@ -55,8 +58,11 @@ export async function getHomeData(): Promise<HomeData> {
   const belt = me.data.user?.user_metadata?.belt;
   const startedOn = me.data.user?.user_metadata?.started_on;
 
+  const myBelt = isBelt(belt) ? belt : "white";
+
   return {
-    belt: isBelt(belt) ? belt : "white",
+    belt: myBelt,
+    drills: myBelt === "white" ? drills : [],
     startedOn: isStartMonth(startedOn) ? startedOn : null,
     thisMonth: today.slice(0, 7),
     sparring,

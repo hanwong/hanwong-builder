@@ -66,6 +66,17 @@
 | related_positions · related_techniques · see_also | text[] | ✓ | `{}` | 포지션 · 기술 · 다른 개념 slug |
 | sort_order | int | ✓ | 0 | |
 
+### `drills` (D-112) — 기본 드릴. 누구나 보기, 쓰기는 마이그레이션만
+| 칸 | 종류 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|
+| slug | text | ✓ | | 영문 키, 유일 |
+| name_ko · name_en | text | ✓ | | |
+| aliases | text[] | ✓ | `{}` | 다른 이름 |
+| summary | text | ✓ | | 한 줄 설명 |
+| steps · tips · why | text[] | ✓ | `{}` | 하는 법 3~5줄 · 노하우 2~4줄 · 필요한 이유 2~3줄 |
+| related_techniques | text[] | ✓ | `{}` | 이어지는 공용 기술 slug |
+| sort_order | int | ✓ | 0 | |
+
 ### `open_mat_events` (D-88)
 | 칸 | 종류 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|

@@ -20,9 +20,9 @@ export default function SkillsPage() {
 
 async function Loader() {
   await cookies(); // 쿠키 읽기는 try 밖에서 (home-sections 참고)
-  let groups;
+  let data;
   try {
-    groups = await getSkills();
+    data = await getSkills();
   } catch (e) {
     console.error("skills failed:", e instanceof Error ? e.message : "unknown");
     return (
@@ -36,7 +36,7 @@ async function Loader() {
       </p>
     );
   }
-  return <SkillsList groups={groups} />;
+  return <SkillsList groups={data.groups} drills={data.drills} />;
 }
 
 function SkillsSkeleton() {

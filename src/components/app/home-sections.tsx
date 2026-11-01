@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getHomeData, type HomeData } from "@/lib/home-data";
 import { TrainingBelt } from "@/components/app/training-belt";
 import { JiujitsuMap } from "@/components/app/jiujitsu-map";
+import { DrillChips } from "@/components/app/drill-chips";
 import { cookies } from "next/headers";
 
 // 홈 ② 수련 벨트 · ③ 내 주짓수 지도 (FLOW 3 · DESIGN 6, 오늘 복습 D-58 · 최근 기록 D-61 로 뺌). 로그인 쿠키를 읽으므로 page 에서 Suspense 로 감싼다.
@@ -30,7 +31,7 @@ export async function HomeSections() {
 }
 
 export function HomeView({ data }: { data: HomeData }) {
-  const { weeks, belt, startedOn, thisMonth, map, sparring } = data;
+  const { weeks, belt, startedOn, thisMonth, map, sparring, drills } = data;
 
   return (
     <>
@@ -48,6 +49,9 @@ export function HomeView({ data }: { data: HomeData }) {
           {sparring.total}판
         </span>
       </div>
+
+      {/* ②-2 기본 드릴 (D-112) — 화이트 벨트만(블루 이상은 drills 가 빈 목록) */}
+      <DrillChips drills={drills} wrap />
 
       {/* ②-2 내 주짓수 지도 (D-60) */}
       <JiujitsuMap map={map} />

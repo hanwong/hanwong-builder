@@ -12,11 +12,13 @@ import { HoverPrefetchLink } from "@/components/app/hover-prefetch-link";
 import type { PositionGroup, SkillRow } from "@/lib/skills-data";
 import { cn } from "@/lib/utils";
 import { PositionPicture } from "@/components/app/position-picture";
+import { DrillChips } from "@/components/app/drill-chips";
+import type { DrillChip } from "@/lib/drills-data";
 
 const LEVEL_LABEL = new Map(LEVELS.map((l) => [l.value, l.label]));
 
 // 내 기술 (T-10, FLOW 4 · DESIGN 6) — 포지션 아코디언(접힘) × 기술 + 숙련도 배지. 안 배운 건 흐리게.
-export function SkillsList({ groups }: { groups: PositionGroup[] }) {
+export function SkillsList({ groups, drills }: { groups: PositionGroup[]; drills: DrillChip[] }) {
   const [onlyLearned, setOnlyLearned] = useState(false);
   const [query, setQuery] = useState("");
   // 검색(D-91) — 받은 목록 안에서 바로. 기록 화면 기술 고르기와 같은 순서, 한 글자부터
@@ -62,6 +64,9 @@ export function SkillsList({ groups }: { groups: PositionGroup[] }) {
           배운 것만 보기
         </button>
       </header>
+
+      {/* 기본 드릴 (D-112) — 모든 벨트 */}
+      <DrillChips drills={drills} />
 
       {/* 검색 (D-91) */}
       <div className="relative">
