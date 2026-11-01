@@ -143,3 +143,5 @@
 - 묶음: 카드(`rounded-2xl bg-card ring-1 ring-border`) 안 제목 15px semibold + `Dumbbell` 아이콘 · 캡션 13px muted. 칩은 둥근 알약(`rounded-full border bg-background px-3 h-8 text-[13px]`), 기술 탭은 한 줄 가로 넘김, 홈은 줄바꿈.
 - 드릴 화면: 기술 상세와 같은 머리 · 카드. 하는 법은 번호 목록, 노하우 · 필요한 이유는 점 목록 카드, 이어지는 기술은 기술 목록과 같은 줄(이름 + `ChevronRight`).
 
+## 질문하기 답 형식 (D-113)
+- 답 본문: 첫 문단 15px → '## 순서'는 17px semibold 소제목 → 번호 목록(제목 굵게, 설명 아래 줄, 세부는 muted 점 목록) → '## 조심할 점' 소제목 → 점 목록(앞머리 굵게) → '> ' 줄은 왼쪽 2px 테두리 · 13px muted 참고 줄.

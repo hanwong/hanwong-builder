@@ -7,6 +7,7 @@ import { cookies } from "next/headers";
 import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AnswerBody } from "@/components/app/answer-body";
 import { DeleteQuestion } from "@/components/app/delete-question";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { loadLibrary } from "@/lib/mcp/library";
@@ -69,7 +70,7 @@ async function Loader({ params }: { params: Promise<{ id: string }> }) {
         </span>
         <h1 className="text-[17px] leading-snug font-semibold">{q.question}</h1>
       </div>
-      <p className="text-[15px] leading-[1.75] whitespace-pre-line">{q.answer}</p>
+      <AnswerBody answer={q.answer} />
 
       {techniques.length > 0 && (
         <section className="flex flex-col gap-2">
