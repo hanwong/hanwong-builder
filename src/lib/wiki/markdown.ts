@@ -2,7 +2,6 @@ import type { Concept, Drill, Library, Position, Technique } from "@/lib/mcp/lib
 import { ROLE_NOTE } from "@/lib/mcp/labels";
 import {
   arrivingAt,
-  BJJGRAPH_NOTE,
   conceptsForPosition,
   conceptsForTechnique,
   drillsForTechnique,
@@ -240,7 +239,6 @@ function readme(lib: Library, date: string): string {
       bullets([
         "AI 가 추천해 쓴 공부용 자료예요. 사람(블랙벨트)이 검증하지 않아 틀릴 수 있으니 코치님께 꼭 확인하세요.",
         RIGHT_HANDED,
-        BJJGRAPH_NOTE,
         "수련 기록 · 숙련도 같은 사용자 데이터는 들어 있지 않아요(공용 기술 지도만).",
       ]),
     ),
@@ -262,7 +260,6 @@ The written content of this repository is licensed under the Creative Commons At
 
 출처 표시 예: "리리롤 주짓수 기술 위키(${WIKI_REPO}), ${LICENSE_NAME}"
 
-${BJJGRAPH_NOTE} BJJGraph 자체 데이터는 이 저장소에 들어 있지 않으며, BJJGraph 의 이용 조건(PolyForm Noncommercial 1.0.0)은 bjjgraph.org 에서 확인하세요.
 `;
 
 /** 위키 문서 전체. date 는 'YYYY-MM-DD'(만든 날). */

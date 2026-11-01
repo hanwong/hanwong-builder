@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Library, Technique } from "@/lib/mcp/library-data";
 import {
-  BJJGRAPH_NOTE,
   LICENSE_NAME,
   LICENSE_URL,
   segments,
@@ -119,12 +118,11 @@ export const techRow = (lib: Library, t: Technique, withPosition = false): Row =
   sub: [withPosition ? lib.posBySlug.get(t.position)?.nameKo : "", techMeta(lib, t)].filter(Boolean).join(" · "),
 });
 
-/** 페이지 끝 안내 — 오른손잡이 · AI 작성 · BJJGraph 참고 · 라이선스. */
+/** 페이지 끝 안내 — 오른손잡이 · AI 작성 · 라이선스. */
 export function WikiNotice() {
   return (
     <footer className="flex flex-col gap-1 border-t pt-4 text-[12px] leading-relaxed text-muted-foreground">
-      <p>{WIKI_NOTICE.filter((n) => n !== BJJGRAPH_NOTE).join(" ")}</p>
-      <p>{BJJGRAPH_NOTE}</p>
+      <p>{WIKI_NOTICE.join(" ")}</p>
       <p>
         리리롤 기술 지도 ·{" "}
         <a href={LICENSE_URL} className="underline underline-offset-4" target="_blank" rel="noreferrer">

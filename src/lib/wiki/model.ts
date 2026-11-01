@@ -10,9 +10,8 @@ export const WIKI_REPO = "https://github.com/hanwong/rereroll-wiki";
 export const LICENSE_NAME = "CC BY-NC-SA 4.0";
 export const LICENSE_URL = "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ko";
 export const RIGHT_HANDED = "좌우는 모두 오른손잡이 기준이에요(왼손잡이는 반대로).";
-export const BJJGRAPH_NOTE = "일부 내용은 BJJGraph(© Diogo Seca, bjjgraph.org)를 참고해 우리 말로 새로 썼어요.";
 export const LICENSE_LINE = `리리롤(rereroll.xyz) 기술 지도 · ${LICENSE_NAME} — 비상업 목적으로, 출처를 밝히고, 같은 조건으로만 나눌 수 있어요.`;
-export const WIKI_NOTICE = [RIGHT_HANDED, AI_NOTICE, BJJGRAPH_NOTE];
+export const WIKI_NOTICE = [RIGHT_HANDED, AI_NOTICE];
 
 export type Kind = "positions" | "techniques" | "concepts" | "drills";
 export type Segment = string | Link;

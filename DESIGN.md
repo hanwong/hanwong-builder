@@ -150,5 +150,5 @@
 - 머리: 왼쪽 `BookOpen` + "리리롤 기술 위키"(목차로), 오른쪽 "Re:Re:롤 홈". 본문 폭 `max-w-2xl px-4`.
 - 항목 화면은 드릴 · 기술 상세와 같은 머리(배지 · mark-lime 이름 · 영어 이름 캡션 · 한 줄 설명)와 카드. 포지션 노트는 카드 하나에 13px muted 소제목(목표 · 핵심 · 상대가 ~하면 · 흔한 실수 · 드릴).
 - "→ 기술" 링크는 글 안 밑줄(`decoration-border`, 누르면 진하게). 목록은 기술 목록과 같은 줄(이름 + 캡션 + `ChevronRight`).
-- 끝에 12px muted 안내 — 오른손잡이 · AI 작성 · BJJGraph 참고 · CC BY-NC-SA 4.0 · GitHub 링크.
+- 끝에 12px muted 안내 — 오른손잡이 · AI 작성 · CC BY-NC-SA 4.0 · GitHub 링크.
 
