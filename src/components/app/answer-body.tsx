@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 
-// 질문하기 답 (D-113) — 답 형식(첫 문단 → "## 순서" 번호 단계 → "## 조심할 점" → "> " 한 줄)만 그리는 작은 그리기.
+// 질문하기 답 (D-113) — 답 형식(첫 문단 → "## 핵심" → "## 순서" 번호 단계 → "## 흔한 실수" → "## 막히면" → "> " 한 줄)만 그리는 작은 그리기.
 // 마크다운 전부가 아니라 이 형식만 안다. 형식이 없는 예전 답은 문단 그대로 보인다.
 type Block =
   | { kind: "p"; text: string }
@@ -68,7 +68,7 @@ export function AnswerBody({ answer }: { answer: string }) {
               <ol key={i} className="flex list-decimal flex-col gap-3 pl-5">
                 {b.items.map((it, j) => (
                   <li key={j} className="pl-1">
-                    <span className="font-semibold">{inline(it.title.replace(/\*\*/g, ""))}</span>
+                    <span>{/\*\*/.test(it.title) ? inline(it.title) : <span className="font-semibold">{it.title}</span>}</span>
                     {it.body.length > 0 && <p className="whitespace-pre-line">{inline(it.body.join("\n"))}</p>}
                     {it.subs.length > 0 && (
                       <ul className="mt-1 flex list-disc flex-col gap-1 pl-5 text-muted-foreground">
