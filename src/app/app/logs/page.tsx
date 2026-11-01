@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "기록 — Re:Re:롤",
 };
 
-// 기록 목록 (T-33, D-40) — 하단 '기록' 탭. 최신순 30개를 미리 받아 두고, '더 보기'는 서버 액션으로 이어 받는다(D-106).
+// 기록 목록 (T-33, D-40) — 하단 '기록' 탭. 최신순 20개를 미리 받아 두고, 끝에 가까워지면 서버 액션으로 이어 받는다(D-106 · D-111).
 export default function LogsPage() {
   return (
     <Suspense fallback={<LogsSkeleton />}>

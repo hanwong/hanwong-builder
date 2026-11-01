@@ -1,6 +1,6 @@
 "use server";
 
-import { fetchLogs, fetchLogsInMonth, LOGS_PAGE, type LogRow } from "@/lib/logs-data";
+import { fetchLogs, fetchLogsInMonth, type LogRow } from "@/lib/logs-data";
 import { seoulToday } from "@/lib/seoul-date";
 
 // 기록 탭에서 처음 받은 뒤 이어 받는 것(D-106) — 더 보기 · 다른 달. 본인 것만 보이는 건 RLS 가 막는다.

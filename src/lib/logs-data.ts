@@ -54,7 +54,7 @@ const toQuestionRow = (q: { id: string; asked_on: string; created_at: string; qu
 const newestFirst = (a: LogRow, b: LogRow) =>
   a.loggedOn === b.loggedOn ? b.at.localeCompare(a.at) : b.loggedOn.localeCompare(a.loggedOn);
 
-export const LOGS_PAGE = 30; // 30개씩 더 보기
+export const LOGS_PAGE = 20; // 처음 20개 · 끝에 가까워지면 20개씩 더(D-111)
 
 type Supa = Awaited<ReturnType<typeof createSupabaseServer>>;
 
