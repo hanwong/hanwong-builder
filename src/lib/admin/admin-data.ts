@@ -1,4 +1,5 @@
 import "server-only";
+import { cacheLife } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { isLive } from "@/lib/matching";
 import { getLibrary } from "@/lib/matching/library";
@@ -120,6 +121,13 @@ export async function draftedToday(supabase: Supa): Promise<number> {
 export async function isOperator(supabase: Supa): Promise<boolean> {
   const { data, error } = await supabase.rpc("is_operator");
   return !error && data === true;
+}
+
+// 내가 운영자인지 — 기록 탭 질문하기 버튼(D-100)처럼 미리 받기에 같이 들어가야 하는 곳에서. 5분 동안 휴대폰 안에서 재사용
+export async function amOperator(): Promise<boolean> {
+  "use cache: private";
+  cacheLife({ stale: 300 });
+  return isOperator(await createSupabaseServer());
 }
 
 export async function getAdminData(): Promise<AdminData | null> {

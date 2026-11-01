@@ -110,9 +110,9 @@ export function TrainingBelt({
           <Settings />
         </Button>
       </div>
-      {/* 벨트: 바깥 = 벨트 색, 위아래는 높이의 약 1%(≈ 너비의 0.17%). 누르면 기록 달력(D-99) */}
+      {/* 벨트: 바깥 = 벨트 색, 위아래는 높이의 약 1%(≈ 너비의 0.17%). 누르면 기록 달력(D-99 · D-106) */}
       <Link
-        href="/app/logs?view=cal"
+        href="/app/logs/cal"
         className="block rounded-[3px] outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50"
         style={{
           backgroundColor: color,
@@ -171,11 +171,19 @@ export function TrainingBelt({
         >
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[17px] font-semibold">벨트 설정</DialogTitle>
-            <Button variant="ghost" size="icon" aria-label="닫기" className="-mr-1 rounded-full" onClick={() => setPicking(false)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="닫기"
+              className="-mr-1 rounded-full"
+              onClick={() => setPicking(false)}
+            >
               <X />
             </Button>
           </div>
-          <DialogDescription className="sr-only">벨트 색과 수련을 시작한 연도 · 달을 바꿔요. 고르면 바로 저장돼요.</DialogDescription>
+          <DialogDescription className="sr-only">
+            벨트 색과 수련을 시작한 연도 · 달을 바꿔요. 고르면 바로 저장돼요.
+          </DialogDescription>
           <div className="flex flex-col gap-2">
             <span id="belt-setting-label" className="text-[15px] font-semibold">
               지금 벨트
