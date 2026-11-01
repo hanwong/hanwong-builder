@@ -19,6 +19,7 @@ export type AdminDraft = {
   nameEn: string;
   aliases: string[];
   steps: string[];
+  rules: string[]; // 규정 · 안전(D-105) — 승인 전 확인용, 읽기만
   note: string;
   times: number; // 몇 번 적혔나
   people: number; // 몇 명이
@@ -65,7 +66,7 @@ export type AdminData = {
 };
 
 export const DRAFT_SELECT =
-  "id, name_key, custom_name, kind, slug, name_ko, name_en, aliases, steps, note, positions(slug), alias:techniques!technique_drafts_alias_of_fkey(slug, name_ko)";
+  "id, name_key, custom_name, kind, slug, name_ko, name_en, aliases, steps, rules, note, positions(slug), alias:techniques!technique_drafts_alias_of_fkey(slug, name_ko)";
 
 type DraftRow = {
   id: string;
@@ -77,6 +78,7 @@ type DraftRow = {
   name_en: string | null;
   aliases: string[] | null;
   steps: string[] | null;
+  rules: string[] | null;
   note: string | null;
   positions: { slug: string } | null;
   alias: { slug: string; name_ko: string } | null;
@@ -94,6 +96,7 @@ export function toAdminDraft(d: DraftRow, times = 0, people = 0): AdminDraft {
     nameEn: d.name_en ?? "",
     aliases: d.aliases ?? [],
     steps: d.steps ?? [],
+    rules: d.rules ?? [],
     note: d.note ?? "",
     times,
     people,
@@ -105,7 +108,11 @@ export async function draftedToday(supabase: Supa): Promise<number> {
   const since = `${seoulToday()}T00:00:00+09:00`;
   const [made, redrafts] = await Promise.all([
     supabase.from("technique_drafts").select("id", { count: "exact", head: true }).gte("created_at", since),
-    supabase.from("ai_calls").select("id", { count: "exact", head: true }).eq("kind", "redraft").gte("called_at", since),
+    supabase
+      .from("ai_calls")
+      .select("id", { count: "exact", head: true })
+      .eq("kind", "redraft")
+      .gte("called_at", since),
   ]);
   return (made.count ?? 0) + (redrafts.count ?? 0);
 }

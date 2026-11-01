@@ -167,8 +167,15 @@ function ItemRow({
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-1.5">
-          {draft ? <Badge variant="secondary">{KIND_LABEL[draft.kind]}</Badge> : <Badge variant="outline">초안 전</Badge>}
-          <ChevronDown className={`size-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+          {draft ? (
+            <Badge variant="secondary">{KIND_LABEL[draft.kind]}</Badge>
+          ) : (
+            <Badge variant="outline">초안 전</Badge>
+          )}
+          <ChevronDown
+            className={`size-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+            aria-hidden
+          />
         </span>
       </button>
 
@@ -204,6 +211,7 @@ function DraftCard({ draft, positions }: { draft: AdminDraft; positions: AdminDa
   const [aliases, setAliases] = useState(draft.aliases.join(", "));
   const [steps, setSteps] = useState(draft.steps.join("\n"));
   const [note, setNote] = useState(draft.note);
+  const [rules, setRules] = useState(draft.rules);
   const [hint, setHint] = useState("");
   const [redrafting, startRedraft] = useTransition();
   const id = (k: string) => `${draft.id}-${k}`;
@@ -238,6 +246,7 @@ function DraftCard({ draft, positions }: { draft: AdminDraft; positions: AdminDa
       setAliases(d.aliases.join(", "));
       setSteps(d.steps.join("\n"));
       setNote(d.note);
+      setRules(d.rules);
       setHint("");
       toast.success("새 초안으로 바꿨어요.");
     });
@@ -257,6 +266,15 @@ function DraftCard({ draft, positions }: { draft: AdminDraft; positions: AdminDa
   return (
     <section className="flex flex-col gap-3" aria-label={`‘${draft.name}’ 초안`}>
       {note && <p className="text-[13px] text-muted-foreground">AI: {note}</p>}
+      {/* 규정 · 안전(D-105) — 하체 관절기 등. 승인하면 기술 카드에 그대로 */}
+      {rules.length > 0 && (
+        <div className="flex flex-col gap-1 rounded-xl bg-muted px-3 py-2 text-[13px] leading-relaxed">
+          <span className="font-semibold">규정 · 안전</span>
+          {rules.map((r) => (
+            <span key={r}>- {r}</span>
+          ))}
+        </div>
+      )}
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={id("kind")}>종류</Label>
@@ -344,7 +362,17 @@ function DraftCard({ draft, positions }: { draft: AdminDraft; positions: AdminDa
   );
 }
 
-function Field({ id, label, value, onChange }: { id: string; label: string; value: string; onChange: (v: string) => void }) {
+function Field({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={id}>{label}</Label>
@@ -376,7 +404,11 @@ function AliasPicker({
     let alive = true;
     const t = setTimeout(async () => {
       const list = await searchTechniques(text).catch(() => []);
-      if (alive) setResults({ q: text, list: list.slice(0, 5).map((x) => ({ slug: x.id, nameKo: x.nameKo, position: x.position })) });
+      if (alive)
+        setResults({
+          q: text,
+          list: list.slice(0, 5).map((x) => ({ slug: x.id, nameKo: x.nameKo, position: x.position })),
+        });
     }, 250);
     return () => {
       alive = false;
@@ -396,7 +428,10 @@ function AliasPicker({
         <p className="text-[14px] text-destructive">아직 안 골랐어요.</p>
       )}
       <div className="relative">
-        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+        <Search
+          className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+          aria-hidden
+        />
         <Input
           id={inputId}
           className="pl-9"
@@ -473,7 +508,10 @@ function SuggestionRow({
             {sg.addAliases.length > 0 && ` · 다른 이름 +${sg.addAliases.length}`}
           </span>
         </span>
-        <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+        <ChevronDown
+          className={`size-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+          aria-hidden
+        />
       </button>
 
       {open && (
@@ -511,10 +549,20 @@ function SuggestionRow({
             <Label htmlFor={id("steps")}>최종 세팅 과정 (한 줄에 하나, 3~5줄)</Label>
             <Textarea id={id("steps")} value={steps} onChange={(e) => setSteps(e.target.value)} rows={5} />
           </div>
-          <Field id={id("aliases")} label="더할 다른 이름 (쉼표로 구분, 비워도 됨)" value={aliases} onChange={setAliases} />
+          <Field
+            id={id("aliases")}
+            label="더할 다른 이름 (쉼표로 구분, 비워도 됨)"
+            value={aliases}
+            onChange={setAliases}
+          />
 
           <div className="flex gap-2 pt-1">
-            <Button variant="outline" className="flex-1 rounded-full" disabled={busy} onClick={() => act(() => rejectSuggestion(sg.id))}>
+            <Button
+              variant="outline"
+              className="flex-1 rounded-full"
+              disabled={busy}
+              onClick={() => act(() => rejectSuggestion(sg.id))}
+            >
               버림
             </Button>
             <Button
@@ -577,14 +625,22 @@ function UserTechniqueRow({
             {t.aliases.length > 0 && ` · 다른 이름: ${t.aliases.join(", ")}`}
           </span>
         </span>
-        <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+        <ChevronDown
+          className={`size-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+          aria-hidden
+        />
       </button>
 
       {open && (
         <div className="flex flex-col gap-3 border-t border-border p-4 pt-3">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={id("position")}>포지션</Label>
-            <NativeSelect id={id("position")} className="w-full" value={position} onChange={(e) => setPosition(e.target.value)}>
+            <NativeSelect
+              id={id("position")}
+              className="w-full"
+              value={position}
+              onChange={(e) => setPosition(e.target.value)}
+            >
               <NativeSelectOption value="">고르기</NativeSelectOption>
               {positions.map((p) => (
                 <NativeSelectOption key={p.slug} value={p.slug}>
@@ -601,7 +657,12 @@ function UserTechniqueRow({
           </div>
 
           <div className="flex gap-2 pt-1">
-            <Button variant="outline" className="flex-1 rounded-full" disabled={busy} onClick={() => act(() => rejectUserTechnique(t.id))}>
+            <Button
+              variant="outline"
+              className="flex-1 rounded-full"
+              disabled={busy}
+              onClick={() => act(() => rejectUserTechnique(t.id))}
+            >
               버림
             </Button>
             <Button

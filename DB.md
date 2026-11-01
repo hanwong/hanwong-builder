@@ -97,6 +97,7 @@
 | mistakes | text[] | | `{}` | 흔한 실수 2~3줄 |
 | if_blocked | text[] | | `{}` | 막히면 — "상대가 ~하면 → 다음 수" 2~3줄 |
 | defense | text[] | | `{}` | 방어하는 쪽 — 알아챌 신호 · 막는 법 2~4줄 |
+| rules | text[] | ✓ | `{}` | 규정 · 안전 0~4줄(D-105) — "도복 · 노기:" · "대회 규정:"(IBJJF 성인 허용 띠, 확인 달) · "안전:". 하체 관절기 · 도복 전용 · 띠 제한 있는 기술만, 나머지는 빈 배열 |
 | owner_id | uuid → auth.users | | | **비면 공용.** 있으면 그 사람이 '내용 생성'으로 만든 내 기술(D-57) — 만든 사람 · 운영자만 보임. 계정을 지우면 같이 지움 |
 | owner_status | text | | | owner_id 가 있을 때만: `pending` 승인 대기 · `rejected` 버림(만든 사람에게 계속 보임). 승인하면 owner_id · owner_status 모두 비고 공용 |
 | created_at | timestamptz | ✓ | now() | |
@@ -185,7 +186,7 @@
 | slug · name_ko · name_en | text | | 새 기술 칸(승인 때 필수) |
 | aliases · steps | text[] | ✓ | 다른 이름 · 세팅 과정(승인 때 3~5줄) |
 | note | text | | AI 가 그렇게 본 이유 한 줄 |
-| tech_kind · role · ends_at · key_points · mistakes · if_blocked · defense | text · text[] | | 기술 지도 칸(D-87, techniques 의 kind · role … 와 같은 뜻). 종류 칸은 초안 종류(kind)와 겹쳐 `tech_kind`. 승인하면 기술로 그대로 옮긴다 |
+| tech_kind · role · ends_at · key_points · mistakes · if_blocked · defense · rules(D-105) | text · text[] | | 기술 지도 칸(D-87, techniques 의 kind · role … 와 같은 뜻). 종류 칸은 초안 종류(kind)와 겹쳐 `tech_kind`. 승인하면 기술로 그대로 옮긴다 |
 | status | text | ✓ | `pending` · `approved` · `rejected` |
 | technique_id | uuid → techniques | | 승인 뒤 연결된 기술 |
 | decided_at · created_at | timestamptz | | |

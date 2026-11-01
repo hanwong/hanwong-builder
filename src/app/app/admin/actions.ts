@@ -6,7 +6,15 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { isLive } from "@/lib/matching";
 import { forgetLibrary, getLibrary } from "@/lib/matching/library";
-import { DAILY_DRAFT_LIMIT, draftWithResearch, mapFields, nameKey, type Draft, type DraftKind, type Redo } from "@/lib/admin/drafter";
+import {
+  DAILY_DRAFT_LIMIT,
+  draftWithResearch,
+  mapFields,
+  nameKey,
+  type Draft,
+  type DraftKind,
+  type Redo,
+} from "@/lib/admin/drafter";
 import { addDays, seoulToday } from "@/lib/seoul-date";
 import { DRAFT_SELECT, draftedToday, toAdminDraft, type AdminDraft } from "@/lib/admin/admin-data";
 
@@ -79,8 +87,7 @@ export async function draftName(key: string): Promise<DraftNameResult> {
 
 // 다시 추천 (D-48) — 카드 하나를 이전 초안 + 운영자 메모와 함께 다시 만든다. 하루 한도 1개로 센다.
 export type RedraftResult =
-  | { ok: true; draft: Omit<AdminDraft, "id" | "name" | "times" | "people"> }
-  | { ok: false; message: string };
+  { ok: true; draft: Omit<AdminDraft, "id" | "name" | "times" | "people"> } | { ok: false; message: string };
 
 export async function redraftDraft(id: string, hint: string, current: DraftEdit): Promise<RedraftResult> {
   const supabase = await operator();
@@ -106,7 +113,10 @@ export async function redraftDraft(id: string, hint: string, current: DraftEdit)
     nameKo: clean(current?.nameKo, 60),
     nameEn: clean(current?.nameEn, 80),
     aliases: [],
-    steps: (Array.isArray(current?.steps) ? current.steps : []).map((x) => clean(x, 120)).filter(Boolean).slice(0, 5),
+    steps: (Array.isArray(current?.steps) ? current.steps : [])
+      .map((x) => clean(x, 120))
+      .filter(Boolean)
+      .slice(0, 5),
     note: "",
   };
 
@@ -162,6 +172,7 @@ export async function redraftDraft(id: string, hint: string, current: DraftEdit)
       nameEn: d.nameEn,
       aliases: d.aliases,
       steps: d.steps,
+      rules: d.rules,
       note: d.note,
     },
   };
@@ -184,8 +195,13 @@ const clean = (s: unknown, max: number) => (typeof s === "string" ? s.replace(/\
 // 운영자가 고친 칸 → 초안에 저장 (대기 중인 것만)
 async function saveEdit(supabase: Supa, id: string, e: DraftEdit): Promise<string | null> {
   const kind: DraftKind = e.kind === "alias" || e.kind === "new" ? e.kind : "unclear";
-  const steps = (Array.isArray(e.steps) ? e.steps : []).map((s) => clean(s, 120)).filter(Boolean).slice(0, 5);
-  const aliases = [...new Set((Array.isArray(e.aliases) ? e.aliases : []).map((s) => clean(s, 40)).filter(Boolean))].slice(0, 8);
+  const steps = (Array.isArray(e.steps) ? e.steps : [])
+    .map((s) => clean(s, 120))
+    .filter(Boolean)
+    .slice(0, 5);
+  const aliases = [
+    ...new Set((Array.isArray(e.aliases) ? e.aliases : []).map((s) => clean(s, 40)).filter(Boolean)),
+  ].slice(0, 8);
   const slug = clean(e.slug, 60).toLowerCase();
 
   let aliasId: string | null = null;
@@ -230,7 +246,8 @@ async function saveEdit(supabase: Supa, id: string, e: DraftEdit): Promise<strin
 export async function approveDraft(id: string, edit: DraftEdit): Promise<AdminResult> {
   const supabase = await operator();
   if (!supabase) return { ok: false, message: "운영자만 쓸 수 있어요." };
-  if (edit?.kind === "unclear") return { ok: false, message: "'기술 아님 같음'은 승인할 수 없어요 — 종류를 바꾸거나 버려 주세요." };
+  if (edit?.kind === "unclear")
+    return { ok: false, message: "'기술 아님 같음'은 승인할 수 없어요 — 종류를 바꾸거나 버려 주세요." };
   const problem = await saveEdit(supabase, id, edit);
   if (problem) return { ok: false, message: problem };
 
@@ -272,9 +289,16 @@ export async function approveSuggestion(id: string, steps: string[], aliases: st
   if (!supabase) return { ok: false, message: "운영자만 쓸 수 있어요." };
   const lines = (Array.isArray(steps) ? steps : []).map((x) => clean(x, 120)).filter(Boolean);
   if (lines.length < 3 || lines.length > 5) return { ok: false, message: "세팅 과정은 3~5줄이 필요해요." };
-  const add = [...new Set((Array.isArray(aliases) ? aliases : []).map((x) => clean(x, 40)).filter(Boolean))].slice(0, 5);
+  const add = [...new Set((Array.isArray(aliases) ? aliases : []).map((x) => clean(x, 40)).filter(Boolean))].slice(
+    0,
+    5,
+  );
 
-  const { data, error } = await supabase.rpc("approve_technique_suggestion", { p_id: id, p_steps: lines, p_aliases: add });
+  const { data, error } = await supabase.rpc("approve_technique_suggestion", {
+    p_id: id,
+    p_steps: lines,
+    p_aliases: add,
+  });
   if (error) {
     console.error("approveSuggestion failed:", error.code ?? "", (error.message ?? "").slice(0, 120));
     return { ok: false, message: "승인하지 못했어요 — 이미 처리됐을 수 있어요." };

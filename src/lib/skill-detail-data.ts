@@ -12,6 +12,7 @@ export type SkillDetail = {
   position: string;
   positionSlug: string | null; // 포지션 그림(D-54)
   steps: string[];
+  rules: string[]; // 규정 · 안전(D-105) — 하체 관절기 · 도복 전용 등만
   draft: boolean;
   mine?: "pending" | "rejected"; // 내가 만든 기술(D-57)
   level: Level | null;
@@ -26,7 +27,9 @@ export async function getSkill(slug: string): Promise<SkillDetail | null> {
 
   const { data: t, error } = await supabase
     .from("techniques")
-    .select("id, slug, name_ko, name_en, aliases, steps, is_reviewed, owner_id, owner_status, positions(slug, name_ko)")
+    .select(
+      "id, slug, name_ko, name_en, aliases, steps, rules, is_reviewed, owner_id, owner_status, positions(slug, name_ko)",
+    )
     .eq("slug", slug)
     .maybeSingle();
   if (error) throw new Error(`skill: ${error.code ?? ""} ${error.message.slice(0, 80)}`);
@@ -34,7 +37,10 @@ export async function getSkill(slug: string): Promise<SkillDetail | null> {
 
   const [level, links, suggestion] = await Promise.all([
     supabase.from("technique_levels").select("level").eq("technique_id", t.id).maybeSingle(),
-    supabase.from("class_log_techniques").select("class_logs(id, logged_on, body, created_at)").eq("technique_id", t.id),
+    supabase
+      .from("class_log_techniques")
+      .select("class_logs(id, logged_on, body, created_at)")
+      .eq("technique_id", t.id),
     supabase
       .from("technique_suggestions")
       .select("id", { count: "exact", head: true })
@@ -58,6 +64,7 @@ export async function getSkill(slug: string): Promise<SkillDetail | null> {
     position: t.positions?.name_ko ?? "",
     positionSlug: t.positions?.slug ?? null,
     steps: t.steps,
+    rules: t.rules ?? [],
     draft: !t.is_reviewed,
     mine: mineOf(t.owner_id, t.owner_status),
     level: (level.data?.level as Level | undefined) ?? null,

@@ -4,8 +4,23 @@ import { createClient } from "@supabase/supabase-js";
 // 리리롤 MCP(D-81 · D-83)가 읽는 공용 기술 목록 · 포지션 노트 · 개념 카드. 로그인 없이(anon) 공용 기술 · 포지션만 읽는다 — 사용자 표는 접근 규칙으로 막혀 있다.
 // 함수 인스턴스마다 10분 동안 들고 있는다(목록은 마이그레이션 · 운영 승인으로만 바뀜).
 
-export type Position = { slug: string; nameKo: string; nameEn: string; sort: number; summary: string; variants: string[] };
-export type PositionNote = { position: string; role: "top" | "bottom" | "standing"; goals: string[]; keys: string[]; decisions: string[]; mistakes: string[]; drills: string[] };
+export type Position = {
+  slug: string;
+  nameKo: string;
+  nameEn: string;
+  sort: number;
+  summary: string;
+  variants: string[];
+};
+export type PositionNote = {
+  position: string;
+  role: "top" | "bottom" | "standing";
+  goals: string[];
+  keys: string[];
+  decisions: string[];
+  mistakes: string[];
+  drills: string[];
+};
 export type Concept = {
   slug: string;
   nameKo: string;
@@ -32,6 +47,7 @@ export type Technique = {
   mistakes: string[];
   ifBlocked: string[];
   defense: string[];
+  rules: string[];
 };
 export type Library = {
   positions: Position[];
@@ -55,14 +71,20 @@ export function loadLibrary(): Promise<Library> {
 }
 
 async function fetchLibrary(): Promise<Library> {
-  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      auth: { persistSession: false, autoRefreshToken: false },
+    },
+  );
   const [pos, tech, notes, cons] = await Promise.all([
     supabase.from("positions").select("id, slug, name_ko, name_en, sort_order, summary, variants").order("sort_order"),
     supabase
       .from("techniques")
-      .select("slug, position_id, name_ko, name_en, aliases, steps, kind, role, ends_at, key_points, mistakes, if_blocked, defense, sort_order")
+      .select(
+        "slug, position_id, name_ko, name_en, aliases, steps, kind, role, ends_at, key_points, mistakes, if_blocked, defense, rules, sort_order",
+      )
       .is("owner_id", null)
       .order("sort_order"),
     supabase.from("position_notes").select("position_id, role, goals, keys, decisions, mistakes, drills"),
@@ -97,6 +119,7 @@ async function fetchLibrary(): Promise<Library> {
       mistakes: t.mistakes ?? [],
       ifBlocked: t.if_blocked ?? [],
       defense: t.defense ?? [],
+      rules: t.rules ?? [],
     }))
     .sort((a, b) => (order.get(a.position) ?? 99) - (order.get(b.position) ?? 99));
   const concepts: Concept[] = cons.data.map((c) => ({

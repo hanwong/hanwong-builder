@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ChevronRight, Loader2, Plus } from "lucide-react";
+import { ArrowLeft, ChevronRight, Loader2, Plus, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -76,13 +76,32 @@ export function SkillDetail({ skill }: { skill: Detail }) {
         </div>
       </header>
 
+      {/* 규정 · 안전(D-105) — 도복 · 노기 · 대회 허용 띠 · 다치지 않게. 있는 기술만 */}
+      {skill.rules.length > 0 && (
+        <Card className="rounded-2xl ring-border">
+          <CardContent className="flex flex-col gap-2">
+            <h2 className="flex items-center gap-1.5 text-[17px] font-semibold">
+              <ShieldAlert className="size-[18px]" strokeWidth={2} aria-hidden />
+              규정 · 안전
+            </h2>
+            <ul className="flex list-disc flex-col gap-1.5 pl-5 text-[15px] leading-relaxed">
+              {skill.rules.map((r) => (
+                <li key={r}>{r}</li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
       {/* 세팅 과정 */}
       <Card className="rounded-2xl ring-border">
         <CardContent className="flex flex-col gap-3">
           <div className="flex items-baseline justify-between gap-2">
             <h2 className="text-[17px] font-semibold">세팅 과정</h2>
             {/* 좌우는 오른손잡이 기준으로 적는다(D-74) */}
-            <span className="text-[12px] font-medium text-muted-foreground">오른손잡이 기준 · 왼손잡이는 좌우 반대로</span>
+            <span className="text-[12px] font-medium text-muted-foreground">
+              오른손잡이 기준 · 왼손잡이는 좌우 반대로
+            </span>
           </div>
           <ol className="flex list-decimal flex-col gap-2 pl-5 text-[15px] leading-relaxed">
             {skill.steps.map((s) => (
@@ -148,8 +167,7 @@ export function SkillDetail({ skill }: { skill: Detail }) {
         ) : (
           <Button asChild variant="secondary" className="h-12 w-full rounded-full text-base shadow-none">
             <Link href="/app/log">
-              <Plus data-icon="inline-start" aria-hidden />
-              이 기술 기록하기
+              <Plus data-icon="inline-start" aria-hidden />이 기술 기록하기
             </Link>
           </Button>
         )}

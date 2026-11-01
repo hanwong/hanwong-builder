@@ -514,6 +514,7 @@ export type Database = {
           note: string | null
           position_id: string | null
           role: string | null
+          rules: string[]
           slug: string | null
           status: string
           steps: string[]
@@ -539,6 +540,7 @@ export type Database = {
           note?: string | null
           position_id?: string | null
           role?: string | null
+          rules?: string[]
           slug?: string | null
           status?: string
           steps?: string[]
@@ -564,6 +566,7 @@ export type Database = {
           note?: string | null
           position_id?: string | null
           role?: string | null
+          rules?: string[]
           slug?: string | null
           status?: string
           steps?: string[]
@@ -691,6 +694,7 @@ export type Database = {
           owner_status: string | null
           position_id: string
           role: string | null
+          rules: string[]
           slug: string
           sort_order: number
           source: string | null
@@ -713,6 +717,7 @@ export type Database = {
           owner_status?: string | null
           position_id: string
           role?: string | null
+          rules?: string[]
           slug: string
           sort_order?: number
           source?: string | null
@@ -735,6 +740,7 @@ export type Database = {
           owner_status?: string | null
           position_id?: string
           role?: string | null
+          rules?: string[]
           slug?: string
           sort_order?: number
           source?: string | null

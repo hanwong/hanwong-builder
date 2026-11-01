@@ -22,6 +22,7 @@ export const INSTRUCTIONS = `리리롤 주짓수 기술 사전 · 지도. 한국
 - "여기서 뭘 해야 해? / 제일 중요한 게 뭐야?" → rereroll_get_position(role=top|bottom) 으로 목표 · 핵심 · "상대가 ~하면 → 기술" 을 먼저, 기술 목록은 rereroll_position_options.
 - "프레임이 뭐야? / 왜 자꾸 눌려? / 포지션 스파링은?" 같은 원리 · 공부법 → rereroll_get_concept (모르면 rereroll_list_concepts).
 - "A 에서 B 로" → rereroll_find_paths.
+- 기술에 "규정 · 안전" 이 있으면(하체 관절기 · 도복 전용 등) 답에 도복 · 노기 · 대회 허용 띠 · 안전을 꼭 함께 말한다.
 - 답 속 [slug] 는 그 기술로 바로 이어 볼 수 있다는 뜻 — 필요하면 rereroll_get_technique 로 따라간다.
 - 좌우는 모두 오른손잡이 기준. 답할 때마다 끝에 이 점과 "AI 가 추천한 내용이라 틀릴 수 있고, 사람(블랙벨트)이 검증하지 않았으니 코치에게 확인하라"는 안내를 짧게 꼭 붙인다.`;
 
@@ -208,6 +209,7 @@ function search(lib: Library, q: string): Hit[] {
       ["핵심", t.keyPoints],
       ["막히면", t.ifBlocked],
       ["실수", t.mistakes],
+      ["규정", t.rules],
     ];
     let score = 0;
     let snippet = "";
@@ -355,6 +357,8 @@ function renderTechnique(lib: Library, t: Technique, requested: "attacker" | "de
   const perspective = requested === "defender" && selfDefense ? "both" : requested;
   const out = [`# ${label(lib, t)}`, t.aliases.length ? `다른 이름: ${t.aliases.join(", ")}` : ""];
   if (perspective !== requested) out.push("(이 기술이 바로 막는 쪽 · 빠져나오는 쪽의 방법이에요)");
+  // 규정 · 안전(D-105)은 어느 쪽으로 물어도 맨 앞에 — 답에서 빠뜨리지 않게
+  if (t.rules.length) out.push(`## 규정 · 안전 (꼭 함께 안내)\n${bullet(t.rules)}`);
   if (perspective !== "defender") {
     out.push(`## 세팅 과정 (오른손잡이 기준)\n${t.steps.map((s, i) => `${i + 1}. ${s}`).join("\n")}`);
     if (t.keyPoints.length) out.push(`## 핵심 디테일\n${bullet(t.keyPoints)}`);
