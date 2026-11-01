@@ -2,7 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { ko } from "react-day-picker/locale";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LogList } from "@/components/app/log-list";
@@ -64,7 +66,16 @@ export function LogsCalendar({ month, rows, today }: { month: string; rows: LogR
                 .join(" · ")}`
             : "이 달은 기록이 없어요"}
       </span>
-      <div className="rounded-2xl bg-card ring-1 ring-border">
+      {/* 다른 달을 불러오는 동안 날짜 칸은 흐리게 깜빡이고 가운데 도는 표시 — 달 넘기기 버튼은 그대로 눌린다 */}
+      <div className="relative rounded-2xl bg-card ring-1 ring-border" aria-busy={loading || undefined}>
+        {loading && (
+          <div className="pointer-events-none absolute inset-x-0 top-14 bottom-0 z-30 flex items-center justify-center">
+            <span className="flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-[13px] font-medium text-muted-foreground shadow-sm ring-1 ring-border">
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+              불러오는 중
+            </span>
+          </div>
+        )}
         <Calendar
           mode="single"
           locale={ko}
@@ -84,6 +95,10 @@ export function LogsCalendar({ month, rows, today }: { month: string; rows: LogR
           className="w-full bg-transparent p-3 [--cell-size:--spacing(11)]"
           classNames={{
             root: "w-full",
+            month_grid: cn(
+              "rdp-month_grid w-full border-collapse transition-opacity",
+              loading && "pointer-events-none animate-pulse opacity-40",
+            ),
             caption_label: "text-[15px] font-semibold select-none",
             weekday: "flex-1 text-[13px] font-normal text-muted-foreground select-none",
             today: "rounded-(--cell-radius) ring-1 ring-foreground/40 ring-inset",
