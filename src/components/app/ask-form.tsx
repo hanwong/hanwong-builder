@@ -10,16 +10,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useSpeechInput } from "@/lib/use-speech-input";
 import { askQuestion } from "@/app/app/ask/actions";
 
-// 질문하기 (D-100 · D-115) — 글상자(마이크는 기록 메모와 같음) · 예시 칩 · 오늘 남은 횟수 · "질문하기". 답을 저장하면 그 질문 화면으로.
+// 질문하기 (D-100 · D-115) — 글상자(마이크는 기록 메모와 같음) · 오늘 남은 횟수 · "질문하기". 답을 저장하면 그 질문 화면으로.
 const MAX = 500;
-const EXAMPLES = [
-  { label: "하프가드에서 눌릴 때", text: "하프가드 아래에서 상대가 크로스페이스로 누르면 어떻게 해요?" },
-  { label: "다리로 허리를 감았을 때", text: "상대가 누워서 두 다리로 내 허리를 감고 있으면 어떻게 빠져나와요?" },
-  { label: "사이드에 깔렸을 때", text: "사이드 컨트롤 아래에 깔려서 숨이 막힐 때 어떻게 빠져나와요?" },
-];
 
-// compact(시험 홈 D-115): 예시 칩 없이, 안내는 한 줄
-export function AskForm({ left, limit, compact = false }: { left: number; limit: number; compact?: boolean }) {
+export function AskForm({ left, limit }: { left: number; limit: number }) {
   const router = useRouter();
   const [text, setText] = useState("");
   const [pending, startAsk] = useTransition();
@@ -89,37 +83,12 @@ export function AskForm({ left, limit, compact = false }: { left: number; limit:
         </p>
       )}
 
-      {/* 시험 홈(compact)은 예시 없이 — 본인 요청 2026-11-04 */}
-      {!compact && (
-        <div className="flex flex-col gap-2">
-          <span className="text-[13px] font-medium text-muted-foreground">이렇게 물어봐도 돼요</span>
-          {EXAMPLES.map((ex) => (
-            <button
-              key={ex.label}
-              type="button"
-              disabled={pending}
-              onClick={() => setText(ex.text)}
-              className="rounded-2xl border border-border bg-card px-4 py-2.5 text-left text-[14px] leading-snug transition-colors hover:bg-muted disabled:opacity-50"
-            >
-              {ex.text}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {compact ? (
-        <p className="text-[12px] text-muted-foreground">
-          질문 글만 AI 에 보내져요(누가 물었는지는 빼고) ·{" "}
-          <a href="/privacy" className="underline underline-offset-4">
-            자세히
-          </a>
-        </p>
-      ) : (
-        <p className="text-[13px] leading-relaxed font-medium text-muted-foreground">
-          질문 글은 답을 만들고, 밤마다 기술 지도를 넓히는 데 AI(Anthropic Claude)에 보내져요. 누가 물었는지는
-          보내지 않아요. 사람 이름은 적지 마세요.
-        </p>
-      )}
+      <p className="text-[12px] text-muted-foreground">
+        질문 글만 AI 에 보내져요(누가 물었는지는 빼고) ·{" "}
+        <a href="/privacy" className="underline underline-offset-4">
+          자세히
+        </a>
+      </p>
       <Button className="h-12 w-full gap-2 rounded-full text-base shadow-none" disabled={!ready} onClick={submit}>
         {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
         {pending ? "기술 지도를 찾아보는 중…" : left > 0 ? "질문하기" : "오늘 질문을 다 썼어요"}

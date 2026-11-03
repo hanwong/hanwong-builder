@@ -9,8 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnswerBody } from "@/components/app/answer-body";
 import { DeleteQuestion } from "@/components/app/delete-question";
-import { createSupabaseServer } from "@/lib/supabase/server";
-import { loadLibrary } from "@/lib/mcp/library";
+import { getQuestion, type QuestionView } from "@/lib/ask/ask-data";
 import { formatKoreanDate } from "@/lib/seoul-date";
 
 export const metadata: Metadata = {
@@ -38,14 +37,11 @@ async function Loader({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   await cookies();
-  const supabase = await createSupabaseServer();
-  const { data: q, error } = await supabase
-    .from("questions")
-    .select("id, asked_on, question, answer, slugs")
-    .eq("id", id)
-    .maybeSingle();
-  if (error) {
-    console.error("question failed:", error.code ?? "");
+  let q: QuestionView | null;
+  try {
+    q = await getQuestion(id);
+  } catch (e) {
+    console.error("question failed:", e instanceof Error ? e.message : "unknown");
     return (
       <p role="alert" className="text-[15px] font-medium text-destructive">
         불러오지 못했어요 —{" "}
@@ -56,8 +52,6 @@ async function Loader({ params }: { params: Promise<{ id: string }> }) {
     );
   }
   if (!q) notFound();
-  const lib = await loadLibrary();
-  const techniques = q.slugs.flatMap((s) => lib.bySlug.get(s) ?? []);
 
   return (
     <article className="flex flex-col gap-5 pb-16">
@@ -66,7 +60,7 @@ async function Loader({ params }: { params: Promise<{ id: string }> }) {
           <Badge variant="secondary" className="h-5 px-1.5 text-[12px]">
             질문
           </Badge>
-          {formatKoreanDate(q.asked_on)}
+          {formatKoreanDate(q.askedOn)}
         </span>
         <h1 className="text-[17px] leading-snug font-semibold">{q.question}</h1>
       </div>
@@ -79,11 +73,11 @@ async function Loader({ params }: { params: Promise<{ id: string }> }) {
           : "이 질문은 오늘 밤 지도 키우기 에이전트가 살펴봐요. 질문이 쌓일수록 기술 지도가 넓어지고 답이 더 정확해져요."}
       </p>
 
-      {techniques.length > 0 && (
+      {q.techniques.length > 0 && (
         <section className="flex flex-col gap-2">
           <h2 className="text-[15px] font-semibold">답에 나온 기술</h2>
           <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-2xl bg-card ring-1 ring-border">
-            {techniques.map((t) => (
+            {q.techniques.map((t) => (
               <li key={t.slug}>
                 <Link
                   href={`/app/skills/${t.slug}`}
@@ -99,7 +93,7 @@ async function Loader({ params }: { params: Promise<{ id: string }> }) {
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-[15px] font-semibold">{t.nameKo}</span>
                     <span className="truncate text-[13px] text-muted-foreground">
-                      {lib.posBySlug.get(t.position)?.nameKo ?? t.position}
+                      {t.positionName}
                     </span>
                   </span>
                   <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />

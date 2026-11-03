@@ -47,7 +47,7 @@ export function HomeView({ data }: { data: HomeData }) {
       {/* ②-2 내 주짓수 지도 (D-60) */}
       <JiujitsuMap map={map} />
 
-      {/* ②-3 오픈매트 · 시험 홈 타일 (D-88 · D-115 · D-116) */}
+      {/* ②-3 오픈매트 타일 (D-88 · D-116) */}
       <HomeTiles />
     </>
   );

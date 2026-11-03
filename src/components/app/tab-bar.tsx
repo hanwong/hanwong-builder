@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 // 하단 탭 4개 (DESIGN.md 4). 복습 탭은 D-58 로 뺐다. 홈 · 기록 탭에는 위에 떠 있는 기록하기(D-67).
 const tabs: { href: string; label: string; Icon: typeof House; ready: boolean; match?: string[] }[] = [
   { href: "/app", label: "홈", Icon: House, ready: true },
-  { href: "/app/beta", label: "질문하기", Icon: MessageCircleQuestion, ready: true, match: ["/app/beta", "/app/ask"] }, // 질문 홈 · 답 보기(D-118)
+  { href: "/app/ask", label: "질문하기", Icon: MessageCircleQuestion, ready: true }, // 질문 홈 · 답 보기(D-118 · D-119)
   { href: "/app/logs", label: "기록", Icon: PenLine, ready: true, match: ["/app/log"] }, // 목록 · 쓰기 · 보기 모두(D-40)
   { href: "/app/skills", label: "내 기술", Icon: Map, ready: true },
 ];

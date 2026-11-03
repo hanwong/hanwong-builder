@@ -1,17 +1,16 @@
 import Link from "next/link";
 import { ArrowRight, MapPlus, MessageCircleQuestion, MoonStar, Sprout } from "lucide-react";
 import { PositionPicture } from "@/components/app/position-picture";
-import type { Growth } from "@/lib/ask/beta-data"; // 타입만 — server-only 모듈이어도 지워진다
-import { seoulToday } from "@/lib/seoul-date";
+import type { Growth } from "@/lib/ask/ask-data"; // 타입만 — server-only 모듈이어도 지워진다
 
 // 질문할수록 자라는 기술 지도(D-115) — 글 대신 그림 · 숫자. map_growth 에서(공용 기술 · 에이전트 실행 기록의 숫자만)
 const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"];
 
-export function GrowingMap({ growth, myCount }: { growth: Growth; myCount: number }) {
+export function GrowingMap({ growth, myCount, today }: { growth: Growth; myCount: number; today: string }) {
   const run = growth.lastRun;
   const week = growth.daily.slice(-7);
   const max = Math.max(1, ...week);
-  const today = new Date(`${seoulToday()}T00:00:00Z`).getUTCDay();
+  const dow = new Date(`${today}T00:00:00Z`).getUTCDay();
   return (
     <section className="flex min-w-0 flex-col gap-4 overflow-hidden rounded-3xl bg-foreground p-5 text-background">
       <div className="flex items-center justify-between">
@@ -39,7 +38,7 @@ export function GrowingMap({ growth, myCount }: { growth: Growth; myCount: numbe
                 className={i === week.length - 1 ? "w-4 rounded-sm bg-accent" : "w-4 rounded-sm bg-background/35"}
                 style={{ height: `${Math.max(3, (n / max) * 44)}px` }}
               />
-              <span className="text-[10px] opacity-60">{WEEKDAY[(today - (week.length - 1 - i) + 14) % 7]}</span>
+              <span className="text-[10px] opacity-60">{WEEKDAY[(dow - (week.length - 1 - i) + 14) % 7]}</span>
             </div>
           ))}
         </div>

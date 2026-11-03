@@ -16,6 +16,10 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // 질문 화면 옛 주소(D-119)
+  async redirects() {
+    return [{ source: "/app/beta", destination: "/app/ask", permanent: true }];
+  },
   partialPrefetching: true,
   // 기록 공유 이미지(D-51) — 서버에서 읽는 글꼴 · 포지션 그림을 배포 묶음에 넣는다
   outputFileTracingIncludes: {
