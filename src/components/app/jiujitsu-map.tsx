@@ -14,8 +14,15 @@ export function JiujitsuMap({ map }: { map: { slug: string; nameKo: string; lear
         <h2 id="map-title" className="text-[17px] font-semibold">
           내 주짓수 지도
         </h2>
-        <span className="text-[13px] font-medium text-muted-foreground tabular-nums">
-          <span className="font-semibold text-foreground">{reached}</span> / {map.length} 포지션 · 배운 기술 {total}개
+        <span className="text-[13px] font-medium text-muted-foreground tabular-nums">배운 기술 {total}개</span>
+      </div>
+      {/* 밟아 본 포지션 — 진행 띠(D-116) */}
+      <div className="flex items-center gap-3">
+        <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted" aria-hidden>
+          <div className="h-full rounded-full bg-foreground transition-[width]" style={{ width: `${(reached / Math.max(1, map.length)) * 100}%` }} />
+        </div>
+        <span className="shrink-0 text-[13px] font-semibold tabular-nums">
+          {reached} <span className="font-medium text-muted-foreground">/ {map.length} 포지션</span>
         </span>
       </div>
       <ul className="grid grid-cols-4 gap-2">

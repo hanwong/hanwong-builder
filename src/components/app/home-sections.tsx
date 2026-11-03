@@ -1,10 +1,10 @@
-import Link from "next/link";
-import { ChevronRight, Swords, Users } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getHomeData, type HomeData } from "@/lib/home-data";
 import { TrainingBelt } from "@/components/app/training-belt";
 import { JiujitsuMap } from "@/components/app/jiujitsu-map";
 import { DrillChips } from "@/components/app/drill-chips";
+import { SparringTile } from "@/components/app/sparring-tile";
+import { HomeTiles } from "@/components/app/home-tiles";
 import { cookies } from "next/headers";
 
 // 홈 ② 수련 벨트 · ③ 내 주짓수 지도 (FLOW 3 · DESIGN 6, 오늘 복습 D-58 · 최근 기록 D-61 로 뺌). 로그인 쿠키를 읽으므로 page 에서 Suspense 로 감싼다.
@@ -38,17 +38,8 @@ export function HomeView({ data }: { data: HomeData }) {
       {/* ② 수련 벨트 (D-33) */}
       <TrainingBelt weeks={weeks} belt={belt} startedOn={startedOn} thisMonth={thisMonth} />
 
-      {/* ②-1 스파링 (D-64) */}
-      <div className="flex items-center justify-between gap-3 rounded-2xl bg-card px-4 py-3 ring-1 ring-border">
-        <span className="flex items-center gap-2 text-[15px] font-semibold">
-          <Swords className="size-4" strokeWidth={1.75} aria-hidden />
-          스파링
-        </span>
-        <span className="text-[13px] font-medium text-muted-foreground tabular-nums">
-          이번 달 <span className="text-[15px] font-semibold text-foreground">{sparring.month}판</span> · 전체{" "}
-          {sparring.total}판
-        </span>
-      </div>
+      {/* ②-1 스파링 (D-64 · D-116) */}
+      <SparringTile month={sparring.month} total={sparring.total} />
 
       {/* ②-2 기본 드릴 (D-112) — 화이트 벨트만(블루 이상은 drills 가 빈 목록) */}
       <DrillChips drills={drills} wrap />
@@ -56,20 +47,8 @@ export function HomeView({ data }: { data: HomeData }) {
       {/* ②-2 내 주짓수 지도 (D-60) */}
       <JiujitsuMap map={map} />
 
-      {/* ②-3 온라인 오픈매트 (D-88) */}
-      <Link
-        href="/open-mat"
-        className="flex items-center justify-between gap-3 rounded-2xl bg-card px-4 py-3 ring-1 ring-border hover:bg-muted"
-      >
-        <span className="flex items-center gap-2 text-[15px] font-semibold">
-          <Users className="size-4" strokeWidth={1.75} aria-hidden />
-          온라인 오픈매트
-        </span>
-        <span className="flex items-center gap-1 text-[13px] font-medium text-muted-foreground">
-          매트에 모여 오스
-          <ChevronRight className="size-4" aria-hidden />
-        </span>
-      </Link>
+      {/* ②-3 오픈매트 · 시험 홈 타일 (D-88 · D-115 · D-116) */}
+      <HomeTiles />
     </>
   );
 }

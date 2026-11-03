@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { ChevronRight, LogOut, MessageCircleQuestion } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HomeSections, HomeSkeleton } from "@/components/app/home-sections";
 import { HomeNotices } from "@/components/app/home-notices";
@@ -33,20 +32,6 @@ export default function AppHome() {
         <HomeSections />
       </Suspense>
 
-      {/* 질문 메인 시험 홈으로 (D-115) */}
-      <Link
-        href="/app/beta"
-        className="flex items-center justify-between gap-3 rounded-2xl bg-card px-4 py-3 ring-1 ring-border hover:bg-muted"
-      >
-        <span className="flex items-center gap-2 text-[15px] font-semibold">
-          <MessageCircleQuestion className="size-4" strokeWidth={1.75} aria-hidden />
-          새 홈 미리 써 보기
-        </span>
-        <span className="flex items-center gap-1 text-[13px] font-medium text-muted-foreground">
-          막힌 장면 물어보기 · 베타
-          <ChevronRight className="size-4" aria-hidden />
-        </span>
-      </Link>
     </div>
   );
 }
