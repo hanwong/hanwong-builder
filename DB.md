@@ -340,3 +340,9 @@
 | — | 사진 · 파일 저장소 | 해당 없음(M1 에 저장소 없음) |
 | — | 서버 기능(Route Handler) | **미확인** — 5단계에서 코드가 생긴 뒤 점검 |
 - 방법: 관리자 키로 사용자 권한을 흉내 낸 게 아니라, DB 세션 안에서 `set local role authenticated/anon` + `request.jwt.claims` 로 **실제 RLS 가 적용되는 역할**로 실행했다. 점검용 사용자 2명은 트랜잭션 롤백으로 사라졌고, `auth.users` 에 남은 테스트 계정 0 확인.
+
+### 함수 publish_technique_draft (D-117)
+- `publish_technique_draft(p_draft uuid, p_source text)` — 초안을 공용 기술로 넣고 그 이름으로 적힌 기록을 잇고 적은 사람에게 알림. 운영자 확인 없음. **실행 권한: public · anon · authenticated 모두 없음** — DB 직접 연결(매일 지도 키우기 에이전트의 Supabase MCP)만 부른다.
+- `approve_technique_draft(p_draft, p_due)` — 운영자 버튼. `is_operator()` 확인 뒤 위 함수를 출처 "운영자 승인(앱 초안, D-47)"로 부른다.
+- 에이전트가 넣은 기술은 `techniques.source` 가 "에이전트 자동 추가(D-117)" 로 시작한다.
+
