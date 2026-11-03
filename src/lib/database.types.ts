@@ -833,6 +833,7 @@ export type Database = {
         }[]
       }
       is_operator: { Args: never; Returns: boolean }
+      map_growth: { Args: never; Returns: Json }
       my_pending_suggestions: { Args: never; Returns: number }
       name_key: { Args: { t: string }; Returns: string }
       open_mat_announce: { Args: { p_log: string }; Returns: undefined }

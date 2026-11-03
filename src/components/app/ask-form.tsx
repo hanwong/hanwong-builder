@@ -10,14 +10,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { useSpeechInput } from "@/lib/use-speech-input";
 import { askQuestion } from "@/app/app/ask/actions";
 
-// 질문하기 (D-100) — 글상자(마이크는 기록 메모와 같음) · 예시 칩 · "질문하기". 답을 저장하면 그 질문 화면으로.
+// 질문하기 (D-100 · D-115) — 글상자(마이크는 기록 메모와 같음) · 예시 칩 · 오늘 남은 횟수 · "질문하기". 답을 저장하면 그 질문 화면으로.
 const MAX = 500;
 const EXAMPLES = [
   "하프가드 아래에서 상대가 크로스페이스로 누르면 어떻게 해요?",
   "상대가 누워서 두 다리로 내 허리를 감고 있으면 어떻게 빠져나와요?",
 ];
 
-export function AskForm() {
+export function AskForm({ left, limit }: { left: number; limit: number }) {
   const router = useRouter();
   const [text, setText] = useState("");
   const [pending, startAsk] = useTransition();
@@ -25,7 +25,7 @@ export function AskForm() {
     onText: (t) => setText((prev) => (prev + (prev && !/\s$/.test(prev) ? " " : "") + t).slice(0, MAX)),
   });
   const shown = interim ? `${text}${text && !/\s$/.test(text) ? " " : ""}${interim}` : text;
-  const ready = text.trim().length >= 2 && !pending;
+  const ready = text.trim().length >= 2 && !pending && left > 0;
 
   function submit() {
     if (!ready) return;
@@ -103,12 +103,16 @@ export function AskForm() {
       </div>
 
       <p className="text-[13px] leading-relaxed font-medium text-muted-foreground">
-        질문은 답을 만들기 위해 AI 에 보내져요. 상대 이름은 적지 마세요.
+        질문 글은 답을 만들고, 밤마다 기술 지도를 넓히는 데 AI(Anthropic Claude)에 보내져요. 누가 물었는지는
+        보내지 않아요. 사람 이름은 적지 마세요.
       </p>
       <Button className="h-12 w-full gap-2 rounded-full text-base shadow-none" disabled={!ready} onClick={submit}>
         {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
-        {pending ? "기술 지도를 찾아보는 중…" : "질문하기"}
+        {pending ? "기술 지도를 찾아보는 중…" : left > 0 ? "질문하기" : "오늘 질문을 다 썼어요"}
       </Button>
+      <p className="text-center text-[13px] font-medium text-muted-foreground tabular-nums">
+        오늘 남은 질문 {left} / {limit}
+      </p>
     </div>
   );
 }

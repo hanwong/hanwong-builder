@@ -5,9 +5,9 @@ import { createSupabaseServer } from "@/lib/supabase/server";
 import { isLive } from "@/lib/matching";
 import { answerQuestion } from "@/lib/ask/answer";
 import { seoulToday } from "@/lib/seoul-date";
+import { askQuota } from "@/lib/ask/quota";
 
-// 질문하기 (D-100) — 지금은 운영자만. 성공한 답만 저장하고 ai_calls(kind ask)로 센다.
-const DAILY_ASKS = 30; // 운영자 안전장치
+// 질문하기 (D-100 · D-115) — 로그인한 모든 사용자, 하루 3번(운영자 30번). 성공한 답만 저장하고 ai_calls(kind ask)로 센다.
 
 export type AskResult = { ok: true; id: string } | { ok: false; message: string };
 
@@ -17,20 +17,13 @@ export async function askQuestion(text: string): Promise<AskResult> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, message: "로그인이 풀렸어요. 다시 로그인해 주세요." };
-  const { data: operator } = await supabase.rpc("is_operator");
-  if (!operator) return { ok: false, message: "질문하기는 아직 준비 중이에요." };
 
   const question = typeof text === "string" ? text.replace(/\s+/g, " ").trim().slice(0, 500) : "";
   if (question.length < 2) return { ok: false, message: "질문을 두 글자 이상 적어 주세요." };
   if (!isLive()) return { ok: false, message: "AI 키가 없어 지금은 답을 만들 수 없어요." };
 
-  const since = `${seoulToday()}T00:00:00+09:00`;
-  const { count } = await supabase
-    .from("ai_calls")
-    .select("id", { count: "exact", head: true })
-    .eq("kind", "ask")
-    .gte("called_at", since);
-  if ((count ?? 0) >= DAILY_ASKS) return { ok: false, message: "오늘은 여기까지 — 내일 다시 물어봐 주세요." };
+  const { left } = await askQuota(supabase);
+  if (left <= 0) return { ok: false, message: "오늘 질문 횟수를 다 썼어요 — 내일 다시 물어봐 주세요." };
 
   let a;
   try {

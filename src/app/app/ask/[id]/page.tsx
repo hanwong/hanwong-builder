@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Sprout } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnswerBody } from "@/components/app/answer-body";
@@ -71,6 +71,13 @@ async function Loader({ params }: { params: Promise<{ id: string }> }) {
         <h1 className="text-[17px] leading-snug font-semibold">{q.question}</h1>
       </div>
       <AnswerBody answer={q.answer} />
+      {/* 질문할수록 자라는 지도(D-115) — 지도에 딱 맞는 칸이 없어 합쳐 답했으면(> 줄) 더 분명히 */}
+      <p className="flex gap-2 rounded-xl bg-muted px-3 py-2.5 text-[13px] leading-relaxed">
+        <Sprout className="mt-0.5 size-4 shrink-0" strokeWidth={1.75} aria-hidden />
+        {/^>\s/m.test(q.answer)
+          ? "지도에 딱 맞는 칸이 없어 비슷한 항목을 합쳐 답했어요. 이 질문은 오늘 밤 지도 키우기 에이전트가 살펴보고, 빠진 기술이면 지도에 넣을 초안을 만들어요."
+          : "이 질문은 오늘 밤 지도 키우기 에이전트가 살펴봐요. 질문이 쌓일수록 기술 지도가 넓어지고 답이 더 정확해져요."}
+      </p>
 
       {techniques.length > 0 && (
         <section className="flex flex-col gap-2">
