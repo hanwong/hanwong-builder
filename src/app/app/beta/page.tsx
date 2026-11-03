@@ -3,11 +3,12 @@ import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { BookOpen, ChevronRight, House, PenLine, Sprout } from "lucide-react";
+import { BookOpen, ChevronRight, House, PenLine } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AskForm } from "@/components/app/ask-form";
-import { getBetaData, type Growth } from "@/lib/ask/beta-data";
+import { getBetaData } from "@/lib/ask/beta-data";
+import { GrowingMap } from "@/components/app/growing-map";
 import { formatKoreanDate } from "@/lib/seoul-date";
 
 export const metadata: Metadata = {
@@ -27,15 +28,10 @@ export default function BetaHome() {
         </span>
         <Badge variant="secondary">시험 중</Badge>
       </header>
-      <section className="flex flex-col gap-2">
-        <h1 className="text-[24px] font-bold tracking-tight">
-          <span className="mark-lime">막힌 장면</span>, 물어보세요
-        </h1>
-        <p className="text-[15px] leading-relaxed text-muted-foreground">
-          포지션 이름을 몰라도 돼요. 상황을 말로 적으면 리리롤 기술 지도에서 찾아 순서 · 흔한 실수 · 막히면 다음 수까지
-          답해요.
-        </p>
-      </section>
+      <h1 className="text-[28px] leading-tight font-bold tracking-tight">
+        <span className="mark-lime">막힌 장면</span>,<br />
+        물어보세요
+      </h1>
       <Suspense fallback={<BetaSkeleton />}>
         <Loader />
       </Suspense>
@@ -61,7 +57,7 @@ async function Loader() {
   }
   return (
     <>
-      <AskForm left={data.left} limit={data.limit} />
+      <AskForm left={data.left} limit={data.limit} compact />
       {data.growth && <GrowingMap growth={data.growth} myCount={data.myCount} />}
       {data.mine.length > 0 && (
         <section className="flex flex-col gap-2">
@@ -87,69 +83,6 @@ async function Loader() {
         <SmallLink href="/app" Icon={House} label="원래 홈" />
       </nav>
     </>
-  );
-}
-
-// 질문할수록 자라는 기술 지도(D-115) — 숫자는 map_growth 에서(공용 기술 · 에이전트 실행 기록의 숫자만)
-function GrowingMap({ growth, myCount }: { growth: Growth; myCount: number }) {
-  const run = growth.lastRun;
-  return (
-    <section className="flex flex-col gap-3 rounded-2xl bg-card p-4 ring-1 ring-border">
-      <div className="flex items-center gap-2">
-        <Sprout className="size-4" strokeWidth={1.75} aria-hidden />
-        <h2 className="text-[15px] font-semibold">질문할수록 똑똑해지는 기술 지도</h2>
-      </div>
-      <p className="flex items-baseline gap-2 tabular-nums">
-        <span className="text-[28px] leading-none font-bold">{growth.total}</span>
-        <span className="text-[13px] font-medium text-muted-foreground">개 기술</span>
-        {growth.added7d > 0 && (
-          <span className="ml-auto rounded-full bg-accent px-2 py-0.5 text-[12px] font-semibold text-accent-foreground">
-            최근 7일 +{growth.added7d}
-          </span>
-        )}
-      </p>
-      <ol className="flex flex-col gap-1.5 text-[13px] leading-relaxed">
-        {[
-          "내 질문에 기술 지도를 찾아 답해요",
-          "밤마다 지도 키우기 에이전트가 질문을 살펴 지도에 빠진 기술을 찾아요",
-          "운영자가 확인하면 지도에 들어가고, 다음 답이 더 정확해져요",
-        ].map((s, i) => (
-          <li key={s} className="flex gap-2">
-            <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold">
-              {i + 1}
-            </span>
-            <span>{s}</span>
-          </li>
-        ))}
-      </ol>
-      {run && (
-        <p className="rounded-xl bg-muted px-3 py-2 text-[13px] leading-relaxed">
-          {formatKoreanDate(run.runOn)} 새벽 — 질문 {run.questions}개를 살펴보고 새 기술 초안 {run.drafted}개를 만들었어요.
-          {growth.fromQuestions > 0 && ` 지금까지 질문에서 시작된 기술 ${growth.fromQuestions}개.`}
-        </p>
-      )}
-      {growth.recent.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[12px] font-medium text-muted-foreground">최근 지도에 들어간 기술</span>
-          <div className="flex flex-wrap gap-1.5">
-            {growth.recent.map((t) => (
-              <Link
-                key={t.slug}
-                href={`/app/skills/${t.slug}`}
-                className="h-8 rounded-full border bg-background px-3 text-[13px] leading-8 hover:bg-muted"
-              >
-                {t.name}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-      {myCount > 0 && (
-        <p className="text-[12px] text-muted-foreground">
-          지금까지 내 질문 {myCount}개 — 모두 밤마다 지도 키우기에 쓰여요(누가 물었는지는 빼고).
-        </p>
-      )}
-    </section>
   );
 }
 

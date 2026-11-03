@@ -7,8 +7,9 @@ export type Growth = {
   total: number;
   added7d: number;
   fromQuestions: number;
+  daily: number[]; // 최근 14일 날마다 들어간 공용 기술 수 — 오래된 날부터, 마지막이 오늘
   lastRun: { runOn: string; questions: number; drafted: number } | null;
-  recent: { slug: string; name: string }[];
+  recent: { slug: string; name: string; position: string | null }[];
 };
 export type BetaData = {
   left: number;
@@ -22,8 +23,9 @@ type RawGrowth = {
   total: number;
   added_7d: number;
   from_questions: number;
+  daily: number[] | null;
   last_run: { run_on: string; questions: number; drafted: number } | null;
-  recent: { slug: string; name: string }[];
+  recent: { slug: string; name: string; position: string | null }[];
 };
 
 export async function getBetaData(): Promise<BetaData> {
@@ -46,6 +48,7 @@ export async function getBetaData(): Promise<BetaData> {
           total: g.total,
           added7d: g.added_7d,
           fromQuestions: g.from_questions,
+          daily: g.daily ?? [],
           lastRun: g.last_run ? { runOn: g.last_run.run_on, questions: g.last_run.questions, drafted: g.last_run.drafted } : null,
           recent: g.recent ?? [],
         }
