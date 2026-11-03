@@ -18,7 +18,7 @@ const EXAMPLES = [
   { label: "사이드에 깔렸을 때", text: "사이드 컨트롤 아래에 깔려서 숨이 막힐 때 어떻게 빠져나와요?" },
 ];
 
-// compact(시험 홈 D-115): 예시는 짧은 칩, 안내는 한 줄
+// compact(시험 홈 D-115): 예시 칩 없이, 안내는 한 줄
 export function AskForm({ left, limit, compact = false }: { left: number; limit: number; compact?: boolean }) {
   const router = useRouter();
   const [text, setText] = useState("");
@@ -89,21 +89,8 @@ export function AskForm({ left, limit, compact = false }: { left: number; limit:
         </p>
       )}
 
-      {compact ? (
-        <div className="-mt-1 flex flex-wrap gap-1.5">
-          {EXAMPLES.map((ex) => (
-            <button
-              key={ex.label}
-              type="button"
-              disabled={pending}
-              onClick={() => setText(ex.text)}
-              className="h-8 rounded-full border bg-background px-3 text-[13px] transition-colors hover:bg-muted disabled:opacity-50"
-            >
-              {ex.label}
-            </button>
-          ))}
-        </div>
-      ) : (
+      {/* 시험 홈(compact)은 예시 없이 — 본인 요청 2026-11-04 */}
+      {!compact && (
         <div className="flex flex-col gap-2">
           <span className="text-[13px] font-medium text-muted-foreground">이렇게 물어봐도 돼요</span>
           {EXAMPLES.map((ex) => (
