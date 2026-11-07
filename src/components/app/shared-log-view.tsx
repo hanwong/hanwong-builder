@@ -28,7 +28,7 @@ export function SharedLogView({ log }: { log: SharedLog }) {
         toast.error(res?.message ?? "가져오지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
         return;
       }
-      toast.success("내 기록으로 가져왔어요. 오늘 막힌 점을 메모에 더해 보세요.");
+      toast.success("내 기록으로 가져왔어요. 메모는 내 것으로 고쳐도 돼요.");
       router.replace(`/app/log/${res.id}`);
     });
   }
@@ -46,7 +46,7 @@ export function SharedLogView({ log }: { log: SharedLog }) {
       </header>
 
       <p className="text-[15px] leading-relaxed text-muted-foreground">
-        같이 수업한 사람이 보낸 링크예요. 가져오면 같은 날짜 · 기술로 내 기록이 생기고, 메모는 내가 적어요.
+        같이 수업한 사람이 보낸 링크예요. 가져오면 같은 날짜 · 기술 · 메모로 내 기록이 생기고, 메모는 내 것으로 고칠 수 있어요.
       </p>
 
       <section className="flex flex-col gap-3">
@@ -95,6 +95,16 @@ export function SharedLogView({ log }: { log: SharedLog }) {
 
         {count === 0 && <p className="text-[15px] text-muted-foreground">고른 기술이 없는 기록이에요.</p>}
       </section>
+
+      {/* 수업 메모 (D-124) — 올린 사람이 적은 그대로, 읽기만 */}
+      {log.body && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-[17px] font-semibold">메모</h2>
+          <Card className="rounded-2xl ring-border">
+            <CardContent className="text-[15px] leading-relaxed whitespace-pre-wrap">{log.body}</CardContent>
+          </Card>
+        </section>
+      )}
 
       <BottomAction>
         {log.importedId ? (

@@ -5,6 +5,7 @@ import { createSupabaseServer } from "@/lib/supabase/server";
 export type SharedLog = {
   id: string;
   loggedOn: string;
+  body: string; // 수업 메모(D-124) — 공유의 핵심이라 보여 준다
   nick: string | null; // 올린 사람 닉네임(공유를 켤 때 적게 하지만, 뒤에 지웠을 수 있다)
   owner: boolean; // 내가 올린 것(그러면 보통 고치기 화면이 먼저 나와 여기 안 온다)
   techniques: { slug: string; nameKo: string; nameEn: string; position: string; positionSlug: string | null; public: boolean }[];
@@ -14,6 +15,7 @@ export type SharedLog = {
 
 type Raw = {
   logged_on: string;
+  body: string | null;
   nick: string | null;
   owner: boolean;
   techniques: { slug: string; name_ko: string; name_en: string; position: string | null; position_slug: string | null; public: boolean }[];
@@ -30,6 +32,7 @@ export async function getSharedLog(id: string): Promise<SharedLog | null> {
   return {
     id,
     loggedOn: raw.logged_on,
+    body: raw.body ?? "",
     nick: raw.nick ?? null,
     owner: !!raw.owner,
     techniques: (raw.techniques ?? []).map((t) => ({
