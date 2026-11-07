@@ -30,7 +30,7 @@ const ACTS: { act: Act; label: string; Icon: typeof Hand }[] = [
   { act: "fistbump", label: "콤파치", Icon: HandFist }, // 주먹 맞대기 인사(본인 요청 2026-10-31, 하이파이브 대신)
   { act: "tap", label: "탭", Icon: Hand },
 ];
-// 앉은 자세(본인 요청 2026-10-31) — 누르면 앉고, 다시 누르면(또는 걸으면) 일어선다
+// 앉은 자세(본인 요청 2026-10-31) — 누르면 앉고, 다시 누르면 일어선다. 걸어도 앉은 채로 간다(D-125)
 const STANCES: { stance: Exclude<Stance, "stand">; label: string; Icon: typeof Hand }[] = [
   { stance: "top", label: "탑", Icon: ArrowDownToLine },
   { stance: "guard", label: "가드", Icon: Shield },

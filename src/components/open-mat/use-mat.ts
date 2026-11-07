@@ -19,7 +19,8 @@ export const MAT_HALF = 4.6; // 매트 안쪽 반 너비 — 이 안에서만 �
 export type Act = "oss" | "fistbump" | "tap";
 export const ACT_LABEL: Record<Act, string> = { oss: "오스로 인사했어요", fistbump: "콤파치를 했어요", tap: "탭을 쳤어요" };
 
-// 앉은 자세(본인 요청 2026-10-31 "탑, 가드 넣어서 앉았다 일어났다") — 다시 누르거나 걸으면 일어선다
+// 앉은 자세(본인 요청 2026-10-31 "탑, 가드 넣어서 앉았다 일어났다") — 같은 버튼을 다시 누르면 일어선다.
+// 걸어도 자세는 그대로다(본인 요청 2026-11-07 "탑 · 가드일 때 움직이면 그 상태로 움직이게", D-125)
 export type Stance = "stand" | "guard" | "top";
 export const STANCE_LABEL: Record<Exclude<Stance, "stand">, string> = { guard: "가드 자세로 앉았어요", top: "탑 자세를 잡았어요" };
 const isStance = (v: unknown): v is Stance => v === "stand" || v === "guard" || v === "top";
@@ -147,8 +148,7 @@ export function useMat() {
           const x = clamp(Number(payload.x) || 0);
           const z = clamp(Number(payload.z) || 0);
           spots.current.set(payload.id, { x, z });
-          stances.current.delete(payload.id); // 걸으면 일어선다
-          setPlayers((ps) => ps.map((p) => (p.id === payload.id ? { ...p, x, z, stance: "stand" } : p)));
+          setPlayers((ps) => ps.map((p) => (p.id === payload.id ? { ...p, x, z } : p))); // 자세는 그대로(D-125)
         });
         ch.on("broadcast", { event: "stance" }, ({ payload }) => {
           const stance = payload?.stance;
@@ -246,8 +246,7 @@ export function useMat() {
     self.current = { ...self.current, x: clamp(x), z: clamp(z) };
     const { id, x: nx, z: nz } = self.current;
     spots.current.set(id, { x: nx, z: nz });
-    stances.current.delete(id); // 걸으면 일어선다(받는 쪽도 move 를 받으면 일으킨다)
-    setPlayers((ps) => ps.map((p) => (p.id === id ? { ...p, x: nx, z: nz, stance: "stand" } : p)));
+    setPlayers((ps) => ps.map((p) => (p.id === id ? { ...p, x: nx, z: nz } : p))); // 앉은 자세는 그대로 간다(D-125)
     void ch.send({ type: "broadcast", event: "move", payload: { id, x: nx, z: nz } }); // 명단(presence)은 건드리지 않는다
   }, []);
 
@@ -265,7 +264,7 @@ export function useMat() {
     [play, toast],
   );
 
-  // 탑 · 가드: 누르면 그 자세로 앉고, 같은 버튼을 다시 누르면 일어선다
+  // 탑 · 가드: 누르면 그 자세로 앉고, 같은 버튼을 다시 누르면 일어선다(걸어도 안 일어남, D-125)
   const toggleStance = useCallback(
     (want: Exclude<Stance, "stand">) => {
       const ch = channel.current;

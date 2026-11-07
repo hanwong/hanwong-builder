@@ -100,6 +100,9 @@ function Room({ onPick }: { onPick: (x: number, z: number) => void }) {
         </group>
       ))}
 
+      {/* 출입문 맞은편(정면) 벽 위쪽에 큰 글자 JIUJITSU(본인 요청 2026-11-07) */}
+      <WallText text="JIUJITSU" />
+
       {/* 어두운 천장 + 덕트 + 비스듬히 길게 이어진 조명 — 카메라가 천장 위로 올라가면 가리지 않게 숨긴다 */}
       <Ceiling />
     </group>
@@ -152,6 +155,38 @@ function GlassDoor() {
         </mesh>
       ))}
     </group>
+  );
+}
+
+// 벽 글자 — 캔버스에 굵은 글자를 그려 출입문 맞은편 벽(z = +ROOM, 들어와서 정면에 보이는 벽) 패드 위 빈 벽에 붙인다.
+// 글자 높이 약 1.3m, 벽 위쪽 띠(패드 2m ~ 천장 4.2m) 가운데.
+function WallText({ text }: { text: string }) {
+  const { material, ratio } = useMemo(() => {
+    const h = 256;
+    const font = `900 ${h * 0.78}px "Pretendard Variable", Pretendard, Arial, sans-serif`;
+    const c = document.createElement("canvas");
+    const ctx = c.getContext("2d")!;
+    ctx.font = font;
+    ctx.letterSpacing = `${h * 0.08}px`;
+    const w = Math.ceil(ctx.measureText(text).width) + h * 0.3;
+    c.width = w;
+    c.height = h;
+    ctx.font = font;
+    ctx.letterSpacing = `${h * 0.08}px`;
+    ctx.fillStyle = MAT.matBorder;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, w / 2 + h * 0.04, h / 2 + h * 0.04);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 4;
+    return { material: new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }), ratio: w / h };
+  }, [text]);
+  const height = 1.3;
+  return (
+    <mesh material={material} position={[0, PAD_H + (WALL_H - PAD_H) / 2, ROOM - 0.02]} rotation-y={Math.PI}>
+      <planeGeometry args={[height * ratio, height]} />
+    </mesh>
   );
 }
 
@@ -395,20 +430,21 @@ function Character({
       pose.position.copy(g.position);
       pose.rotation.copy(g.rotation);
     }
-    // 자세: 걷는 동안엔 서고, 아니면 고른 자세로 약 0.4초에 걸쳐 앉는다
-    const goal = STANCE_POSE[walking ? "stand" : player.stance];
+    // 자세: 고른 자세로 약 0.4초에 걸쳐 앉는다. 앉은 채로도 걷는다(본인 요청 2026-11-07 "탑 · 가드일 때 움직이면 그 상태로") —
+    // 앉아서 갈 때는 다리를 크게 젓지 않고 몸만 조금 들썩이며 미끄러지듯 간다
+    const goal = STANCE_POSE[player.stance];
     const c = cur.current;
     const k = Math.min(1, dt * 7);
     for (const key of Object.keys(c) as (keyof typeof c)[]) c[key] += (goal[key] - c[key]) * k;
     const seated = Math.min(1, Math.abs(c.hip) / 0.16); // 앉은 정도(0 서 있음 ~ 1 앉음)
 
-    const bob = walking ? Math.abs(Math.sin(t * 10)) * 0.06 : Math.sin(t * 2) * 0.01 * (1 - seated);
+    const bob = walking ? Math.abs(Math.sin(t * 10)) * (0.06 - seated * 0.04) : Math.sin(t * 2) * 0.01 * (1 - seated);
     hips.current.position.y = c.hip + bob;
     // 동작
     const a = act ? Math.min(1, (t - actStart.current) / 1.4) : 1;
     const wave = act ? Math.sin(Math.PI * a) : 0;
     body.current.rotation.x = c.lean + (act === "oss" ? wave * 0.55 : 0); // 허리 숙여 인사
-    const swing = walking ? Math.sin(t * 10) * 0.5 : 0;
+    const swing = walking ? Math.sin(t * 10) * 0.5 * (1 - seated * 0.75) : 0;
     armR.current.rotation.x =
       act === "fistbump" ? -wave * 1.55 : // 콤파치: 오른팔을 앞으로 쭉 내밀었다 거둔다
       act === "tap" ? -0.6 - Math.abs(Math.sin(t * 18)) * 0.5 * wave :
