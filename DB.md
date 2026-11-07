@@ -7,6 +7,7 @@
 
 ## 1. 로그인
 - 누가: **수련자**만. 랜딩(`/`)은 로그인 없이, `/app/...` 전부 로그인 필요(D-07).
+- 닉네임(D-122)은 표를 만들지 않고 `user_metadata.nick`(최대 20자, 본인만 바꿈)에 둔다. 안 적으면 이메일 @ 앞부분을 쓰되 저장하지 않는다.
 - 벨트 색(홈 수련 벨트, D-33)은 표를 만들지 않고 `auth.users` 의 `user_metadata.belt`(white · blue · purple · brown · black)에 둔다. 본인만 바꾼다(supabase.auth.updateUser).
 - 방식: **Supabase Auth + Google**(D-05). 이메일 · 매직링크 없음. 사용자 식별은 `auth.users.id`(uuid) — 아래 표의 `user_id` 가 이것을 가리킨다.
 - 운영자(본인): `operators` 표에 한웅 님 계정 하나(D-47). 운영 화면 `/app/admin` 에서 목록 밖 기술 초안을 승인 · 버림. 그 밖의 기술 콘텐츠는 마이그레이션으로 넣는다.

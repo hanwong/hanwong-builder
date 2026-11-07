@@ -3,6 +3,7 @@ import { cacheLife } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { addDays, seoulToday } from "@/lib/seoul-date";
 import { BELT_WEEKS, isBelt, isStartMonth, type Belt } from "@/lib/belt";
+import { cleanNick, emailId } from "@/lib/nickname";
 import { queryDrillChips, type DrillChip } from "@/lib/drills-data";
 
 // 홈(T-21)에 필요한 것만 읽는다. RLS 로 본인 것만 나온다(DB.md 5).
@@ -10,6 +11,8 @@ export type HomeData = {
   map: { slug: string; nameKo: string; learned: number }[]; // 내 주짓수 지도(D-60) — 포지션 순서대로, 숙련도가 있는 기술 수
   belt: Belt; // 내 벨트 색(auth user_metadata, D-33)
   startedOn: string | null; // 수련 시작 'YYYY-MM'(D-59)
+  nick: string; // 닉네임(D-122) — 안 적었으면 빈 글자
+  defaultNick: string; // 닉네임을 안 적었을 때 쓰는 이메일 앞부분(D-122)
   thisMonth: string; // 서울 기준 이번 달 'YYYY-MM' — "수련 N년째" 계산용
   sparring: { month: number; total: number }; // 스파링 판 수(D-64) — 이번 달 · 전체
   weeks: { start: string; count: number }[]; // 최근 104주(월요일 시작, 서울) — 오래된 주부터
@@ -64,6 +67,8 @@ export async function getHomeData(): Promise<HomeData> {
     belt: myBelt,
     drills: myBelt === "white" ? drills : [],
     startedOn: isStartMonth(startedOn) ? startedOn : null,
+    nick: cleanNick(me.data.user?.user_metadata?.nick) ?? "",
+    defaultNick: emailId(me.data.user?.email),
     thisMonth: today.slice(0, 7),
     sparring,
     weeks,

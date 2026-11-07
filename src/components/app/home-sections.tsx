@@ -31,12 +31,12 @@ export async function HomeSections() {
 }
 
 export function HomeView({ data }: { data: HomeData }) {
-  const { weeks, belt, startedOn, thisMonth, map, sparring, drills } = data;
+  const { weeks, belt, startedOn, nick, defaultNick, thisMonth, map, sparring, drills } = data;
 
   return (
     <>
       {/* ② 수련 벨트 (D-33) */}
-      <TrainingBelt weeks={weeks} belt={belt} startedOn={startedOn} thisMonth={thisMonth} />
+      <TrainingBelt weeks={weeks} belt={belt} startedOn={startedOn} nick={nick} defaultNick={defaultNick} thisMonth={thisMonth} />
 
       {/* ②-1 스파링 (D-64 · D-116) */}
       <SparringTile month={sparring.month} total={sparring.total} />

@@ -7,9 +7,11 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { BeltChoice } from "@/components/app/belt-choice";
 import { useFloatingDialog } from "@/lib/use-floating-dialog";
-import { setBelt, setStartedOn } from "@/app/app/actions";
+import { setBelt, setNick, setStartedOn } from "@/app/app/actions";
 import { StartMonthPicker } from "@/components/app/start-month-picker";
 import {
   BELTS,
@@ -22,6 +24,7 @@ import {
   trainingSpan,
   type Belt,
 } from "@/lib/belt";
+import { NICK_MAX, cleanNick } from "@/lib/nickname";
 import { formatKoreanDate } from "@/lib/seoul-date";
 
 // 이 탭에서 물결을 이미 보여 줬나(서버에서는 늘 false — 바꾸는 건 브라우저 effect 에서만)
@@ -30,20 +33,26 @@ const WAVE_STEP = 45; // 세로줄(주) 사이 간격 ms — 26줄이면 약 1.2
 
 // 홈 "수련 벨트" (D-33, DESIGN 2) — 최근 2년(104주)을 1주 1칸으로, 그 주 수련(기록) 횟수만큼 밝게.
 // 바깥은 내 벨트 색(양옆 너비의 약 5%, 위아래 높이의 약 1%), 가운데는 검정 바탕 + 살짝 둥근 네모.
-// 위에 "○○ 벨트 · 수련 N년 N개월째"(D-59) + 오른쪽 끝 톱니바퀴(벨트 설정 팝업: 벨트 색 · 수련 시작), 아래에 범례 · 최근 2년 횟수.
+// 위에 "○○ 벨트 · 수련 N년 N개월째"(D-59) + 오른쪽 끝 톱니바퀴(내 설정 팝업: 닉네임 · 벨트 색 · 수련 시작), 아래에 범례 · 최근 2년 횟수.
 export function TrainingBelt({
   weeks,
   belt: initialBelt,
   startedOn: initialStartedOn,
+  nick: initialNick,
+  defaultNick,
   thisMonth,
 }: {
   weeks: { start: string; count: number }[];
   belt: Belt;
   startedOn: string | null;
+  nick: string;
+  defaultNick: string;
   thisMonth: string;
 }) {
   const [belt, setBeltState] = useState<Belt>(initialBelt);
   const [startedOn, setStartedOnState] = useState(initialStartedOn);
+  const [savedNick, setSavedNick] = useState(initialNick);
+  const [nickDraft, setNickDraft] = useState(initialNick);
   const [picking, setPicking] = useState(false);
   // 벨트 물결(D-65) — 이 탭에서 홈을 처음 열 때 한 번(띠를 누르면 기록 달력으로 가서 다시 돌리지 않음, D-99)
   const [wave] = useState(() => (wavePlayed ? 0 : 1));
@@ -83,9 +92,30 @@ export function TrainingBelt({
     });
   }
 
+  // 닉네임(D-122) — 칸을 벗어나거나 팝업을 닫으면 저장
+  function saveNick() {
+    const value = cleanNick(nickDraft);
+    if (value === null || value === savedNick) return;
+    const prev = savedNick;
+    setSavedNick(value);
+    setNickDraft(value);
+    startSaving(async () => {
+      const res = await setNick(value).catch(() => null);
+      if (!res?.ok) {
+        setSavedNick(prev);
+        toast.error("닉네임을 저장하지 못했어요. 다시 적어 주세요.");
+      }
+    });
+  }
+
+  function toggleSettings(open: boolean) {
+    if (!open) saveNick();
+    setPicking(open);
+  }
+
   return (
     <section className="flex flex-col gap-2" aria-label="수련 벨트">
-      {/* 수련 기간 (D-59) + 오른쪽 끝 벨트 설정(톱니바퀴) */}
+      {/* 수련 기간 (D-59) + 오른쪽 끝 내 설정(톱니바퀴) */}
       <div className="flex items-center gap-2">
         {startedOn ? (
           <p className="min-w-0 flex-1 text-[15px] font-semibold">
@@ -103,7 +133,7 @@ export function TrainingBelt({
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label="벨트 설정"
+          aria-label="내 설정"
           className="-mr-1.5 shrink-0 rounded-full text-muted-foreground"
           onClick={() => setPicking(true)}
         >
@@ -162,28 +192,48 @@ export function TrainingBelt({
         <span className="text-[13px] font-medium text-muted-foreground tabular-nums">최근 2년 · {total}번</span>
       </div>
 
-      {/* 벨트 설정 — 기술 고르기와 같은 떠 있는 팝업(T-35) */}
-      <Dialog open={picking} onOpenChange={setPicking}>
+      {/* 내 설정 — 기술 고르기와 같은 떠 있는 팝업(T-35) */}
+      <Dialog open={picking} onOpenChange={toggleSettings}>
         <DialogContent
           showCloseButton={false}
           className="sm:max-w-md"
           style={{ ...floating, display: "flex", flexDirection: "column", gap: "14px", padding: "14px" }}
         >
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-[17px] font-semibold">벨트 설정</DialogTitle>
+            <DialogTitle className="text-[17px] font-semibold">내 설정</DialogTitle>
             <Button
               variant="ghost"
               size="icon"
               aria-label="닫기"
               className="-mr-1 rounded-full"
-              onClick={() => setPicking(false)}
+              onClick={() => toggleSettings(false)}
             >
               <X />
             </Button>
           </div>
           <DialogDescription className="sr-only">
-            벨트 색과 수련을 시작한 연도 · 달을 바꿔요. 고르면 바로 저장돼요.
+            닉네임, 벨트 색, 수련을 시작한 연도 · 달을 바꿔요. 바꾸면 바로 저장돼요.
           </DialogDescription>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="nick-setting" className="text-[15px] font-semibold">
+              닉네임
+            </Label>
+            <Input
+              id="nick-setting"
+              value={nickDraft}
+              maxLength={NICK_MAX}
+              autoComplete="off"
+              placeholder={defaultNick || "실명이 아니어도 돼요"}
+              className="h-11 rounded-xl px-3"
+              onChange={(e) => setNickDraft(e.target.value)}
+              onBlur={saveNick}
+            />
+            {defaultNick && (
+              <p className="text-[13px] font-medium text-muted-foreground">
+                비워 두면 이메일 앞부분({defaultNick})으로 써요.
+              </p>
+            )}
+          </div>
           <div className="flex flex-col gap-2">
             <span id="belt-setting-label" className="text-[15px] font-semibold">
               지금 벨트
@@ -202,7 +252,7 @@ export function TrainingBelt({
               {startedOn ? `${trainingSpan(startedOn, thisMonth)}로 보여요.` : "연도와 달을 고르면 바로 저장돼요."}
             </p>
           </div>
-          <Button className="h-12 w-full rounded-full text-base shadow-none" onClick={() => setPicking(false)}>
+          <Button className="h-12 w-full rounded-full text-base shadow-none" onClick={() => toggleSettings(false)}>
             완료
           </Button>
         </DialogContent>

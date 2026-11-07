@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { isBelt, isStartMonth, type Belt } from "@/lib/belt";
+import { cleanNick } from "@/lib/nickname";
 import { seoulToday } from "@/lib/seoul-date";
 
 // 홈 수련 벨트 색 바꾸기 (D-33) — 새 표 없이 로그인 계정 정보(user_metadata.belt)에 저장. 본인 것만 바뀐다.
@@ -22,7 +23,7 @@ export async function setBelt(belt: Belt): Promise<{ ok: boolean }> {
   return { ok: true };
 }
 
-// 수련 시작 연 · 월 (D-59) — 홈 벨트 설정에서 바꾼다. null 이면 지운다
+// 수련 시작 연 · 월 (D-59) — 홈 내 설정에서 바꾼다. null 이면 지운다
 export async function setStartedOn(startedOn: string | null): Promise<{ ok: boolean }> {
   if (startedOn !== null && (!isStartMonth(startedOn) || startedOn > seoulToday().slice(0, 7))) return { ok: false };
   const supabase = await createSupabaseServer();
@@ -33,6 +34,24 @@ export async function setStartedOn(startedOn: string | null): Promise<{ ok: bool
   const { error } = await supabase.auth.updateUser({ data: { started_on: startedOn } });
   if (error) {
     console.error("setStartedOn failed:", error.code ?? "", (error.message ?? "").slice(0, 120));
+    return { ok: false };
+  }
+  revalidatePath("/app");
+  return { ok: true };
+}
+
+// 닉네임 (D-122) — 홈 설정에서 바꾼다. 빈 글자면 지운다
+export async function setNick(raw: string): Promise<{ ok: boolean }> {
+  const nick = cleanNick(raw);
+  if (nick === null) return { ok: false };
+  const supabase = await createSupabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+  const { error } = await supabase.auth.updateUser({ data: { nick: nick || null } });
+  if (error) {
+    console.error("setNick failed:", error.code ?? "", (error.message ?? "").slice(0, 120));
     return { ok: false };
   }
   revalidatePath("/app");
