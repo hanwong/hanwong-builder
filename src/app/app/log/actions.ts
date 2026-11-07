@@ -9,6 +9,7 @@ import { draftNames, mapFields } from "@/lib/admin/drafter";
 import { MAX_BODY } from "@/lib/log-limits";
 import { LEVELS, type Level, type MatchedTechnique, type Term } from "@/lib/mock/log-seed";
 import { isIsoDate, seoulToday } from "@/lib/seoul-date";
+import { cleanNick } from "@/lib/nickname";
 
 // 기록 화면 — 기술을 먼저 고르고 오늘 메모(D-56). AI 정리하기는 없앴다.
 // 목록 밖 이름은 사용자가 '내용 생성'으로 AI 기술 카드를 만들 수 있다 — 만든 사람만 보고, 운영자 승인 뒤 공용(D-57).
@@ -510,4 +511,46 @@ function fail(step: string, error: DbError): SaveResult {
   // 어느 단계 · 오류 코드만 남긴다(글 내용은 남기지 않는다)
   console.error("saveLog failed:", step, error?.code ?? "", (error?.message ?? "").slice(0, 120));
   return { ok: false, message: "저장하지 못했어요. 잠시 뒤 다시 눌러 주세요." };
+}
+
+// 수업 링크 공유 켜기 · 끄기 (D-123) — 켜면 주소를 아는 로그인한 사람이 날짜 · 기술 · 내 닉네임을 본다. 닉네임이 없으면 못 켠다.
+export async function setLogShared(logId: string, on: boolean): Promise<{ ok: boolean; message?: string }> {
+  if (!/^[0-9a-f-]{36}$/i.test(logId)) return { ok: false };
+  const supabase = await createSupabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "로그인이 풀렸어요. 다시 로그인해 주세요." };
+  if (on && !cleanNick(user.user_metadata?.nick)) return { ok: false, message: "닉네임을 먼저 적어 주세요." };
+  const { error, count } = await supabase
+    .from("class_logs")
+    .update({ shared_at: on ? new Date().toISOString() : null }, { count: "exact" })
+    .eq("id", logId); // RLS: 내 기록만
+  if (error || !count) {
+    console.error("setLogShared failed:", error?.code ?? "no-row");
+    return { ok: false, message: "저장하지 못했어요. 다시 눌러 주세요." };
+  }
+  revalidatePath(`/app/log/${logId}`);
+  return { ok: true };
+}
+
+// 공유한 기록을 내 기록으로 가져오기 (D-123) — DB 함수가 날짜 · 기술만 복사한 새 기록을 만든다. 두 번 누르면 같은 기록
+export async function importSharedLog(logId: string): Promise<{ ok: true; id: string } | { ok: false; message: string }> {
+  if (!/^[0-9a-f-]{36}$/i.test(logId)) return { ok: false, message: "없는 기록이에요." };
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase.rpc("import_shared_log", { p_id: logId });
+  if (error || !data) {
+    console.error("importSharedLog failed:", error?.code ?? "no-id");
+    return {
+      ok: false,
+      message:
+        error?.code === "P0002"
+          ? "올린 사람이 공유를 껐어요."
+          : error?.code === "P0001"
+            ? "내가 올린 기록이에요."
+            : "가져오지 못했어요. 다시 눌러 주세요.",
+    };
+  }
+  revalidatePath("/app", "layout"); // 홈 · 기록 · 내 기술이 바뀐다
+  return { ok: true, id: data };
 }

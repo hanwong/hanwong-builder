@@ -111,7 +111,9 @@ export type Database = {
           body: string
           created_at: string
           id: string
+          imported_from: string | null
           logged_on: string
+          shared_at: string | null
           sparring_rounds: number
           terms: Json
           user_id: string
@@ -121,7 +123,9 @@ export type Database = {
           body: string
           created_at?: string
           id?: string
+          imported_from?: string | null
           logged_on: string
+          shared_at?: string | null
           sparring_rounds?: number
           terms?: Json
           user_id: string
@@ -131,7 +135,9 @@ export type Database = {
           body?: string
           created_at?: string
           id?: string
+          imported_from?: string | null
           logged_on?: string
+          shared_at?: string | null
           sparring_rounds?: number
           terms?: Json
           user_id?: string
@@ -833,6 +839,7 @@ export type Database = {
         }[]
       }
       is_operator: { Args: never; Returns: boolean }
+      import_shared_log: { Args: { p_id: string }; Returns: string }
       map_growth: { Args: never; Returns: Json }
       my_pending_suggestions: { Args: never; Returns: number }
       name_key: { Args: { t: string }; Returns: string }
@@ -849,6 +856,7 @@ export type Database = {
           times: number
         }[]
       }
+      shared_log: { Args: { p_id: string }; Returns: Json }
       reject_user_technique: { Args: { p_id: string }; Returns: undefined }
     }
     Enums: {

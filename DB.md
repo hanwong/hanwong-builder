@@ -123,6 +123,8 @@
 | body | text | ✓ | | 오늘 메모(음성 입력 포함, 0~5000자). D-56 부터 선택 — 기술만 고르면 빈 글. 기술도 메모도 없으면 앱이 막음. 상대 이름은 적지 말라고 화면에 안내 |
 | terms | jsonb | | `[]` | 용어 요약 `[{term, meaning}]` — AI 가 쓴 것, 읽기용. D-56 뒤 새 기록은 비어 있음 |
 | sparring_rounds | smallint | ✓ | 0 | 스파링 몇 판(0~50, D-64) |
+| shared_at | timestamptz | | | 수업 링크 공유를 켠 시각(D-123). null 이면 꺼짐 |
+| imported_from | uuid → class_logs | | | 남의 공유 기록에서 가져온 기록이면 그 기록(D-123). 원본을 지우면 null |
 | ai_status | text | ✓ | `'none'` | `mock` · `ok` · `failed` · `none`(그냥 저장) |
 | created_at | timestamptz | ✓ | now() | |
 
@@ -270,7 +272,7 @@
 | open_mat_events | **하루치 보기**(D-88) | 하루치 보기 · 쓰기는 함수로 본인 기록만 | 하루치 보기 | 하루치 보기 |
 | position_notes · concepts | **보기**(D-83, 온라인 MCP) | 보기 | 보기 | 보기 (쓰기는 마이그레이션으로만) |
 | techniques | **공용만 보기**(owner_id 없음, D-81 — 온라인 MCP 용. 포지션도 같음) | 공용 보기(검수 전 초안 포함, D-24) + **내가 만든 것 보기 · 추가**(승인 대기 · 검수 전으로만, D-57) | 공용만 (남이 만든 것 ✗) | 전부 보기, 사용자 기술 승인 · 버림은 함수로 (공용 쓰기는 마이그레이션 · 시드로만) |
-| class_logs | ✗ | 보기 · 추가 · 수정 · 삭제 (자기 것만) | ✗ | ✗ |
+| class_logs | ✗ | 보기 · 추가 · 수정 · 삭제 (자기 것만) | ✗ (공유 켠 기록은 **함수 `shared_log` 로 날짜 · 기술 · 닉네임만**, D-123) | ✗ |
 | class_log_techniques | ✗ | 보기 · 추가 · 삭제 (자기 것만) | ✗ | ✗ |
 | technique_levels | ✗ | 보기 · 추가 · 수정 · 삭제 (자기 것만) | ✗ | ✗ |
 | review_cards | ✗ | 보기 · 추가 · 수정 · 삭제 (자기 것만) | ✗ | ✗ |
@@ -287,9 +289,12 @@
 - **사용자 기술 함수(D-57, 운영자만)**: `approve_user_technique(id, position, name_ko, name_en, steps)` 고친 내용으로 공용 기술 + 만든 사람에게 알림 · `reject_user_technique(id)` 버림(owner_status = rejected). 앱의 공용 목록 캐시는 `owner_id is null` 만 읽고, 내 기술은 사람마다 따로 읽는다(남의 내 기술이 캐시로 새지 않게). 기술을 가리키는 연결 · 숙련도 · 카드의 외래키는 restrict → no action(계정 삭제 때 같은 문장 안에서 함께 지워지게, 평소엔 똑같이 막음).
 - **운영자 DB 함수(D-47, security definer — 함수 안에서 운영자인지 먼저 확인, 아니면 거부 42501)**: `is_operator()` 운영자인가 · `pending_custom_names()` 초안 없는 적힌 이름과 횟수 · 사람 수(글 원문 · 사람 정보 없음) · `custom_name_counts(keys)` 초안별 횟수 · `approve_technique_draft(draft, due)` 승인 → 기술 추가(또는 다른 이름 추가) · 그 이름으로 적힌 모든 기록 연결 · 숙련도(비기너) · 카드(due) · 알림. 운영자도 다른 사람의 기록 표를 직접 읽지는 못한다(점검 2026-10-28: 0건). Supabase 보안 점검이 이 4개 함수를 "로그인 사용자가 실행 가능"으로 경고하지만 의도된 것 — 비운영자 · 로그인 안 한 사람 호출은 모두 막힘 확인.
 
+- **수업 링크 함수(D-123, security definer, 로그인한 사람만)**: `shared_log(id)` 공유가 켜진 기록의 날짜 · 올린 사람 닉네임(auth.users 메타) · 기술(이름 · 포지션 · 공용 여부) · 직접 적은 이름 · 내가 가져온 기록 id 를 jsonb 로(꺼졌으면 null, 메모 · 스파링 · 이메일은 안 나감) · `import_shared_log(id)` 날짜 · 기술만 복사한 내 기록을 만들고 id 를 돌려줌(두 번이면 전 것, 본인 기록이면 거부 P0001, 꺼졌으면 P0002). 마이그레이션 `20261107021204_shared_log.sql`.
+
 ## 6. 제약 · 인덱스 (함정 대비)
 - `review_cards (user_id, technique_id)` **유일** — 같은 기술을 두 번 기록해도 카드 1장.
 - `technique_levels (user_id, technique_id)` 유일.
+- `class_logs (user_id, imported_from)` 유일(imported_from 이 있을 때, D-123) — 같은 공유 링크는 한 사람이 한 번만.
 - `class_log_techniques (class_log_id, technique_id)` 유일(technique_id 가 있을 때) + `technique_id 또는 custom_name 중 하나는 반드시` 체크.
 - `techniques.slug`, `positions.slug` 유일.
 - `review_cards.interval_step` 0~4, `technique_levels.level` 5개 값, `review_logs.rating` 4개 값, `class_logs.ai_status` 4개 값 — 체크 제약.

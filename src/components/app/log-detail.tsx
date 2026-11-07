@@ -26,7 +26,7 @@ export function LogDetail({ log }: { log: SavedLog }) {
       date={<LogDateInput value={loggedOn} today={today} onChange={(v) => setLoggedOn(v || log.loggedOn)} />}
       saveLabel="고친 내용 저장"
       onBack={goBack}
-      headerAction={<ShareLog id={log.id} loggedOn={log.loggedOn} />}
+      headerAction={<ShareLog id={log.id} loggedOn={log.loggedOn} shared={log.shared} nick={log.nick} />}
       onSave={async (value) => {
         const res = await updateLog(log.id, {
           loggedOn,

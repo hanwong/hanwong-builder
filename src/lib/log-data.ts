@@ -2,6 +2,7 @@ import "server-only";
 import { cacheLife } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { mineOf, type Level, type MatchedTechnique, type Term } from "@/lib/mock/log-seed";
+import { cleanNick } from "@/lib/nickname";
 
 // 저장한 기록 하나를 정리 완료 화면(상태 C) 모양으로 읽는다 (D-25). RLS 로 본인 기록만 나온다.
 export type SavedLog = {
@@ -13,6 +14,8 @@ export type SavedLog = {
   techniques: MatchedTechnique[];
   customNames: string[];
   sparringRounds: number; // D-64
+  shared: boolean; // 수업 링크 공유 켬(D-123)
+  nick: string; // 내 닉네임(D-122) — 공유를 켜려면 있어야 한다. 없으면 빈 글자
 };
 
 export async function getLog(id: string): Promise<SavedLog | null> {
@@ -23,7 +26,7 @@ export async function getLog(id: string): Promise<SavedLog | null> {
   const { data, error } = await supabase
     .from("class_logs")
     .select(
-      "id, logged_on, body, terms, ai_status, sparring_rounds, class_log_techniques(created_at, custom_name, technique_id, techniques(slug, name_ko, name_en, steps, is_reviewed, owner_id, owner_status, positions(slug, name_ko)))",
+      "id, logged_on, body, terms, ai_status, sparring_rounds, shared_at, class_log_techniques(created_at, custom_name, technique_id, techniques(slug, name_ko, name_en, steps, is_reviewed, owner_id, owner_status, positions(slug, name_ko)))",
     )
     .eq("id", id)
     .maybeSingle();
@@ -55,12 +58,15 @@ export async function getLog(id: string): Promise<SavedLog | null> {
     ];
   });
 
+  const me = await supabase.auth.getUser();
   const status = data.ai_status === "ok" || data.ai_status === "mock" ? data.ai_status : "none";
   return {
     id: data.id,
     loggedOn: data.logged_on,
     body: data.body,
     sparringRounds: data.sparring_rounds,
+    shared: !!data.shared_at,
+    nick: cleanNick(me.data.user?.user_metadata?.nick) ?? "",
     terms: Array.isArray(data.terms) ? (data.terms as Term[]) : [],
     aiStatus: status,
     techniques,
