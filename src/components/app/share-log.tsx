@@ -159,7 +159,7 @@ export function ShareLog({ id, loggedOn, shared: initialShared, nick: initialNic
           </DialogDescription>
 
           {/* 제목 줄 아래는 전부 스크롤 — 링크 상자 + 이미지 미리보기가 한 화면보다 길다(2026-11-07 본인 신고) */}
-          <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-1 pb-1">
+          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-x-hidden overflow-y-auto overscroll-contain pb-1">
           {/* 같이 수업한 사람에게 링크 (D-123 · 메모도 D-124) */}
           <div className="flex flex-col gap-2 rounded-xl bg-muted/60 p-3">
             <div className="flex items-center justify-between gap-3">
