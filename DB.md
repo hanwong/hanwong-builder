@@ -33,6 +33,7 @@
 | `questions` | 질문하기 — 질문 · AI 답 · 답에 나온 기술(D-100) | 사용자 |
 | `map_agent_runs` | 매일 지도 키우기 에이전트가 날마다 한 일(D-102) | 운영 |
 | `technique_suggestions` | 사용자가 보낸 기술 내용 보완 제안(세팅 과정 · 다른 이름 · 이유) → 운영자 승인(D-50) | 사용자 · 운영 |
+| `belt_techniques` | 벨트마다 "흔히 배우는 기술" 목록 — 벨트 · 기술 slug · 순서(D-126) | 콘텐츠(공용) |
 
 ## 3. 표별 칸
 공통: 모든 표에 `id uuid 기본키(자동)`, `created_at timestamptz 기본값 now()`. 사용자 표에는 `user_id uuid → auth.users(id)` 필수.
@@ -77,6 +78,14 @@
 | steps · tips · why | text[] | ✓ | `{}` | 하는 법 3~5줄 · 노하우 2~4줄 · 필요한 이유 2~3줄 |
 | related_techniques | text[] | ✓ | `{}` | 이어지는 공용 기술 slug |
 | sort_order | int | ✓ | 0 | |
+
+### `belt_techniques` (D-126) — 벨트별 흔히 배우는 기술. 누구나 보기, 쓰기는 마이그레이션만
+| 칸 | 종류 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|
+| belt | text | ✓ | | white · blue · purple · brown · black (유소년 벨트는 앱이 white 목록을 보여 줌) |
+| technique_slug | text | ✓ | | 공용 기술 slug — 없는 slug 면 마이그레이션이 멈춤. (belt, technique_slug) 유일 |
+| sort_order | int | ✓ | 0 | 벨트 안 순서(포지션 순) |
+- 화이트 44 · 블루 61 · 퍼플 48 · 브라운 28 · 블랙 17. 진행도는 표에 없고 읽을 때 셈 — 적어 봤는지 = 그 기술이 연결된 내 `class_log_techniques` 가 있거나 `technique_levels` 가 있음.
 
 ### `open_mat_events` (D-88)
 | 칸 | 종류 | 필수 | 기본값 | 설명 |
@@ -271,6 +280,7 @@
 | positions | **보기**(D-81, 온라인 MCP) | 보기 | 보기 | 보기 (쓰기는 마이그레이션 · 시드로만) |
 | open_mat_events | **하루치 보기**(D-88) | 하루치 보기 · 쓰기는 함수로 본인 기록만 | 하루치 보기 | 하루치 보기 |
 | position_notes · concepts | **보기**(D-83, 온라인 MCP) | 보기 | 보기 | 보기 (쓰기는 마이그레이션으로만) |
+| belt_techniques | 보기(D-126) | 보기 | 보기 | 보기 (쓰기는 마이그레이션으로만) |
 | techniques | **공용만 보기**(owner_id 없음, D-81 — 온라인 MCP 용. 포지션도 같음) | 공용 보기(검수 전 초안 포함, D-24) + **내가 만든 것 보기 · 추가**(승인 대기 · 검수 전으로만, D-57) | 공용만 (남이 만든 것 ✗) | 전부 보기, 사용자 기술 승인 · 버림은 함수로 (공용 쓰기는 마이그레이션 · 시드로만) |
 | class_logs | ✗ | 보기 · 추가 · 수정 · 삭제 (자기 것만) | ✗ (공유 켠 기록은 **함수 `shared_log` 로 날짜 · 기술 · 닉네임만**, D-123) | ✗ |
 | class_log_techniques | ✗ | 보기 · 추가 · 삭제 (자기 것만) | ✗ | ✗ |

@@ -144,6 +144,10 @@
 - 묶음: 카드(`rounded-2xl bg-card ring-1 ring-border`) 안 제목 15px semibold + `Dumbbell` 아이콘 · 캡션 13px muted. 칩은 둥근 알약(`rounded-full border bg-background px-3 h-8 text-[13px]`), 기술 탭은 한 줄 가로 넘김, 홈은 줄바꿈.
 - 드릴 화면: 기술 상세와 같은 머리 · 카드. 하는 법은 번호 목록, 노하우 · 필요한 이유는 점 목록 카드, 이어지는 기술은 기술 목록과 같은 줄(이름 + `ChevronRight`).
 
+## 벨트별 기술 (D-126)
+- 기술 탭 카드: 기본 드릴 묶음과 같은 카드(`rounded-2xl bg-card ring-1 ring-border`). 왼쪽 벨트 색 점(수련 벨트 색, 화이트는 테두리) + 15px semibold 제목, 오른쪽 "9/44" 15px semibold + `ChevronRight`. 아래 막대 `h-1.5 rounded-full bg-muted` 안 채움 `bg-foreground`.
+- 벨트 화면: 벨트 탭은 '배운 것만 보기'와 같은 알약(고른 것 = `bg-foreground text-background`), 한 줄 가로 넘김. 포지션 묶음 제목은 기술 탭 아코디언과 같은 17px + 포지션 그림 28px. 기술 줄은 기술 탭과 같은 줄(이름 + 숙련도 칩) 앞에 `CircleCheck`(적어 봤음, 라임 바탕) 또는 빈 원(`Circle` muted). "N번"은 13px muted. 안 적어 본 줄 `opacity-40` 은 쓰지 않는다(목록이 할 일이라 다 읽혀야 함) — 대신 ✓ 유무로만.
+
 ## 질문하기 답 형식 (D-113)
 - 답 본문: 첫 문단 15px → 소제목(핵심 · 순서 · 흔한 실수 · 막히면)은 17px semibold → 순서는 번호 목록(앞 문장만 굵게, 설명은 같은 줄) → 흔한 실수 · 막히면은 점 목록 → '> ' 줄은 왼쪽 2px 테두리 · 13px muted 참고 줄.
 

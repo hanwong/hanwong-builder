@@ -192,6 +192,30 @@ export type Database = {
         }
         Relationships: []
       }
+      belt_techniques: {
+        Row: {
+          belt: string
+          created_at: string
+          id: string
+          sort_order: number
+          technique_slug: string
+        }
+        Insert: {
+          belt: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          technique_slug: string
+        }
+        Update: {
+          belt?: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          technique_slug?: string
+        }
+        Relationships: []
+      }
       drills: {
         Row: {
           aliases: string[]

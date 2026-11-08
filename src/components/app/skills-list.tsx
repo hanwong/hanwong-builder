@@ -14,11 +14,21 @@ import { cn } from "@/lib/utils";
 import { PositionPicture } from "@/components/app/position-picture";
 import { DrillChips } from "@/components/app/drill-chips";
 import type { DrillChip } from "@/lib/drills-data";
+import { BeltCard } from "@/components/app/belt-card";
+import type { BeltProgress } from "@/lib/belt-techniques-data";
 
 const LEVEL_LABEL = new Map(LEVELS.map((l) => [l.value, l.label]));
 
 // 내 기술 (T-10, FLOW 4 · DESIGN 6) — 포지션 아코디언(접힘) × 기술 + 숙련도 배지. 안 배운 건 흐리게.
-export function SkillsList({ groups, drills }: { groups: PositionGroup[]; drills: DrillChip[] }) {
+export function SkillsList({
+  groups,
+  drills,
+  beltProgress,
+}: {
+  groups: PositionGroup[];
+  drills: DrillChip[];
+  beltProgress: BeltProgress;
+}) {
   const [onlyLearned, setOnlyLearned] = useState(false);
   const [query, setQuery] = useState("");
   // 검색(D-91) — 받은 목록 안에서 바로. 기록 화면 기술 고르기와 같은 순서, 한 글자부터
@@ -67,6 +77,9 @@ export function SkillsList({ groups, drills }: { groups: PositionGroup[]; drills
 
       {/* 기본 드릴 (D-112) — 모든 벨트 */}
       <DrillChips drills={drills} />
+
+      {/* 내 벨트에서 흔히 배우는 기술 (D-126) — 검색 중엔 숨긴다 */}
+      {!searching && <BeltCard progress={beltProgress} />}
 
       {/* 검색 (D-91) */}
       <div className="relative">
