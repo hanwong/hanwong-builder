@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import Image from "next/image";
-import { LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { SignOutButton } from "@/components/app/sign-out-button";
 import { HomeSections, HomeSkeleton } from "@/components/app/home-sections";
 import { HomeNotices } from "@/components/app/home-notices";
 
@@ -15,12 +14,7 @@ export default function AppHome() {
           <Image src="/logo.png" alt="" width={28} height={28} className="rounded-lg" />
           Re:Re:롤
         </h1>
-        <form action="/auth/signout" method="post">
-          <Button variant="ghost" size="sm" type="submit" className="rounded-full text-muted-foreground">
-            <LogOut data-icon="inline-start" aria-hidden />
-            로그아웃
-          </Button>
-        </form>
+        <SignOutButton />
       </header>
 
       {/* 알림 · 운영자 "목록 추가 대기" (D-47) — 없으면 안 보인다 */}
