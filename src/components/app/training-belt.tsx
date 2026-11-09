@@ -218,7 +218,8 @@ export function TrainingBelt({
         <DialogContent
           showCloseButton={false}
           className="sm:max-w-md"
-          style={{ ...floating, display: "flex", flexDirection: "column", gap: "14px", padding: "14px" }}
+          // 화면보다 길면 팝업 안에서 위아래로 스크롤(뒤 화면은 고정)
+          style={{ ...floating, display: "flex", flexDirection: "column", gap: "14px", padding: "14px", overflowY: "auto", overscrollBehavior: "contain" }}
         >
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[17px] font-semibold">내 설정</DialogTitle>
