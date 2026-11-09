@@ -137,7 +137,7 @@ export function ClassForm({ gym, initial, onCancel }: { gym: MyGym; initial: Cla
           placeholder="오늘 포인트, 관원들에게 전할 말"
           className="min-h-28 rounded-xl text-base"
         />
-        <p className="text-[12px] text-muted-foreground">관원이 출석하면 기술과 메모가 그 사람 기록으로 복사돼요. 상대 이름은 적지 말아 주세요.</p>
+        <p className="text-[12px] text-muted-foreground">관원이 출석하면 기술과 메모가 그 사람 기록으로 복사돼요.</p>
       </section>
 
       <BottomAction>
