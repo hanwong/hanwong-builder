@@ -173,7 +173,7 @@ export async function getGymHome(): Promise<GymHome | null> {
   });
   const c = codes.data as { join_code?: string; coach_code?: string } | null;
   const coachNames: Record<string, string> = {};
-  for (const n of names.data ?? []) if (n.role !== "member") coachNames[n.user_id] = n.nick;
+  for (const n of names.data ?? []) if (n.role !== "member") coachNames[n.user_id] = shownName(n);
   return {
     gym: cur.gym,
     all: cur.all,
@@ -197,7 +197,7 @@ export async function getGymSchedule(): Promise<GymSchedulePage | null> {
   return {
     gym: cur.gym,
     schedules,
-    coaches: (names.data ?? []).filter((n) => n.role !== "member").map((n) => ({ id: n.user_id, nick: n.nick })),
+    coaches: (names.data ?? []).filter((n) => n.role !== "member").map((n) => ({ id: n.user_id, nick: shownName(n) })),
   };
 }
 
@@ -244,7 +244,7 @@ export async function getClassDetail(id: string): Promise<ClassDetail | null> {
     },
     attendees: [...c.gym_attendance]
       .sort((a, b) => a.created_at.localeCompare(b.created_at))
-      .map((a) => ({ userId: a.user_id, nick: nick.get(a.user_id)?.nick ?? "관원", belt: nick.get(a.user_id)?.belt ?? null, at: a.created_at })),
+      .map((a) => ({ userId: a.user_id, nick: nick.has(a.user_id) ? shownName(nick.get(a.user_id)!) : "관원", belt: nick.get(a.user_id)?.belt ?? null, at: a.created_at })),
   };
 }
 
@@ -268,17 +268,24 @@ export async function getNewClassInfo(heldOn: string, scheduleId: string | null)
 }
 
 // ---------- 관원 홈 카드 (FLOW 8-3 관원 쪽) ----------
+// 관장 · 코치 화면에 보이는 이름 — 본명이 있으면 "본명 (닉네임)"(D-130). 본명은 관장 · 코치에게만 함수가 내준다.
+type NameRow = { nick: string; real_name: string | null };
+export const shownName = (n: NameRow) => (n.real_name ? `${n.real_name} (${n.nick})` : n.nick);
+
 export type MemberGymCard = {
   id: string;
   name: string;
   network: string | null;
   role: GymRole;
+  needsRealName: boolean; // 본명을 아직 안 적은 관원 · 코치(D-130 전 가입) — 홈 카드에 "본명 입력" 줄
   today: { key: string; name: string; startsAt: string; classId: string | null; status: "waiting" | "posted" | "canceled"; techniques: string[]; myLogId: string | null }[];
 };
 export async function queryMemberGymCards(supabase: Client, userId: string): Promise<MemberGymCard[]> {
   const gyms = await queryMyGyms(supabase, userId);
   if (!gyms.length) return [];
   const today = seoulToday();
+  const { data: realNames } = await supabase.rpc("my_gym_real_names");
+  const realName = new Map((realNames ?? []).map((r) => [r.gym_id, r.real_name]));
   const cards = await Promise.all(
     gyms.map(async (g) => {
       const [schedules, classes, att] = await Promise.all([
@@ -292,6 +299,7 @@ export async function queryMemberGymCards(supabase: Client, userId: string): Pro
         name: g.name,
         network: g.network,
         role: g.role,
+        needsRealName: g.role !== "owner" && !realName.get(g.id),
         today: slotsOn(today, schedules, classes).map((s) => ({
           key: s.key,
           name: s.name,
@@ -334,7 +342,7 @@ export async function getMembers(): Promise<MembersPage | null> {
   const members = (names.data ?? [])
     .map((n) => ({
       userId: n.user_id,
-      nick: n.nick,
+      nick: shownName(n),
       belt: n.belt,
       role: n.role as GymRole,
       joinedAt: n.joined_at,
@@ -379,7 +387,7 @@ export async function getMemberDetail(userId: string): Promise<MemberDetail | nu
   };
   return {
     gym: cur.gym,
-    member: { userId, nick: me.nick, belt: me.belt, startedOn: me.started_on, role: me.role as GymRole, joinedAt: me.joined_at },
+    member: { userId, nick: shownName(me), belt: me.belt, startedOn: me.started_on, role: me.role as GymRole, joinedAt: me.joined_at },
     month: { attendance: o.month.attendance, logs: o.month.logs, sparring: o.month.sparring, lastAttended: o.month.last_attended },
     levels: new Map(o.levels.map((l) => [l.technique_id, l.level as Level])),
     counts: new Map(o.counts.map((c) => [c.technique_id, c.n])),
@@ -407,7 +415,10 @@ export async function getMemberLog(logId: string): Promise<MemberLog | null> {
   const supabase = await createSupabaseServer();
   const cur = await currentStaffGym(supabase);
   if (!cur) return null;
-  const { data, error } = await supabase.rpc("gym_member_log", { p_gym: cur.gym.id, p_log: logId });
+  const [{ data, error }, names] = await Promise.all([
+    supabase.rpc("gym_member_log", { p_gym: cur.gym.id, p_log: logId }),
+    supabase.rpc("gym_member_names", { p_gym: cur.gym.id }),
+  ]);
   if (error) throw new Error(`member log: ${error.code ?? ""} ${error.message.slice(0, 80)}`);
   if (!data || typeof data !== "object" || Array.isArray(data)) return null;
   const l = data as {
@@ -420,7 +431,10 @@ export async function getMemberLog(logId: string): Promise<MemberLog | null> {
     log: {
       id: l.id,
       userId: l.user_id,
-      nick: l.nick,
+      nick: (() => {
+        const n = (names.data ?? []).find((x) => x.user_id === l.user_id);
+        return n ? shownName(n) : l.nick;
+      })(),
       loggedOn: l.logged_on,
       body: l.body,
       sparring: l.sparring_rounds,
@@ -459,8 +473,8 @@ export async function getGymSettings(): Promise<SettingsPage | null> {
     region: [g.data?.region_si, g.data?.region_gu].filter(Boolean).join(" "),
     network: g.data?.network ?? "",
     codes: c?.join_code && c.coach_code ? { join: c.join_code, coach: c.coach_code } : null,
-    staff: people.filter((n) => n.role !== "member").map((n) => ({ userId: n.user_id, nick: n.nick, role: n.role as GymRole })),
-    members: people.filter((n) => n.role === "member").map((n) => ({ userId: n.user_id, nick: n.nick })),
+    staff: people.filter((n) => n.role !== "member").map((n) => ({ userId: n.user_id, nick: shownName(n), role: n.role as GymRole })),
+    members: people.filter((n) => n.role === "member").map((n) => ({ userId: n.user_id, nick: shownName(n) })),
   };
 }
 

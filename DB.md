@@ -392,6 +392,7 @@ FLOW 8 의 3단계. 표 6개를 더한다. 기존 표는 `class_logs` 에 칸 �
 | role | text | ✓ | `'member'` | `owner` · `coach` · `member` |
 | consented_at | timestamptz | ✓ | now() | **"관장님 · 코치가 내 기록(메모 포함)을 봅니다" 동의 시각**(D-127). 관장 · 코치 줄도 들어올 때 같은 값 |
 | joined_at | timestamptz | ✓ | now() | |
+| real_name | text | | | **본명**(D-130, 1~20자). 들어올 때 필수(`join_gym`), D-130 전 가입자는 null → 홈 카드에서 적음(`set_gym_real_name`). **칸 권한으로 표 직접 읽기 막음** — 관장 · 코치만 `gym_member_names` 로 받는다(관원 · 다른 체육관 ✗). 나가면 줄과 함께 지워짐 |
 - (gym_id, user_id) 유일. 체육관마다 owner 는 1명 이상(마지막 관장은 못 빠진다 — 함수에서 막음). 나가기 = 줄 삭제(기록은 그대로, 관장이 더 못 봄).
 
 ### `gym_schedules` — 매주 반복 수업 규칙

@@ -402,6 +402,7 @@ export type Database = {
           gym_id: string
           id: string
           joined_at: string
+          real_name: string | null
           role: string
           user_id: string
         }
@@ -410,6 +411,7 @@ export type Database = {
           gym_id: string
           id?: string
           joined_at?: string
+          real_name?: string | null
           role?: string
           user_id: string
         }
@@ -418,6 +420,7 @@ export type Database = {
           gym_id?: string
           id?: string
           joined_at?: string
+          real_name?: string | null
           role?: string
           user_id?: string
         }
@@ -1235,6 +1238,7 @@ export type Database = {
           belt: string
           joined_at: string
           nick: string
+          real_name: string
           role: string
           started_on: string
           user_id: string
@@ -1246,8 +1250,18 @@ export type Database = {
       }
       import_shared_log: { Args: { p_id: string }; Returns: string }
       is_operator: { Args: never; Returns: boolean }
-      join_gym: { Args: { p_code: string }; Returns: string }
+      join_gym: {
+        Args: { p_code: string; p_real_name: string }
+        Returns: string
+      }
       map_growth: { Args: never; Returns: Json }
+      my_gym_real_names: {
+        Args: never
+        Returns: {
+          gym_id: string
+          real_name: string
+        }[]
+      }
       my_gym_role: { Args: { p_gym: string }; Returns: string }
       my_log_comments: { Args: { p_log: string }; Returns: Json }
       my_pending_suggestions: { Args: never; Returns: number }
@@ -1275,6 +1289,10 @@ export type Database = {
         Returns: string
       }
       reject_user_technique: { Args: { p_id: string }; Returns: undefined }
+      set_gym_real_name: {
+        Args: { p_gym: string; p_real_name: string }
+        Returns: undefined
+      }
       shared_log: { Args: { p_id: string }; Returns: Json }
       transfer_gym_owner: {
         Args: { p_gym: string; p_user: string }

@@ -51,15 +51,30 @@ export async function peekGym(code: string): Promise<Res<{ gym: PeekedGym | null
   return { ok: true, gym: { id: g.id, name: g.name, network: g.network ?? null, region: [g.region_si, g.region_gu].filter(Boolean).join(" ") || null, role: g.role, already: g.already } };
 }
 
-export async function joinGym(code: string): Promise<Res<{ id: string }>> {
+export async function joinGym(code: string, realName: string): Promise<Res<{ id: string }>> {
   const c = code.trim().toUpperCase();
   if (!CODE.test(c)) return fail("코드는 영문 대문자 · 숫자 6자리예요.");
+  const name = realName.trim();
+  if (name.length < 1 || name.length > 20) return fail("본명을 적어 주세요(20자까지).");
   const supabase = await createSupabaseServer();
-  const { data, error } = await supabase.rpc("join_gym", { p_code: c });
+  const { data, error } = await supabase.rpc("join_gym", { p_code: c, p_real_name: name });
   if (error || !data) return fail(error?.code === "P0002" ? "없는 코드예요. 다시 확인해 주세요." : "들어가지 못했어요. 다시 눌러 주세요.");
   revalidatePath("/app", "layout");
   revalidatePath("/gym", "layout");
   return { ok: true, id: data };
+}
+
+// 이미 들어와 있는 사람이 본명을 적거나 고친다(D-130) — 관장 · 코치에게만 보인다.
+export async function setGymRealName(gymId: string, realName: string): Promise<Res> {
+  if (!UUID.test(gymId)) return fail("없는 체육관이에요.");
+  const name = realName.trim();
+  if (name.length < 1 || name.length > 20) return fail("본명을 적어 주세요(20자까지).");
+  const supabase = await createSupabaseServer();
+  const { error } = await supabase.rpc("set_gym_real_name", { p_gym: gymId, p_real_name: name });
+  if (error) return fail("저장하지 못했어요. 다시 눌러 주세요.");
+  revalidatePath("/app", "layout");
+  revalidatePath("/gym", "layout");
+  return { ok: true };
 }
 
 export async function leaveGym(gymId: string): Promise<Res> {
