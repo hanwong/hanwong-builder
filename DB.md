@@ -364,7 +364,7 @@
 
 
 ## 11. 관장님 버전 (M3-G, D-127) — 표 · 접근 규칙 · 함수
-FLOW 8 의 3단계. 표 6개를 더한다. 기존 표는 `class_logs` 에 칸 하나(`gym_class_id`), `notices` 에 칸 하나(`class_log_id`)만 더한다. 마이그레이션은 5단계(만들기)에서 `npx supabase migration new gym_*` → `db push --remote`.
+FLOW 8 의 3단계. 표 6개를 더한다. 기존 표는 `class_logs` 에 칸 하나(`gym_class_id`), `notices` 에 칸 하나(`class_log_id`)만 더한다. 마이그레이션 `20261109021801_gym_core.sql`(2026-11-09 적용).
 
 ### 한 줄 원칙
 - **기록은 사람 것**(FLOW 8-5). 체육관 표는 기록을 "가리키기만" 한다 — 체육관 · 수업 · 코멘트가 지워져도 `class_logs` 는 안 지워진다.
@@ -466,19 +466,23 @@ FLOW 8 의 3단계. 표 6개를 더한다. 기존 표는 `class_logs` 에 칸 �
 | gym_classes · gym_class_techniques | ✗ | 자기 체육관 보기 | 보기 · 추가 · 수정 · 삭제(7일 안) | 같음 | ✗ |
 | gym_attendance | ✗ | 자기 줄 보기 · 추가는 **함수 `attend_class(class_id)` 로만** | 자기 체육관 전부 보기 | 같음 | ✗ |
 | log_comments | ✗ | **내 기록에 달린 것 보기** | 자기 체육관 관원 기록에 보기 · 쓰기 · 내 것 수정 · 삭제 | 같음 | ✗ |
-| class_logs · class_log_techniques · technique_levels (기존) | ✗ | 자기 것(그대로) | **+ 자기 체육관 관원 것 보기**(select 만, D-127) | 같음 | ✗ |
-- 관장 · 코치의 "관원 것 보기" 정책: `exists (select 1 from gym_members me join gym_members them on me.gym_id = them.gym_id where me.user_id = auth.uid() and me.role in ('owner','coach') and them.user_id = class_logs.user_id)`. 관원이 나가면 그 순간부터 안 보인다. 수정 · 삭제는 절대 없음.
+| class_logs · class_log_techniques · technique_levels (기존) | ✗ | 자기 것(그대로) | **표는 그대로(안 넓힘)** — 관원 기록은 함수 `gym_member_overview` · `gym_member_log` 로만(D-127, 2026-11-09 만들며 바꿈: 표를 넓히면 관장 본인의 홈 · 기록 화면에 관원 기록이 섞여서) | 같음 | ✗ |
+- 관장 · 코치의 "관원 것 보기"는 기존 표 정책을 넓히지 않고 함수 안에서 `gym_members` 를 확인한다(관원이 나가면 그 순간부터 안 보임, 수정 · 삭제 없음). 2026-11-09 확인: 관장이 `class_logs` 를 직접 읽으면 빈 결과, 함수로만 보임.
+- `gyms` 표의 코드 칸(join_code · coach_code)은 칸 권한으로 막고(`revoke select` 뒤 칸별 `grant`), 관장은 함수 `gym_codes(gym_id)` 로 본다. 2026-11-09 확인: 관원이 코드 칸을 고르면 42501.
 - 이메일은 어디서도 안 나간다. 관원 이름은 `user_metadata.nick`(없으면 이메일 앞부분) — 함수 `gym_member_names(gym_id)` 가 security definer 로 닉네임만 돌려준다(D-122 · D-123 의 shared_log 와 같은 방식).
 
 ### 함수 (security definer, 안에서 역할 확인 · 아니면 42501)
 | 함수 | 하는 일 |
 |---|---|
-| `create_gym(name, si, gu, first_class)` | 체육관 + 코드 2개 + 내 owner 줄(consented_at 지금) + 기본반 규칙 없이 이름만 돌려줌 |
+| `create_gym(name, si, gu)` | 체육관 + 코드 2개 + 내 owner 줄(consented_at 지금) → 체육관 id. 한 사람 5개까지(P0003) |
 | `peek_gym(code)` | 코드로 체육관 이름 · 지역만(동의 화면용). 로그인한 사람만. 틀리면 null |
 | `join_gym(code)` | 관원 코드 → member 줄, 코치 코드 → coach 줄(동의 시각 기록). 이미 있으면 그대로 |
 | `attend_class(class_id)` | 내가 그 체육관 관원인지 · 수업이 posted 인지 확인 → `import_shared_log` 와 같은 복사(날짜 = held_on · 기술 · 메모 → `class_logs` + `class_log_techniques` + `technique_levels` 비기너, `gym_class_id` 채움) → `gym_attendance` 줄 → 기록 id. 두 번이면 전 기록 id |
 | `gym_member_names(gym_id)` | 관장 · 코치에게 관원 id → 닉네임 · 벨트 · 시작 연월(메타에서) |
-| `member_progress(gym_id, user_id)` | 관장 · 코치에게 그 관원의 벨트별 달성도(belt_techniques × 그 관원 기록 · 숙련도) · 포지션별 배운 수 — D-126 화면 재사용 |
+| `gym_member_overview(gym_id, user_id, before?)` | 관장 · 코치에게 그 관원의 숙련도 · 기술별 기록 횟수 · 최근 기록 20개(메모 포함) · 이번 달 숫자 — 앱이 belt_techniques 와 합쳐 D-126 화면을 그린다 |
+| `gym_member_log(gym_id, log_id)` | 관장 · 코치에게 관원 기록 하나(기술 · 메모 · 스파링 · 코멘트). 관원이 아니면 null |
+| `my_log_comments(log_id)` | 관원이 내 기록에 달린 코멘트(쓴 사람 닉네임 · 역할 · 체육관) |
+| `gym_codes(gym_id)` | 관장만 — 관원 · 코치 코드 |
 | `comment_log(log_id, gym_id, body)` | 내가 그 체육관 관장 · 코치이고 기록 주인이 그 체육관 관원인지 확인 → 코멘트 + 기록 주인에게 `notices`("○○ 관장님이 N월 N일 기록에 코멘트") |
 | `regen_gym_code(gym_id, which)` | 관장만. 관원 코드 · 코치 코드 다시 |
 | `transfer_gym_owner(gym_id, user_id)` | 관장만, 대상은 코치 → 역할 바꿈. 마지막 관장은 못 나감 |

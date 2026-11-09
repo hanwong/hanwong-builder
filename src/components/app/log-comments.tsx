@@ -1,10 +1,8 @@
-import { createSupabaseServer } from "@/lib/supabase/server";
-import { queryMyLogComments } from "@/lib/gym-data";
+import { getMyLogComments } from "@/lib/gym-data";
 
-// 내 기록 아래 "관장님 코멘트" 카드 (D-127, FLOW 8-3 관원 쪽). 없으면 아무것도 안 그린다. 캐시 안 함(기록 화면 캐시와 따로, 새 코멘트가 바로 보이게).
+// 내 기록 아래 "관장님 코멘트" 카드 (D-127, FLOW 8-3 관원 쪽). 없으면 아무것도 안 그린다. 기록 화면과 같은 5분 캐시(코멘트가 달리면 알림을 눌러 들어오고, 그때 새로 읽힌다).
 export async function LogComments({ logId }: { logId: string }) {
-  const supabase = await createSupabaseServer();
-  const comments = await queryMyLogComments(supabase, logId).catch(() => []);
+  const comments = await getMyLogComments(logId).catch(() => []);
   if (!comments.length) return null;
   return (
     <section className="flex flex-col gap-3 rounded-2xl bg-card p-4 ring-1 ring-border">

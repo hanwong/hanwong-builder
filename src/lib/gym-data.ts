@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { cacheLife } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { addDays, seoulToday } from "@/lib/seoul-date";
 import type { Level } from "@/lib/mock/log-seed";
@@ -12,10 +13,12 @@ export type MyGym = { id: string; name: string; role: GymRole };
 
 type Client = Awaited<ReturnType<typeof createSupabaseServer>>;
 
-export async function queryMyGyms(supabase: Client): Promise<MyGym[]> {
+// 내 줄만 — 같은 체육관 사람의 줄도 읽히는 표라(접근 규칙 "같은 체육관 보기") 꼭 내 id 로 거른다(2026-11-09 발견: 안 거르면 관원이 관장 줄을 받아 관장 화면이 보였음)
+export async function queryMyGyms(supabase: Client, userId: string): Promise<MyGym[]> {
   const { data, error } = await supabase
     .from("gym_members")
     .select("role, gyms(id, name)")
+    .eq("user_id", userId)
     .order("joined_at");
   if (error) throw new Error(`gyms: ${error.code ?? ""} ${error.message.slice(0, 80)}`);
   return (data ?? []).flatMap((m) => (m.gyms ? [{ id: m.gyms.id, name: m.gyms.name, role: m.role as GymRole }] : []));
@@ -23,7 +26,11 @@ export async function queryMyGyms(supabase: Client): Promise<MyGym[]> {
 
 // 관장 화면이 지금 보는 체육관 — 쿠키에 적힌 것, 없으면 내가 관장 · 코치인 첫 체육관. 관장 · 코치가 아니면 null
 export async function currentStaffGym(supabase: Client): Promise<{ gym: MyGym; all: MyGym[] } | null> {
-  const all = (await queryMyGyms(supabase)).filter((g) => g.role !== "member");
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  const all = (await queryMyGyms(supabase, user.id)).filter((g) => g.role !== "member");
   if (all.length === 0) return null;
   const picked = (await cookies()).get(GYM_COOKIE)?.value;
   return { gym: all.find((g) => g.id === picked) ?? all[0], all };
@@ -145,6 +152,8 @@ export type GymHome = {
 };
 
 export async function getGymHome(): Promise<GymHome | null> {
+  "use cache: private"; // 내 데이터 — 다른 /app 화면과 같이 5분(D-45). 미리 만들기 단계에서 조회가 끊기지 않게(2026-11-09 확인)
+  cacheLife({ stale: 300 });
   const supabase = await createSupabaseServer();
   const cur = await currentStaffGym(supabase);
   if (!cur) return null;
@@ -179,6 +188,8 @@ export async function getGymHome(): Promise<GymHome | null> {
 
 export type GymSchedulePage = { gym: MyGym; schedules: Schedule[]; coaches: { id: string; nick: string }[] };
 export async function getGymSchedule(): Promise<GymSchedulePage | null> {
+  "use cache: private"; // 내 데이터 — 다른 /app 화면과 같이 5분(D-45). 미리 만들기 단계에서 조회가 끊기지 않게(2026-11-09 확인)
+  cacheLife({ stale: 300 });
   const supabase = await createSupabaseServer();
   const cur = await currentStaffGym(supabase);
   if (!cur) return null;
@@ -198,6 +209,8 @@ export type ClassDetail = {
   attendees: { userId: string; nick: string; belt: string | null; at: string }[];
 };
 export async function getClassDetail(id: string): Promise<ClassDetail | null> {
+  "use cache: private"; // 내 데이터 — 다른 /app 화면과 같이 5분(D-45). 미리 만들기 단계에서 조회가 끊기지 않게(2026-11-09 확인)
+  cacheLife({ stale: 300 });
   const supabase = await createSupabaseServer();
   const { data: c, error } = await supabase
     .from("gym_classes")
@@ -238,6 +251,8 @@ export async function getClassDetail(id: string): Promise<ClassDetail | null> {
 // 새 수업 등록 화면이 쓸 정보 — 규칙(이름 · 시각)과 날짜
 export type NewClassInfo = { gym: MyGym; heldOn: string; scheduleId: string | null; name: string; startsAt: string; today: string };
 export async function getNewClassInfo(heldOn: string, scheduleId: string | null): Promise<NewClassInfo | null> {
+  "use cache: private"; // 내 데이터 — 다른 /app 화면과 같이 5분(D-45). 미리 만들기 단계에서 조회가 끊기지 않게(2026-11-09 확인)
+  cacheLife({ stale: 300 });
   const supabase = await createSupabaseServer();
   const cur = await currentStaffGym(supabase);
   if (!cur) return null;
@@ -260,7 +275,7 @@ export type MemberGymCard = {
   today: { key: string; name: string; startsAt: string; classId: string | null; status: "waiting" | "posted" | "canceled"; techniques: string[]; myLogId: string | null }[];
 };
 export async function queryMemberGymCards(supabase: Client, userId: string): Promise<MemberGymCard[]> {
-  const gyms = await queryMyGyms(supabase);
+  const gyms = await queryMyGyms(supabase, userId);
   if (!gyms.length) return [];
   const today = seoulToday();
   const cards = await Promise.all(
@@ -294,6 +309,8 @@ export async function queryMemberGymCards(supabase: Client, userId: string): Pro
 export type MemberRow = { userId: string; nick: string; belt: string | null; role: GymRole; joinedAt: string; lastAttended: string | null; monthAttendance: number };
 export type MembersPage = { gym: MyGym; all: MyGym[]; members: MemberRow[]; today: string };
 export async function getMembers(): Promise<MembersPage | null> {
+  "use cache: private"; // 내 데이터 — 다른 /app 화면과 같이 5분(D-45). 미리 만들기 단계에서 조회가 끊기지 않게(2026-11-09 확인)
+  cacheLife({ stale: 300 });
   const supabase = await createSupabaseServer();
   const cur = await currentStaffGym(supabase);
   if (!cur) return null;
@@ -337,6 +354,8 @@ export type MemberDetail = {
   thisMonth: string;
 };
 export async function getMemberDetail(userId: string): Promise<MemberDetail | null> {
+  "use cache: private"; // 내 데이터 — 다른 /app 화면과 같이 5분(D-45). 미리 만들기 단계에서 조회가 끊기지 않게(2026-11-09 확인)
+  cacheLife({ stale: 300 });
   const supabase = await createSupabaseServer();
   const cur = await currentStaffGym(supabase);
   if (!cur) return null;
@@ -381,6 +400,8 @@ export type MemberLog = {
   };
 };
 export async function getMemberLog(logId: string): Promise<MemberLog | null> {
+  "use cache: private"; // 내 데이터 — 다른 /app 화면과 같이 5분(D-45). 미리 만들기 단계에서 조회가 끊기지 않게(2026-11-09 확인)
+  cacheLife({ stale: 300 });
   const supabase = await createSupabaseServer();
   const cur = await currentStaffGym(supabase);
   if (!cur) return null;
@@ -417,6 +438,8 @@ export type SettingsPage = {
   members: { userId: string; nick: string }[];
 };
 export async function getGymSettings(): Promise<SettingsPage | null> {
+  "use cache: private"; // 내 데이터 — 다른 /app 화면과 같이 5분(D-45). 미리 만들기 단계에서 조회가 끊기지 않게(2026-11-09 확인)
+  cacheLife({ stale: 300 });
   const supabase = await createSupabaseServer();
   const cur = await currentStaffGym(supabase);
   if (!cur) return null;
@@ -439,7 +462,10 @@ export async function getGymSettings(): Promise<SettingsPage | null> {
 
 // 관원이 내 기록에서 보는 코멘트 (D-127)
 export type MyComment = { id: string; body: string; createdAt: string; author: string; role: GymRole; gym: string };
-export async function queryMyLogComments(supabase: Client, logId: string): Promise<MyComment[]> {
+export async function getMyLogComments(logId: string): Promise<MyComment[]> {
+  "use cache: private";
+  cacheLife({ stale: 300 });
+  const supabase = await createSupabaseServer();
   const { data, error } = await supabase.rpc("my_log_comments", { p_log: logId });
   if (error || !Array.isArray(data)) return [];
   return (data as { id: string; body: string; created_at: string; author: string; role: string; gym: string }[]).map((c) => ({
