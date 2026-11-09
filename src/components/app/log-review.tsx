@@ -1,16 +1,12 @@
 "use client";
 
 import { useState, useTransition, type Dispatch, type ReactNode, type SetStateAction } from "react";
-import { ArrowLeft, ChevronDown, Loader2, Mic, MicOff, Minus, PencilLine, Plus, Sparkles, Trash2, X } from "lucide-react";
-import { toast } from "sonner";
+import { ArrowLeft, ChevronDown, Loader2, Mic, MicOff, Minus, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BottomAction } from "@/components/app/bottom-action";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { cn } from "@/lib/utils";
 import { MAX_BODY } from "@/lib/log-limits";
 import { useSpeechInput } from "@/lib/use-speech-input";
@@ -18,8 +14,7 @@ import { LevelPicker } from "@/components/app/level-picker";
 import { TechniquePicker } from "@/components/app/technique-picker";
 import { YoutubeLink } from "@/components/app/youtube-link";
 import { PositionPicture } from "@/components/app/position-picture";
-import { createOwnTechnique, generateTechnique, techniquePositions, type GenerateResult } from "@/app/app/log/actions";
-import { forgetPicker } from "@/lib/picker-store";
+import { CustomTechniqueCard } from "@/components/app/custom-technique-card";
 import { MINE_LABEL, type Level, type MatchedTechnique, type Term } from "@/lib/mock/log-seed";
 import { AI_NOTICE } from "@/lib/ai-notice";
 
@@ -64,46 +59,10 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
   const setLevel = (id: string, level: Level) =>
     setTechniques((list) => list.map((t) => (t.id === id ? { ...t, level } : t)));
   const remove = (id: string) => setTechniques((list) => list.filter((t) => t.id !== id));
-  // 기술 카드 만들기(D-57) — 직접 적은 이름을 AI 기술 카드로 바꾼다(나만 보기, 운영자 승인 뒤 공용).
-  // AI 가 만들지 못하면 그 카드 아래에 포지션 · 이름 · 세팅 과정을 직접 적는 칸을 연다(2026-10-31 본인 요청)
-  const [generating, setGenerating] = useState<string | null>(null);
-  const [manual, setManual] = useState<Record<string, { slug: string; nameKo: string }[]>>({});
-  async function generate(name: string) {
-    setGenerating(name);
-    const res = await generateTechnique(name).catch(() => null);
-    setGenerating(null);
-    if (!res || !res.ok) {
-      toast.error(res?.message ?? "만들지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
-      const positions = res && !res.ok ? res.positions : undefined;
-      if (positions?.length) setManual((m) => ({ ...m, [name]: positions }));
-      return;
-    }
-    created(name, res);
-  }
-  // 직접 만들기 — AI 를 부르지 않고 바로 적는 칸을 연다(2026-10-31 본인 요청)
-  async function writeOwn(name: string) {
-    if (manual[name]) return;
-    setGenerating(name);
-    const positions = await techniquePositions().catch(() => []);
-    setGenerating(null);
-    if (!positions.length) {
-      toast.error("포지션 목록을 받지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
-      return;
-    }
-    setManual((m) => ({ ...m, [name]: positions }));
-  }
-  function created(name: string, res: Extract<GenerateResult, { ok: true }>) {
-    setManual((m) => withoutKey(m, name));
-    const t = res.technique;
-    if (res.kind === "new") forgetPicker(); // 새 내 기술 — 다음 고르기 · 검색에 보이게 새로 받는다
+  // 목록에 없는 이름 → AI · 직접 기술 카드(D-57) — CustomTechniqueCard 가 만들고 여기서 기술 목록으로 옮긴다
+  function created(name: string, t: MatchedTechnique) {
     setCustomNames((l) => l.filter((n) => n !== name));
     setTechniques((list) => (list.some((x) => x.id === t.id) ? list : [...list, t]));
-    const left = res.left >= 0 ? ` · 오늘 ${res.left}번 남음` : "";
-    toast.success(
-      res.kind === "new"
-        ? `‘${t.nameKo}’ 카드를 만들었어요. 관리자 승인 전까지 나에게만 보여요${left}`
-        : `이미 목록에 있는 ‘${t.nameKo}’(으)로 바꿨어요${left}`,
-    );
   }
   const toggle = (t: MatchedTechnique) =>
     setTechniques((list) => (list.some((x) => x.id === t.id) ? list.filter((x) => x.id !== t.id) : [...list, t]));
@@ -139,61 +98,13 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
         ))}
 
         {customNames.map((name) => (
-          <Card key={name} className="rounded-2xl ring-border" size="sm">
-            <CardContent className="flex flex-wrap items-center gap-2">
-              {/* 첫 줄: 이름 · 빼기 / 둘째 줄: '기술 카드 생성' — AI로 만들기 · 직접 만들기 (2026-10-31 본인 요청) */}
-              <span className="min-w-0 flex-1 truncate text-[17px] font-semibold">{name}</span>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label={`${name} 빼기`}
-                className="rounded-full text-muted-foreground"
-                onClick={() => {
-                  setCustomNames((l) => l.filter((n) => n !== name));
-                  setManual((m) => withoutKey(m, name));
-                }}
-              >
-                <X />
-              </Button>
-              <p className="w-full text-[13px] font-semibold text-muted-foreground">기술 카드 생성</p>
-              <div className="flex w-full flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 rounded-full shadow-none"
-                  disabled={generating !== null || saving}
-                  onClick={() => generate(name)}
-                >
-                  {generating === name ? (
-                    <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />
-                  ) : (
-                    <Sparkles data-icon="inline-start" aria-hidden />
-                  )}
-                  {generating === name ? "만드는 중…" : "AI로 만들기"}
-                </Button>
-                {!manual[name] && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 rounded-full shadow-none"
-                    disabled={generating !== null || saving}
-                    onClick={() => writeOwn(name)}
-                  >
-                    <PencilLine data-icon="inline-start" aria-hidden />
-                    직접 만들기
-                  </Button>
-                )}
-              </div>
-              {manual[name] && (
-                <ManualTechniqueForm
-                  name={name}
-                  positions={manual[name]}
-                  disabled={saving}
-                  onCreated={(res) => created(name, res)}
-                />
-              )}
-            </CardContent>
-          </Card>
+          <CustomTechniqueCard
+            key={name}
+            name={name}
+            disabled={saving}
+            onRemove={() => setCustomNames((l) => l.filter((n) => n !== name))}
+            onCreated={(t) => created(name, t)}
+          />
         ))}
 
         <TechniquePicker
@@ -302,7 +213,7 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
       <BottomAction>
         <Button
           className="h-12 w-full rounded-full text-base shadow-none"
-          disabled={!canSave || saving || deleting || generating !== null}
+          disabled={!canSave || saving || deleting}
           onClick={() =>
             startSaving(() =>
               onSave({
@@ -491,79 +402,6 @@ function TechniqueCard({
       </CardContent>
     </Card>
   );
-}
-
-// 직접 적어 기술 카드 만들기(2026-10-31 본인 요청) — AI 가 만들지 못했을 때, 관리자 초안 화면처럼 포지션을 고르고 내용을 적는다.
-// AI 를 부르지 않는다. 만든 카드는 AI 로 만든 것과 같이 '승인 대기' 내 기술이 되고, 관리자가 고쳐 승인하면 모두의 목록에 들어간다.
-function ManualTechniqueForm({
-  name,
-  positions,
-  disabled,
-  onCreated,
-}: {
-  name: string;
-  positions: { slug: string; nameKo: string }[];
-  disabled: boolean;
-  onCreated: (res: Extract<GenerateResult, { ok: true }>) => void;
-}) {
-  const [position, setPosition] = useState("");
-  const [nameKo, setNameKo] = useState(name.slice(0, 60));
-  const [steps, setSteps] = useState("");
-  const [busy, start] = useTransition();
-  const id = (k: string) => `manual-${name}-${k}`;
-  const lines = steps.split("\n").filter((l) => l.trim());
-  const ready = position !== "" && nameKo.trim() !== "" && lines.length > 0;
-
-  const submit = () =>
-    start(async () => {
-      const res = await createOwnTechnique(name, { position, nameKo, steps: lines }).catch(() => null);
-      if (!res || !res.ok) {
-        toast.error(res?.message ?? "저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
-        return;
-      }
-      onCreated(res);
-    });
-
-  return (
-    <div className="mt-2 flex w-full flex-col gap-3 border-t border-border pt-3">
-      <p className="text-[13px] font-medium text-muted-foreground">직접 적어서 만들기 — 관리자가 확인 후 모두의 기술 카드가 돼요.</p>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor={id("position")}>포지션</Label>
-        <NativeSelect id={id("position")} className="w-full" value={position} onChange={(e) => setPosition(e.target.value)}>
-          <NativeSelectOption value="">고르기</NativeSelectOption>
-          {positions.map((p) => (
-            <NativeSelectOption key={p.slug} value={p.slug}>
-              {p.nameKo}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor={id("name")}>기술 이름</Label>
-        <Input id={id("name")} value={nameKo} maxLength={60} onChange={(e) => setNameKo(e.target.value)} />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor={id("steps")}>세팅 과정 (한 줄에 하나, 1~5줄)</Label>
-        <Textarea
-          id={id("steps")}
-          value={steps}
-          rows={4}
-          placeholder={"예: 상대 오른쪽 깃을 왼손으로 깊게 잡는다\n오른손으로 상대 왼팔을 누른다"}
-          onChange={(e) => setSteps(e.target.value.split("\n").slice(0, 5).join("\n"))}
-        />
-      </div>
-      <Button className="rounded-full" disabled={!ready || busy || disabled} onClick={submit}>
-        {busy && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
-        기술 카드 만들기
-      </Button>
-    </div>
-  );
-}
-
-function withoutKey<T>(m: Record<string, T>, key: string): Record<string, T> {
-  const next = { ...m };
-  delete next[key];
-  return next;
 }
 
 // 수업 날짜 고르기 — 새 기록 · 기록 고치기 둘 다(오늘 뒤 날짜는 못 고른다)

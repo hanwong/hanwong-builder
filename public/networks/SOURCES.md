@@ -32,7 +32,7 @@
 | tozi-korea.png | 또지코리아 | 네이버 블로그 프로필(…/KakaoTalk_20250127_174516494.jpg) | https://m.blog.naver.com/tozikoreajinyeong (진영점, 일광 · 만덕 같은 문양) |
 | ssen-gym.png | 쎈짐 | 네이버 블로그 프로필(…wnstjd5124/profileImage.png) | https://m.blog.naver.com/wnstjd5124 (형곡지부) |
 | wire.png | 와이어 | 네이버 블로그 프로필(…kimjoong76/profileImage.png) | https://m.blog.naver.com/kimjoong76 (이천 본관) |
-| jiujitsu-lab.png | 주짓수랩 | 네이버 블로그 프로필(…no0am…/f.jpg) | https://m.blog.naver.com/no0am (HQ 부산대) |
+| jiujitsu-lab.png | 주짓수랩 | 운영자가 직접 준 그림(2026-11-10, JL LAB 원형 문양) | — |
 | korean-top-team.png | 코리안탑팀 | 네이버 블로그(…fri2005/KTT_logo(gif).jpg) | https://m.blog.naver.com/fri2005 (김포) |
 | kingdom.png | 킹덤 | 네이버 블로그 프로필(…kjwzz12/profileImage.png) | https://m.blog.naver.com/kjwzz12 (옥포지부) |
 | team-roots.png | 팀루츠 | https://www.rootsbjj.com.au/assets/logo-mark.png | https://www.rootsbjj.com.au (Roots BJJ 본부, 한국 Team Roots 운영) |

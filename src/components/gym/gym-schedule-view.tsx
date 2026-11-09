@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, Loader2, Plus, X } from "lucide-react";
+import { Check, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Dialog, DialogDescription, DialogTitle, ModalBody, ModalContent, ModalFooter } from "@/components/ui/dialog";
-import { BottomAction } from "@/components/app/bottom-action";
+import { FloatingAction } from "@/components/app/tab-bar";
 import { GymHeader } from "@/components/gym/gym-header";
 import { CLASS_BG, ScheduleTable } from "@/components/gym/schedule-table";
 import { addSchedule, removeSchedule, setClassColor, updateSchedule } from "@/app/gym/actions";
@@ -35,12 +35,9 @@ export function GymScheduleView({ data }: { data: GymSchedulePage }) {
       {/* 시간표 (D-135) — 맨 위에 한눈에, 칸을 누르면 고치기 */}
       <ScheduleTable schedules={data.schedules} colors={data.colors} onPick={setEditing} />
 
-      <BottomAction>
-        <Button className="h-12 w-full rounded-full text-base" onClick={() => setEditing("new")}>
-          <Plus data-icon="inline-start" aria-hidden />
-          수업 추가
-        </Button>
-      </BottomAction>
+      {/* 기록 탭 "+ 기록하기"와 같은 떠 있는 알약(D-148). 아래 칸이 가리지 않게 자리만 비워 둠 */}
+      <div className="h-16" aria-hidden />
+      <FloatingAction label="수업 추가" onClick={() => setEditing("new")} />
 
       {editing && (
         <ScheduleDialog

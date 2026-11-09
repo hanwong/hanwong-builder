@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { BottomAction } from "@/components/app/bottom-action";
 import { PositionPicture } from "@/components/app/position-picture";
 import { TechniquePicker } from "@/components/app/technique-picker";
+import { CustomTechniqueCard } from "@/components/app/custom-technique-card";
 import { postClass, updateClass } from "@/app/gym/actions";
 import type { MyGym } from "@/lib/gym-data";
 import type { MatchedTechnique } from "@/lib/mock/log-seed";
@@ -115,16 +115,22 @@ export function ClassForm({ gym, initial, today = "", onCancel }: { gym: MyGym; 
             </CardContent>
           </Card>
         ))}
+        {/* 목록에 없는 기술 — 기록 화면과 같은 카드: AI로 만들기 · 직접 만들기(D-148). 만들면 위 기술 카드로 바뀐다 */}
         {customNames.map((n) => (
-          <Card key={n} className="rounded-2xl ring-border" size="sm">
-            <CardContent className="flex items-center gap-2">
-              <span className="min-w-0 flex-1 truncate text-[17px] font-semibold">{n}</span>
-              <Badge variant="outline">목록에 없는 기술</Badge>
-              <Button variant="ghost" size="icon" aria-label={`${n} 빼기`} className="-mr-2 rounded-full" onClick={() => setCustomNames((l) => l.filter((x) => x !== n))}>
-                <X className="size-4" />
-              </Button>
-            </CardContent>
-          </Card>
+          <CustomTechniqueCard
+            key={n}
+            name={n}
+            disabled={saving}
+            onRemove={() => setCustomNames((l) => l.filter((x) => x !== n))}
+            onCreated={(t) => {
+              setCustomNames((l) => l.filter((x) => x !== n));
+              setTechniques((list) =>
+                list.some((x) => x.slug === t.id)
+                  ? list
+                  : [...list, { slug: t.id, nameKo: t.nameKo, nameEn: t.nameEn, position: t.position, positionSlug: t.positionSlug ?? null }],
+              );
+            }}
+          />
         ))}
         <TechniquePicker selected={techniques.map((t) => t.slug)} onToggle={toggle} onCustom={addCustom} />
       </section>

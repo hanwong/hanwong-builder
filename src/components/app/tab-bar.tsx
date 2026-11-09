@@ -26,11 +26,17 @@ export function TabBar() {
   );
 }
 
-// 홈 · 기록 탭에서만 탭 바 바로 위 가운데에 떠 있는 "+ 기록하기"(D-67) — 한 손 엄지가 닿고, 내려도 늘 보인다.
-// 화면(main)을 아래로 내리는 동안엔 동그란 + 로 줄어 아래 내용을 덜 가리고, 위로 올리거나 멈추면 다시 펼친다(Material 3).
+// 기록 탭 "+ 기록하기"(D-67)
+function RecordButton() {
+  return <FloatingAction href="/app/log" label="기록하기" />;
+}
+
+// 탭 바 바로 위 가운데에 떠 있는 검정 알약(D-67) — 기록하기 · 수업 추가(D-148)가 같은 모양.
+// 한 손 엄지가 닿고, 내려도 늘 보인다. 화면(main)을 아래로 내리는 동안엔 동그란 + 로 줄어 아래 내용을 덜 가리고,
+// 위로 올리거나 멈추면 다시 펼친다(Material 3).
 const EXPAND_AFTER = 900; // 멈추고 이만큼 지나면 다시 펼침(ms)
 
-function RecordButton() {
+export function FloatingAction({ label, href, onClick }: { label: string; href?: string; onClick?: () => void }) {
   const [small, setSmall] = useState(false);
   useEffect(() => {
     const main = document.querySelector("main");
@@ -52,16 +58,13 @@ function RecordButton() {
     };
   }, []);
 
-  return (
-    <Link
-      href="/app/log"
-      aria-label="기록하기"
-      className={cn(
-        "fixed left-1/2 z-30 flex h-12 -translate-x-1/2 items-center justify-center overflow-hidden rounded-full bg-primary text-base font-semibold whitespace-nowrap text-primary-foreground shadow-lg shadow-black/20 transition-[padding,transform] duration-200 ease-out active:scale-95 motion-reduce:transition-none",
-        small ? "w-12 px-0" : "px-6",
-      )}
-      style={{ bottom: "calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 12px)" }}
-    >
+  const className = cn(
+    "fixed left-1/2 z-30 flex h-12 -translate-x-1/2 items-center justify-center overflow-hidden rounded-full bg-primary text-base font-semibold whitespace-nowrap text-primary-foreground shadow-lg shadow-black/20 transition-[padding,transform] duration-200 ease-out active:scale-95 motion-reduce:transition-none",
+    small ? "w-12 px-0" : "px-6",
+  );
+  const style = { bottom: "calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 12px)" };
+  const inner = (
+    <>
       <Plus className="size-5 shrink-0" aria-hidden />
       <span
         aria-hidden
@@ -70,9 +73,18 @@ function RecordButton() {
           small ? "ml-0 max-w-0 opacity-0" : "ml-1.5 max-w-24 opacity-100",
         )}
       >
-        기록하기
+        {label}
       </span>
+    </>
+  );
+  return href ? (
+    <Link href={href} aria-label={label} className={className} style={style}>
+      {inner}
     </Link>
+  ) : (
+    <button type="button" aria-label={label} onClick={onClick} className={className} style={style}>
+      {inner}
+    </button>
   );
 }
 

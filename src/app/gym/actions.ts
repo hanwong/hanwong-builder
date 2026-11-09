@@ -210,17 +210,22 @@ function cleanClass(i: ClassInput): ClassInput | null {
   if (!slugs.length && !customNames.length && !body.trim()) return null;
   return { scheduleId: i.scheduleId && UUID.test(i.scheduleId) ? i.scheduleId : null, heldOn: i.heldOn, name, startsAt: i.startsAt, body, slugs, customNames };
 }
+// 공용 기술 + 관장 · 코치가 수업 등록 중 AI · 직접 만든 "내 기술"(D-148, 승인 전엔 만든 사람만 봄).
+// 내 기술은 관원에게 안 보이므로 이름을 custom_name 에도 같이 적어 관원 화면 · 복사된 기록에 이름이 남게 한다.
 async function techniqueRows(supabase: Awaited<ReturnType<typeof createSupabaseServer>>, classId: string, v: ClassInput) {
-  const { data, error } = v.slugs.length
-    ? await supabase.from("techniques").select("id, slug").in("slug", v.slugs).is("owner_id", null)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data, error } = v.slugs.length && user
+    ? await supabase.from("techniques").select("id, slug, name_ko, owner_id").in("slug", v.slugs).or(`owner_id.is.null,owner_id.eq.${user.id}`)
     : { data: [], error: null };
   if (error) return { rows: null, error };
-  const idBySlug = new Map((data ?? []).map((t) => [t.slug, t.id]));
+  const bySlug = new Map((data ?? []).map((t) => [t.slug, t]));
   let order = 0;
   const rows: { gym_class_id: string; technique_id: string | null; custom_name: string | null; sort_order: number }[] = [];
   for (const s of v.slugs) {
-    const id = idBySlug.get(s);
-    if (id) rows.push({ gym_class_id: classId, technique_id: id, custom_name: null, sort_order: order++ });
+    const t = bySlug.get(s);
+    if (t) rows.push({ gym_class_id: classId, technique_id: t.id, custom_name: t.owner_id ? t.name_ko.slice(0, 60) : null, sort_order: order++ });
   }
   for (const n of v.customNames) rows.push({ gym_class_id: classId, technique_id: null, custom_name: n, sort_order: order++ });
   return { rows, error: null };
