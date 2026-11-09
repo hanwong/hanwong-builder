@@ -27,7 +27,7 @@ export function BeltsView({ myBelt, belts, drills }: { myBelt: AdultBelt; belts:
   return (
     <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-2">
-        <Button variant="ghost" size="icon" aria-label="뒤로" className="-ml-2 rounded-full" onClick={() => router.push("/app/skills")}>
+        <Button variant="ghost" size="icon" aria-label="뒤로" className="-ml-2 rounded-full" onClick={() => (window.history.length > 1 ? router.back() : router.push("/app"))} // 들어오는 길은 홈 카드(D-142)>
           <ArrowLeft className="size-5" strokeWidth={1.75} />
         </Button>
         <h1 className="text-[22px] font-bold tracking-tight">벨트별 기술</h1>

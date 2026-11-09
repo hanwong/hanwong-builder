@@ -2,7 +2,6 @@ import "server-only";
 import { cacheLife } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { mineOf, type Level } from "@/lib/mock/log-seed";
-import { queryBeltProgress, type BeltProgress } from "@/lib/belt-techniques-data";
 
 // 내 기술 (T-10) — 포지션 21개 × 기술 + 내 숙련도. 기술은 공용(로그인하면 초안 포함, D-24), 숙련도는 본인 것만(RLS).
 export type SkillRow = {
@@ -16,7 +15,7 @@ export type SkillRow = {
 };
 export type PositionGroup = { slug: string; nameKo: string; skills: SkillRow[] };
 
-export async function getSkills(): Promise<{ groups: PositionGroup[]; beltProgress: BeltProgress }> {
+export async function getSkills(): Promise<{ groups: PositionGroup[] }> {
   "use cache: private"; // 내 데이터 — 서버에 남기지 않고 휴대폰 안에서만 재사용. stale 5분 이상이어야 미리 받기(prefetch)에 포함된다(D-45)
   cacheLife({ stale: 300 }); // 5분 — 이보다 짧으면 탭을 눌러야 그때 불러와서 로딩이 보인다
   const supabase = await createSupabaseServer();
@@ -24,7 +23,7 @@ export async function getSkills(): Promise<{ groups: PositionGroup[]; beltProgre
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [positions, techniques, levels, beltProgress] = await Promise.all([
+  const [positions, techniques, levels] = await Promise.all([
     supabase.from("positions").select("id, slug, name_ko").order("sort_order"),
     supabase
       .from("techniques")
@@ -34,7 +33,6 @@ export async function getSkills(): Promise<{ groups: PositionGroup[]; beltProgre
       .order("sort_order")
       .limit(2000),
     supabase.from("technique_levels").select("technique_id, level"),
-    queryBeltProgress(supabase, user?.user_metadata?.belt), // 맨 위 내 벨트 카드(D-126). 기본 드릴은 화이트 벨트 기술 위로(D-140)
   ]);
   const error = positions.error ?? techniques.error ?? levels.error;
   if (error) throw new Error(`skills: ${error.code ?? ""} ${error.message.slice(0, 80)}`);
@@ -56,6 +54,5 @@ export async function getSkills(): Promise<{ groups: PositionGroup[]; beltProgre
   }
   return {
     groups: (positions.data ?? []).map((p) => ({ slug: p.slug, nameKo: p.name_ko, skills: byPosition.get(p.id) ?? [] })),
-    beltProgress,
   };
 }

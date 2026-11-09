@@ -12,18 +12,14 @@ import { HoverPrefetchLink } from "@/components/app/hover-prefetch-link";
 import type { PositionGroup, SkillRow } from "@/lib/skills-data";
 import { cn } from "@/lib/utils";
 import { PositionPicture } from "@/components/app/position-picture";
-import { BeltCard } from "@/components/app/belt-card";
-import type { BeltProgress } from "@/lib/belt-techniques-data";
 
 const LEVEL_LABEL = new Map(LEVELS.map((l) => [l.value, l.label]));
 
 // 내 기술 (T-10, FLOW 4 · DESIGN 6) — 포지션 아코디언(접힘) × 기술 + 숙련도 배지. 안 배운 건 흐리게.
 export function SkillsList({
   groups,
-  beltProgress,
 }: {
   groups: PositionGroup[];
-  beltProgress: BeltProgress;
 }) {
   const [onlyLearned, setOnlyLearned] = useState(false);
   const [query, setQuery] = useState("");
@@ -70,9 +66,6 @@ export function SkillsList({
           배운 것만 보기
         </button>
       </header>
-
-      {/* 내 벨트에서 흔히 배우는 기술 (D-126) — 검색 중엔 숨긴다 */}
-      {!searching && <BeltCard progress={beltProgress} />}
 
       {/* 검색 (D-91) */}
       <div className="relative">

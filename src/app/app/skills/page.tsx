@@ -36,7 +36,7 @@ async function Loader() {
       </p>
     );
   }
-  return <SkillsList groups={data.groups} beltProgress={data.beltProgress} />;
+  return <SkillsList groups={data.groups} />;
 }
 
 function SkillsSkeleton() {
