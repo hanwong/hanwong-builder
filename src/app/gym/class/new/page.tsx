@@ -26,5 +26,5 @@ async function Loader({ searchParams }: { searchParams: Promise<{ d?: string; s?
   await cookies();
   const info = await getNewClassInfo(d, s ?? null);
   if (!info) return <GymEmpty />;
-  return <ClassForm gym={info.gym} initial={{ id: null, scheduleId: info.scheduleId, heldOn: info.heldOn, name: info.name, startsAt: info.startsAt, body: "", techniques: [], customNames: [] }} />;
+  return <ClassForm gym={info.gym} today={info.today} initial={{ id: null, scheduleId: info.scheduleId, heldOn: info.heldOn, name: info.name, startsAt: info.startsAt, body: "", techniques: [], customNames: [] }} />;
 }

@@ -113,7 +113,11 @@ export function ClassView({ data }: { data: ClassDetail }) {
       <section className="flex flex-col gap-2 rounded-2xl bg-card p-4 ring-1 ring-border">
         <h2 className="text-[15px] font-semibold">출석 {attendees.length}명</h2>
         {attendees.length === 0 ? (
-          <p className="text-[13px] text-muted-foreground">아직 출석한 관원이 없어요 — 관원 홈에 카드가 떠 있어요.</p>
+          <p className="text-[13px] text-muted-foreground">
+            {cls.heldOn > data.today
+              ? "미리 올린 수업이에요 — 수업 날 관원 홈에 카드가 뜨고, 그날부터 출석할 수 있어요."
+              : "아직 출석한 관원이 없어요 — 관원 홈에 카드가 떠 있어요."}
+          </p>
         ) : (
           <ul className="flex flex-col gap-1.5">
             {attendees.map((a) => {

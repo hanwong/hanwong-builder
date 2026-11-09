@@ -29,7 +29,7 @@ export type ClassFormInitial = {
 };
 
 // 수업 내용 등록 · 고치기 (D-127, FLOW 8-3 · DESIGN '관장님 버전') — 기록 화면과 같은 뼈대: 기술 고르기(같은 팝업) → 기술 카드 → 메모 → 아래 고정 "등록"
-export function ClassForm({ gym, initial, onCancel }: { gym: MyGym; initial: ClassFormInitial; onCancel?: () => void }) {
+export function ClassForm({ gym, initial, today = "", onCancel }: { gym: MyGym; initial: ClassFormInitial; today?: string; onCancel?: () => void }) {
   const router = useRouter();
   const [name, setName] = useState(initial.name);
   const [startsAt, setStartsAt] = useState(initial.startsAt);
@@ -71,7 +71,7 @@ export function ClassForm({ gym, initial, onCancel }: { gym: MyGym; initial: Cla
           toast.error(res?.message ?? "저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
           return;
         }
-        toast.success("수업 내용을 등록했어요 — 관원 홈에 카드가 떠요");
+        toast.success(today && initial.heldOn > today ? "미리 등록했어요 — 수업 날 관원 홈에 카드가 떠요" : "수업 내용을 등록했어요 — 관원 홈에 카드가 떠요");
         router.replace(`/gym/class/${res.id}`);
       }
     });
