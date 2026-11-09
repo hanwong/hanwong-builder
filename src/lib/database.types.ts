@@ -1241,6 +1241,7 @@ export type Database = {
           real_name: string
           role: string
           started_on: string
+          stripes: number
           user_id: string
         }[]
       }

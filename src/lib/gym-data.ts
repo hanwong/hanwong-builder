@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { cacheLife } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { addDays, seoulToday } from "@/lib/seoul-date";
+import { cleanStripes } from "@/lib/belt";
 import type { Level } from "@/lib/mock/log-seed";
 import { GYM_COOKIE, WEEKDAY_KO, hhmm } from "@/lib/gym-shared";
 export { GYM_COOKIE, WEEKDAY_KO, hhmm };
@@ -316,8 +317,19 @@ export async function queryMemberGymCards(supabase: Client, userId: string): Pro
 }
 
 // ---------- 관원 목록 · 관원 한 명 · 관원 기록 (FLOW 8-3) ----------
-export type MemberRow = { userId: string; nick: string; belt: string | null; role: GymRole; joinedAt: string; lastAttended: string | null; monthAttendance: number };
-export type MembersPage = { gym: MyGym; all: MyGym[]; members: MemberRow[]; today: string };
+// 관원 목록 (FLOW 8-3, D-131) — 기간 출석률은 화면에서 고른 기간으로 바로 계산하도록 날짜 목록째 넘긴다
+export type MemberRow = {
+  userId: string;
+  nick: string;
+  belt: string | null;
+  stripes: number;
+  role: GymRole;
+  joinedOn: string; // 들어온 날(서울) — 그 전 수업은 출석률 분모에서 뺀다
+  lastAttended: string | null;
+  attended: string[]; // 출석한 수업 날짜(같은 날 두 수업이면 두 번)
+};
+export type MembersPage = { gym: MyGym; all: MyGym[]; members: MemberRow[]; classDates: string[]; today: string };
+const seoulDateOf = (ts: string) => new Date(Date.parse(ts) + 9 * 3_600_000).toISOString().slice(0, 10);
 export async function getMembers(): Promise<MembersPage | null> {
   "use cache: private"; // 내 데이터 — 다른 /app 화면과 같이 5분(D-45). 미리 만들기 단계에서 조회가 끊기지 않게(2026-11-09 확인)
   cacheLife({ stale: 300 });
@@ -325,38 +337,39 @@ export async function getMembers(): Promise<MembersPage | null> {
   const cur = await currentStaffGym(supabase);
   if (!cur) return null;
   const today = seoulToday();
-  const monthStart = today.slice(0, 7) + "-01";
-  const [names, att] = await Promise.all([
+  const [names, att, classes] = await Promise.all([
     supabase.rpc("gym_member_names", { p_gym: cur.gym.id }),
     supabase.from("gym_attendance").select("user_id, gym_classes!inner(gym_id, held_on)").eq("gym_classes.gym_id", cur.gym.id),
+    // 출석률 분모 = 내용이 올라간 수업(출석은 그 수업에만 할 수 있다). 휴강은 뺀다
+    supabase.from("gym_classes").select("held_on").eq("gym_id", cur.gym.id).eq("status", "posted").lte("held_on", today),
   ]);
   if (names.error) throw new Error(`members: ${names.error.code ?? ""} ${names.error.message.slice(0, 80)}`);
-  const last = new Map<string, string>();
-  const month = new Map<string, number>();
+  const dates = new Map<string, string[]>();
   for (const a of att.data ?? []) {
     const d = a.gym_classes?.held_on;
     if (!d) continue;
-    if (!last.has(a.user_id) || last.get(a.user_id)! < d) last.set(a.user_id, d);
-    if (d >= monthStart) month.set(a.user_id, (month.get(a.user_id) ?? 0) + 1);
+    dates.set(a.user_id, [...(dates.get(a.user_id) ?? []), d]);
   }
-  const members = (names.data ?? [])
-    .map((n) => ({
+  const members = (names.data ?? []).map((n) => {
+    const attended = (dates.get(n.user_id) ?? []).sort();
+    return {
       userId: n.user_id,
       nick: shownName(n),
       belt: n.belt,
+      stripes: cleanStripes(n.stripes, n.belt),
       role: n.role as GymRole,
-      joinedAt: n.joined_at,
-      lastAttended: last.get(n.user_id) ?? null,
-      monthAttendance: month.get(n.user_id) ?? 0,
-    }))
-    .sort((a, b) => (b.lastAttended ?? "").localeCompare(a.lastAttended ?? "") || a.nick.localeCompare(b.nick));
-  return { gym: cur.gym, all: cur.all, members, today };
+      joinedOn: seoulDateOf(n.joined_at),
+      lastAttended: attended.at(-1) ?? null,
+      attended,
+    };
+  });
+  return { gym: cur.gym, all: cur.all, members, classDates: (classes.data ?? []).map((c) => c.held_on).sort(), today };
 }
 
 export type MemberLogRow = { id: string; loggedOn: string; body: string; sparring: number; fromClass: boolean; techniques: string[]; comments: number };
 export type MemberDetail = {
   gym: MyGym;
-  member: { userId: string; nick: string; belt: string | null; startedOn: string | null; role: GymRole; joinedAt: string };
+  member: { userId: string; nick: string; belt: string | null; stripes: number; startedOn: string | null; role: GymRole; joinedAt: string };
   month: { attendance: number; logs: number; sparring: number; lastAttended: string | null };
   levels: Map<string, Level>;
   counts: Map<string, number>;
@@ -387,7 +400,7 @@ export async function getMemberDetail(userId: string): Promise<MemberDetail | nu
   };
   return {
     gym: cur.gym,
-    member: { userId, nick: shownName(me), belt: me.belt, startedOn: me.started_on, role: me.role as GymRole, joinedAt: me.joined_at },
+    member: { userId, nick: shownName(me), belt: me.belt, stripes: cleanStripes(me.stripes, me.belt), startedOn: me.started_on, role: me.role as GymRole, joinedAt: me.joined_at },
     month: { attendance: o.month.attendance, logs: o.month.logs, sparring: o.month.sparring, lastAttended: o.month.last_attended },
     levels: new Map(o.levels.map((l) => [l.technique_id, l.level as Level])),
     counts: new Map(o.counts.map((c) => [c.technique_id, c.n])),

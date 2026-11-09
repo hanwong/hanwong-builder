@@ -8,7 +8,7 @@
 ## 1. 로그인
 - 누가: **수련자**만. 랜딩(`/`)은 로그인 없이, `/app/...` 전부 로그인 필요(D-07).
 - 닉네임(D-122)은 표를 만들지 않고 `user_metadata.nick`(최대 20자, 본인만 바꿈)에 둔다. 안 적으면 이메일 @ 앞부분을 쓰되 저장하지 않는다.
-- 벨트 색(홈 수련 벨트, D-33)은 표를 만들지 않고 `auth.users` 의 `user_metadata.belt`(white · blue · purple · brown · black)에 둔다. 본인만 바꾼다(supabase.auth.updateUser).
+- 벨트 색(홈 수련 벨트, D-33)은 표를 만들지 않고 `auth.users` 의 `user_metadata.belt`(white · blue · purple · brown · black)에 둔다. 본인만 바꾼다(supabase.auth.updateUser). 그랄(D-131)은 `user_metadata.stripes`(0~4, 블랙 0~10, 없으면 0) — 같은 방식, 블랙에서 다른 벨트로 바꾸면 4로 맞춘다.
 - 방식: **Supabase Auth + Google**(D-05). 이메일 · 매직링크 없음. 사용자 식별은 `auth.users.id`(uuid) — 아래 표의 `user_id` 가 이것을 가리킨다.
 - 운영자(본인): `operators` 표에 한웅 님 계정 하나(D-47). 운영 화면 `/app/admin` 에서 목록 밖 기술 초안을 승인 · 버림. 그 밖의 기술 콘텐츠는 마이그레이션으로 넣는다.
 - 참고: Google 로그인은 Google Cloud 에서 OAuth 클라이언트를 만들어 Supabase 에 넣어야 한다(T-00b). 메일 발송 한도 문제는 없다.
@@ -480,7 +480,7 @@ FLOW 8 의 3단계. 표 6개를 더한다. 기존 표는 `class_logs` 에 칸 �
 | `peek_gym(code)` | 코드로 체육관 이름 · 지역만(동의 화면용). 로그인한 사람만. 틀리면 null |
 | `join_gym(code)` | 관원 코드 → member 줄, 코치 코드 → coach 줄(동의 시각 기록). 이미 있으면 그대로 |
 | `attend_class(class_id)` | 내가 그 체육관 관원인지 · 수업이 posted 인지 확인 → `import_shared_log` 와 같은 복사(날짜 = held_on · 기술 · 메모 → `class_logs` + `class_log_techniques` + `technique_levels` 비기너, `gym_class_id` 채움) → `gym_attendance` 줄 → 기록 id. 두 번이면 전 기록 id |
-| `gym_member_names(gym_id)` | 관장 · 코치에게 관원 id → 닉네임 · 벨트 · 시작 연월(메타에서) |
+| `gym_member_names(gym_id)` | 관장 · 코치에게 관원 id → 닉네임 · 벨트 · 그랄(D-131) · 시작 연월(메타에서) · 본명(D-130) |
 | `gym_member_overview(gym_id, user_id, before?)` | 관장 · 코치에게 그 관원의 숙련도 · 기술별 기록 횟수 · 최근 기록 20개(메모 포함) · 이번 달 숫자 — 앱이 belt_techniques 와 합쳐 D-126 화면을 그린다 |
 | `gym_member_log(gym_id, log_id)` | 관장 · 코치에게 관원 기록 하나(기술 · 메모 · 스파링 · 코멘트). 관원이 아니면 null |
 | `my_log_comments(log_id)` | 관원이 내 기록에 달린 코멘트(쓴 사람 닉네임 · 역할 · 체육관) |

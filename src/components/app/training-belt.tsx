@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition, type CSSProperties } from "react";
 import Link from "next/link";
-import { Settings, X } from "lucide-react";
+import { Minus, Plus, Settings, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BeltChoice } from "@/components/app/belt-choice";
 import { useFloatingDialog } from "@/lib/use-floating-dialog";
-import { setBelt, setNick, setStartedOn } from "@/app/app/actions";
+import { setBelt, setNick, setStartedOn, setStripes } from "@/app/app/actions";
 import { StartMonthPicker } from "@/components/app/start-month-picker";
 import {
   BELTS,
@@ -21,6 +21,7 @@ import {
   BELT_WEEKS,
   BELT_WHITE_EDGE,
   WEEK_SHADES,
+  maxStripes,
   trainingSpan,
   type Belt,
 } from "@/lib/belt";
@@ -37,6 +38,7 @@ const WAVE_STEP = 45; // 세로줄(주) 사이 간격 ms — 26줄이면 약 1.2
 export function TrainingBelt({
   weeks,
   belt: initialBelt,
+  stripes: initialStripes,
   startedOn: initialStartedOn,
   nick: initialNick,
   defaultNick,
@@ -44,12 +46,14 @@ export function TrainingBelt({
 }: {
   weeks: { start: string; count: number }[];
   belt: Belt;
+  stripes: number;
   startedOn: string | null;
   nick: string;
   defaultNick: string;
   thisMonth: string;
 }) {
   const [belt, setBeltState] = useState<Belt>(initialBelt);
+  const [stripes, setStripesState] = useState(initialStripes);
   const [startedOn, setStartedOnState] = useState(initialStartedOn);
   const [savedNick, setSavedNick] = useState(initialNick);
   const [nickDraft, setNickDraft] = useState(initialNick);
@@ -68,12 +72,29 @@ export function TrainingBelt({
 
   function choose(next: Belt) {
     const prev = belt;
+    const prevStripes = stripes;
     setBeltState(next);
+    setStripesState((n) => Math.min(n, maxStripes(next))); // 서버도 같은 규칙으로 맞춘다
     startSaving(async () => {
       const res = await setBelt(next).catch(() => null);
       if (!res?.ok) {
         setBeltState(prev);
+        setStripesState(prevStripes);
         toast.error("벨트 색을 저장하지 못했어요. 다시 눌러 주세요.");
+      }
+    });
+  }
+
+  // 그랄(D-131) — 스파링처럼 −/+, 누를 때마다 저장
+  function changeStripes(next: number) {
+    if (next < 0 || next > maxStripes(belt)) return;
+    const prev = stripes;
+    setStripesState(next);
+    startSaving(async () => {
+      const res = await setStripes(next).catch(() => null);
+      if (!res?.ok) {
+        setStripesState(prev);
+        toast.error("그랄을 저장하지 못했어요. 다시 눌러 주세요.");
       }
     });
   }
@@ -119,7 +140,7 @@ export function TrainingBelt({
       <div className="flex items-center gap-2">
         {startedOn ? (
           <p className="min-w-0 flex-1 text-[15px] font-semibold">
-            {label} 벨트 · <span className="mark-lime">{trainingSpan(startedOn, thisMonth)}</span>
+            {label} 벨트{stripes > 0 && ` ${stripes}그랄`} · <span className="mark-lime">{trainingSpan(startedOn, thisMonth)}</span>
           </p>
         ) : (
           <button
@@ -212,7 +233,7 @@ export function TrainingBelt({
             </Button>
           </div>
           <DialogDescription className="sr-only">
-            닉네임, 벨트 색, 수련을 시작한 연도 · 달을 바꿔요. 바꾸면 바로 저장돼요.
+            닉네임, 벨트 색, 그랄, 수련을 시작한 연도 · 달을 바꿔요. 바꾸면 바로 저장돼요.
           </DialogDescription>
           <div className="flex flex-col gap-2">
             <Label htmlFor="nick-setting" className="text-[15px] font-semibold">
@@ -239,6 +260,38 @@ export function TrainingBelt({
               지금 벨트
             </span>
             <BeltChoice value={belt} onChange={choose} labelledBy="belt-setting-label" />
+          </div>
+          {/* 그랄(D-131) — 기록 화면 스파링과 같은 −/+ */}
+          <div className="flex items-center justify-between gap-3">
+            <span id="stripes-setting-label" className="flex flex-col">
+              <span className="text-[15px] font-semibold">그랄</span>
+              <span className="text-[12px] font-medium text-muted-foreground">최대 {maxStripes(belt)}개{belt === "black" ? "(블랙)" : ""}</span>
+            </span>
+            <div className="flex items-center gap-2" role="group" aria-labelledby="stripes-setting-label">
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="그랄 하나 빼기"
+                className="size-10 rounded-full shadow-none"
+                disabled={stripes === 0}
+                onClick={() => changeStripes(stripes - 1)}
+              >
+                <Minus />
+              </Button>
+              <span className="w-14 text-center text-[17px] font-semibold tabular-nums" aria-live="polite">
+                {stripes}그랄
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="그랄 하나 더하기"
+                className="size-10 rounded-full shadow-none"
+                disabled={stripes >= maxStripes(belt)}
+                onClick={() => changeStripes(stripes + 1)}
+              >
+                <Plus />
+              </Button>
+            </div>
           </div>
           <div className="flex flex-col gap-2">
             <span className="text-[15px] font-semibold">주짓수를 시작한 때</span>

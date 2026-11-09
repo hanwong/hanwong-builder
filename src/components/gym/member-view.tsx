@@ -40,7 +40,7 @@ export function MemberView({ data, belts }: { data: MemberDetail; belts: BeltLis
           {member.role !== "member" && <Badge variant="secondary">{ROLE_LABEL[member.role]}</Badge>}
         </div>
         <p className="text-[13px] font-medium text-muted-foreground">
-          {b ? `${b.label} 벨트` : "벨트 미정"}
+          {b ? `${b.label} 벨트${member.stripes > 0 ? ` ${member.stripes}그랄` : ""}` : "벨트 미정"}
           {member.startedOn ? ` · ${trainingSpan(member.startedOn, data.thisMonth)}` : ""} · {formatKoreanDate(member.joinedAt.slice(0, 10))} 들어옴
         </p>
       </header>

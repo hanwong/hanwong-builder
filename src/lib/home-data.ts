@@ -2,7 +2,7 @@ import "server-only";
 import { cacheLife } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { addDays, seoulToday } from "@/lib/seoul-date";
-import { BELT_WEEKS, isBelt, isStartMonth, type Belt } from "@/lib/belt";
+import { BELT_WEEKS, cleanStripes, isBelt, isStartMonth, type Belt } from "@/lib/belt";
 import { cleanNick, emailId } from "@/lib/nickname";
 import { queryDrillChips, type DrillChip } from "@/lib/drills-data";
 import { queryMemberGymCards, type MemberGymCard } from "@/lib/gym-data";
@@ -11,6 +11,7 @@ import { queryMemberGymCards, type MemberGymCard } from "@/lib/gym-data";
 export type HomeData = {
   map: { slug: string; nameKo: string; learned: number }[]; // 내 주짓수 지도(D-60) — 포지션 순서대로, 숙련도가 있는 기술 수
   belt: Belt; // 내 벨트 색(auth user_metadata, D-33)
+  stripes: number; // 그랄 0~4 · 블랙 0~10(D-131)
   startedOn: string | null; // 수련 시작 'YYYY-MM'(D-59)
   nick: string; // 닉네임(D-122) — 안 적었으면 빈 글자
   defaultNick: string; // 닉네임을 안 적었을 때 쓰는 이메일 앞부분(D-122)
@@ -68,6 +69,7 @@ export async function getHomeData(): Promise<HomeData> {
 
   return {
     belt: myBelt,
+    stripes: cleanStripes(me.data.user?.user_metadata?.stripes, myBelt),
     drills: myBelt === "white" ? drills : [],
     gyms,
     startedOn: isStartMonth(startedOn) ? startedOn : null,

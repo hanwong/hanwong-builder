@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import { isBelt, isStartMonth, type Belt } from "@/lib/belt";
+import { cleanStripes, isBelt, isStartMonth, maxStripes, type Belt } from "@/lib/belt";
 import { cleanNick } from "@/lib/nickname";
 import { seoulToday } from "@/lib/seoul-date";
 
@@ -14,12 +14,32 @@ export async function setBelt(belt: Belt): Promise<{ ok: boolean }> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false };
-  const { error } = await supabase.auth.updateUser({ data: { belt } });
+  // 블랙(최대 10)에서 다른 벨트(최대 4)로 바꾸면 그랄을 4로 맞춘다(D-131)
+  const stripes = cleanStripes(user.user_metadata?.stripes, belt);
+  const { error } = await supabase.auth.updateUser({ data: { belt, stripes } });
   if (error) {
     console.error("setBelt failed:", error.code ?? "", (error.message ?? "").slice(0, 120));
     return { ok: false };
   }
   revalidatePath("/app"); // 벨트 색은 홈에만 보인다 — 홈만 새로(D-45)
+  return { ok: true };
+}
+
+// 그랄(D-131) — 홈 내 설정에서 스파링처럼 −/+ 로. 0~4, 블랙은 0~10
+export async function setStripes(stripes: number): Promise<{ ok: boolean }> {
+  if (!Number.isInteger(stripes) || stripes < 0 || stripes > 10) return { ok: false };
+  const supabase = await createSupabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+  if (stripes > maxStripes(user.user_metadata?.belt)) return { ok: false };
+  const { error } = await supabase.auth.updateUser({ data: { stripes } });
+  if (error) {
+    console.error("setStripes failed:", error.code ?? "", (error.message ?? "").slice(0, 120));
+    return { ok: false };
+  }
+  revalidatePath("/app");
   return { ok: true };
 }
 

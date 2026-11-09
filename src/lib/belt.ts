@@ -25,6 +25,13 @@ export const BELT_WHITE_EDGE = "#D4D3CC"; // 화이트 벨트일 때 벨트 전�
 // 주별 수련 횟수 0 · 1 · 2 · 3 · 4 · 5회 이상 → 5회 이상이 가장 하얗다
 export const WEEK_SHADES = ["#1C1C1C", "#3A3A3A", "#5E5E5E", "#8C8C8C", "#C2C2C2", "#FAFAFA"] as const;
 
+// 그랄(벨트 줄, D-131) — 0~4, 블랙은 0~10(단). 로그인 계정 정보(user_metadata.stripes)에 벨트와 함께 둔다.
+export const maxStripes = (belt: string | null | undefined) => (belt === "black" ? 10 : 4);
+export const cleanStripes = (v: unknown, belt: string | null | undefined): number =>
+  typeof v === "number" && Number.isInteger(v) && v >= 0 ? Math.min(v, maxStripes(belt)) : 0;
+// 벨트순 정렬 — 블랙(높은 띠) → 화이트, 그다음 유소년(그린 → 그레이). 같은 벨트면 그랄 많은 순
+export const BELT_RANK: Record<string, number> = { black: 9, brown: 8, purple: 7, blue: 6, white: 5, green: 4, orange: 3, yellow: 2, grey: 1 };
+
 // 수련 시작 연 · 월 (D-59) — 'YYYY-MM'. 로그인 계정 정보(user_metadata.started_on)에 벨트와 함께 둔다.
 export const isStartMonth = (v: unknown): v is string =>
   typeof v === "string" && /^(19[5-9]\d|20\d\d)-(0[1-9]|1[0-2])$/.test(v);

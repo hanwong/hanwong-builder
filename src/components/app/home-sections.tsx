@@ -32,12 +32,12 @@ export async function HomeSections() {
 }
 
 export function HomeView({ data }: { data: HomeData }) {
-  const { weeks, belt, startedOn, nick, defaultNick, thisMonth, map, sparring, drills, gyms } = data;
+  const { weeks, belt, stripes, startedOn, nick, defaultNick, thisMonth, map, sparring, drills, gyms } = data;
 
   return (
     <>
       {/* ② 수련 벨트 (D-33) */}
-      <TrainingBelt weeks={weeks} belt={belt} startedOn={startedOn} nick={nick} defaultNick={defaultNick} thisMonth={thisMonth} />
+      <TrainingBelt weeks={weeks} belt={belt} stripes={stripes} startedOn={startedOn} nick={nick} defaultNick={defaultNick} thisMonth={thisMonth} />
 
       {/* ②-0 내 체육관 (D-127) — 없으면 들어가기, 있으면 오늘 수업 · 출석 */}
       <GymCard gyms={gyms} />
