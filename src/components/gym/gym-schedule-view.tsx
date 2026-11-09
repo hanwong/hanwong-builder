@@ -263,7 +263,7 @@ function ScheduleDialog({
               이 수업 없애기
             </Button>
           )}
-          <Button className="ml-auto h-11 rounded-full px-5 text-[15px]" disabled={!canSave || saving} onClick={save}>
+          <Button className="h-12 flex-1 rounded-full text-base" disabled={!canSave || saving} onClick={save}>
             {saving && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
             저장
           </Button>

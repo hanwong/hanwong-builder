@@ -150,6 +150,8 @@
   }
   html {
     @apply font-sans;
+    /* 확대 · 축소 막기 (D-147) — 핀치 · 두 번 탭 확대 없이 스크롤만 */
+    touch-action: pan-x pan-y;
   }
 }
 @keyframes rise-in {

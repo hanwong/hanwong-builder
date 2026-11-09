@@ -157,7 +157,7 @@ function DialogDescription({
 
 // 리리롤 공통 팝업 틀 (D-145) — 모든 팝업은 이 셋으로 만든다.
 // ModalContent: 화면 위쪽에 떠 있고(키보드가 올라와도 보이는 영역 안), 뒤 화면은 고정.
-// ModalBody: 내용 — 길면 이 안에서만 위아래로 스크롤.
+// ModalBody: 내용 — 길면 이 안에서만 위아래로 스크롤(좌우 스크롤 없음, D-147).
 // ModalFooter: 아래 버튼 줄 — 스크롤과 상관없이 항상 보임.
 function ModalContent({
   open = true,
@@ -183,7 +183,7 @@ function ModalBody({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="modal-body"
       className={cn(
-        "-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-1",
+        "-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto overscroll-contain px-1",
         className
       )}
       {...props}
