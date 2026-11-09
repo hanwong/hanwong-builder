@@ -16,7 +16,7 @@ export function NetworkSelect({ value, onChange, id = "gym-network" }: { value: 
           id={id}
           value={value}
           onValueChange={onChange}
-          className="h-12"
+          triggerClassName="h-12"
           options={[
             { value: "", label: "없음 · 독립 체육관" },
             ...GYM_NETWORKS.map((n) => ({ value: n, label: n, icon: <NetworkMark network={n} size={24} /> })),

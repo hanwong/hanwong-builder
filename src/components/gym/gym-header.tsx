@@ -20,7 +20,8 @@ export function GymHeader({ gym, all }: { gym: MyGym; all: MyGym[] }) {
           value={gym.id}
           onValueChange={(id) => start(() => pickGym(id))}
           aria-label="체육관 고르기"
-          className="h-9 w-auto border-0 bg-transparent px-0 text-[17px] font-bold tracking-tight shadow-none"
+          className="min-w-0"
+          triggerClassName="h-9 w-auto border-0 bg-transparent px-0 text-[17px] font-bold tracking-tight"
           options={all.map((g) => ({ value: g.id, label: g.name, icon: <NetworkMark network={g.network} size={20} /> }))}
         />
       ) : (

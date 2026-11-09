@@ -1,191 +1,21 @@
 "use client"
 
 import * as React from "react"
-import { cn } from "cn"
-import { Select as SelectPrimitive } from "radix-ui"
-import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
+import { CheckIcon, ChevronDownIcon } from "lucide-react"
 
-function Select({
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />
-}
+import { cn } from "@/lib/utils"
 
-function SelectGroup({
-  className,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Group>) {
-  return (
-    <SelectPrimitive.Group
-      data-slot="select-group"
-      className={cn("scroll-my-1 p-1", className)}
-      {...props}
-    />
-  )
-}
-
-function SelectValue({
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Value>) {
-  return <SelectPrimitive.Value data-slot="select-value" {...props} />
-}
-
-function SelectTrigger({
-  className,
-  size = "default",
-  children,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
-  size?: "sm" | "default"
-}) {
-  return (
-    <SelectPrimitive.Trigger
-      data-slot="select-trigger"
-      data-size={size}
-      className={cn(
-        "flex w-fit items-center justify-between gap-1.5 rounded-lg border border-input bg-transparent py-2 pr-2 pl-2.5 text-sm whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground data-[size=default]:h-8 data-[size=sm]:h-7 data-[size=sm]:rounded-[min(var(--radius-md),10px)] *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        className
-      )}
-      {...props}
-    >
-      {children}
-      <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground" />
-      </SelectPrimitive.Icon>
-    </SelectPrimitive.Trigger>
-  )
-}
-
-function SelectContent({
-  className,
-  children,
-  position = "item-aligned",
-  align = "center",
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Content>) {
-  return (
-    <SelectPrimitive.Portal>
-      <SelectPrimitive.Content
-        data-slot="select-content"
-        data-align-trigger={position === "item-aligned"}
-        className={cn("relative z-50 max-h-(--radix-select-content-available-height) min-w-36 origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95", position ==="popper"&&"data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1", className )}
-        position={position}
-        align={align}
-        {...props}
-      >
-        <SelectScrollUpButton />
-        <SelectPrimitive.Viewport
-          data-position={position}
-          className={cn(
-            "data-[position=popper]:h-(--radix-select-trigger-height) data-[position=popper]:w-full data-[position=popper]:min-w-(--radix-select-trigger-width)",
-            position === "popper" && ""
-          )}
-        >
-          {children}
-        </SelectPrimitive.Viewport>
-        <SelectScrollDownButton />
-      </SelectPrimitive.Content>
-    </SelectPrimitive.Portal>
-  )
-}
-
-function SelectLabel({
-  className,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Label>) {
-  return (
-    <SelectPrimitive.Label
-      data-slot="select-label"
-      className={cn("px-1.5 py-1 text-xs text-muted-foreground", className)}
-      {...props}
-    />
-  )
-}
-
-function SelectItem({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Item>) {
-  return (
-    <SelectPrimitive.Item
-      data-slot="select-item"
-      className={cn(
-        "relative flex w-full cursor-default items-center gap-1.5 rounded-md py-1 pr-8 pl-1.5 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
-        className
-      )}
-      {...props}
-    >
-      <span className="pointer-events-none absolute right-2 flex size-4 items-center justify-center">
-        <SelectPrimitive.ItemIndicator>
-          <CheckIcon className="pointer-events-none" />
-        </SelectPrimitive.ItemIndicator>
-      </span>
-      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-    </SelectPrimitive.Item>
-  )
-}
-
-function SelectSeparator({
-  className,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Separator>) {
-  return (
-    <SelectPrimitive.Separator
-      data-slot="select-separator"
-      className={cn("pointer-events-none -mx-1 my-1 h-px bg-border", className)}
-      {...props}
-    />
-  )
-}
-
-function SelectScrollUpButton({
-  className,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.ScrollUpButton>) {
-  return (
-    <SelectPrimitive.ScrollUpButton
-      data-slot="select-scroll-up-button"
-      className={cn(
-        "z-10 flex cursor-default items-center justify-center bg-popover py-1 [&_svg:not([class*='size-'])]:size-4",
-        className
-      )}
-      {...props}
-    >
-      <ChevronUpIcon
-      />
-    </SelectPrimitive.ScrollUpButton>
-  )
-}
-
-function SelectScrollDownButton({
-  className,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.ScrollDownButton>) {
-  return (
-    <SelectPrimitive.ScrollDownButton
-      data-slot="select-scroll-down-button"
-      className={cn(
-        "z-10 flex cursor-default items-center justify-center bg-popover py-1 [&_svg:not([class*='size-'])]:size-4",
-        className
-      )}
-      {...props}
-    >
-      <ChevronDownIcon
-      />
-    </SelectPrimitive.ScrollDownButton>
-  )
-}
-
-// 리리롤 선택 상자 (D-149) — 앱 안의 모든 선택 상자는 이것으로. 브라우저 기본 모양(NativeSelect) 대신 같은 디자인의 목록이 뜬다.
-// 값 ""(없음 · 고르기 전)도 쓸 수 있게 안에서만 다른 값으로 바꿔 둔다. icon 은 목록 · 고른 칸에 같이 보인다(네트워크 로고 등).
-const NONE = "__none__"
+// 리리롤 선택 상자 (D-149 → D-151) — 앱 안의 모든 선택 상자는 이것으로.
+// 누르면 목록이 칸 바로 아래로 "펼쳐진다"(화면 위에 따로 뜨지 않음). 아이폰에서 떠 있는 목록(Radix Select)이
+// 스크롤되지 않고 깜빡여서(2026-11-10 본인 확인) 바꿨다 — 목록이 페이지 · 팝업 안에 그대로 있어 손가락 스크롤이 그냥 된다.
+// 값 ""(없음 · 고르기 전)도 쓸 수 있다. icon 은 목록 · 고른 칸에 같이 보인다(네트워크 로고, 수업 색 등).
 type OptionSelectOption = {
   value: string
   label: React.ReactNode
   icon?: React.ReactNode
   disabled?: boolean
 }
+
 function OptionSelect({
   id,
   value,
@@ -193,6 +23,7 @@ function OptionSelect({
   options,
   placeholder = "고르기",
   className,
+  triggerClassName,
   disabled,
   "aria-label": ariaLabel,
 }: {
@@ -201,59 +32,102 @@ function OptionSelect({
   onValueChange: (v: string) => void
   options: OptionSelectOption[]
   placeholder?: string
-  className?: string
+  className?: string // 바깥(칸 + 펼친 목록) — 폭 · 배치
+  triggerClassName?: string // 칸 자체 — 높이 · 글자
   disabled?: boolean
   "aria-label"?: string
 }) {
-  const hasNone = options.some((o) => o.value === "")
-  const inner = value === "" ? (hasNone ? NONE : undefined) : value
+  const [open, setOpen] = React.useState(false)
+  const wrapRef = React.useRef<HTMLDivElement>(null)
+  const listRef = React.useRef<HTMLUListElement>(null)
+  const listId = React.useId()
+  const current = options.find((o) => o.value === value)
+
+  // 바깥을 누르거나 Esc 면 닫힘
+  React.useEffect(() => {
+    if (!open) return
+    const onDown = (e: PointerEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation()
+        setOpen(false)
+      }
+    }
+    document.addEventListener("pointerdown", onDown)
+    document.addEventListener("keydown", onKey, true)
+    // 고른 줄이 보이게
+    listRef.current?.querySelector<HTMLElement>("[aria-selected=true]")?.scrollIntoView({ block: "nearest" })
+    return () => {
+      document.removeEventListener("pointerdown", onDown)
+      document.removeEventListener("keydown", onKey, true)
+    }
+  }, [open])
+
   return (
-    <Select
-      value={inner}
-      onValueChange={(v) => onValueChange(v === NONE ? "" : v)}
-      disabled={disabled}
-    >
-      <SelectTrigger
+    <div ref={wrapRef} className={cn("flex min-w-0 flex-col", className)}>
+      <button
+        type="button"
         id={id}
+        role="combobox"
         aria-label={ariaLabel}
+        aria-expanded={open}
+        aria-controls={listId}
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
         className={cn(
-          "h-11 w-full min-w-0 rounded-xl bg-card px-3 text-base",
-          className
+          "flex h-11 w-full min-w-0 items-center gap-2 rounded-xl border border-input bg-card px-3 text-left text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50",
+          open && "border-ring",
+          triggerClassName
         )}
       >
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent
-        position="popper"
-        className="max-h-[min(var(--radix-select-content-available-height),20rem)] rounded-xl"
-      >
-        {options.map((o) => (
-          <SelectItem
-            key={o.value || NONE}
-            value={o.value || NONE}
-            disabled={o.disabled}
-            className="min-h-10 rounded-lg py-2 pl-2.5 text-[15px] focus:bg-muted focus:text-foreground"
-          >
-            {o.icon}
-            <span className="min-w-0 truncate">{o.label}</span>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+        {current?.icon}
+        <span className={cn("min-w-0 flex-1 truncate", !current && "text-muted-foreground")}>
+          {current ? current.label : placeholder}
+        </span>
+        <ChevronDownIcon
+          className={cn("size-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")}
+          aria-hidden
+        />
+      </button>
+      {open && (
+        <ul
+          ref={listRef}
+          id={listId}
+          role="listbox"
+          aria-label={ariaLabel}
+          className="mt-1.5 max-h-64 overflow-y-auto overscroll-contain rounded-xl bg-card p-1 ring-1 ring-border"
+        >
+          {options.map((o) => {
+            const on = o.value === value
+            return (
+              <li
+                key={o.value || "__none__"}
+                role="option"
+                aria-selected={on}
+                aria-disabled={o.disabled || undefined}
+                onClick={() => {
+                  if (o.disabled) return
+                  onValueChange(o.value)
+                  setOpen(false)
+                }}
+                className={cn(
+                  "flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-2.5 text-[15px] select-none hover:bg-muted active:bg-muted",
+                  on && "bg-muted font-semibold",
+                  o.disabled && "pointer-events-none opacity-40"
+                )}
+              >
+                {o.icon}
+                <span className="min-w-0 flex-1 truncate">{o.label}</span>
+                {on && <CheckIcon className="size-4 shrink-0" aria-hidden />}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
   )
 }
 
-export {
-  OptionSelect,
-  type OptionSelectOption,
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectScrollDownButton,
-  SelectScrollUpButton,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-}
+export { OptionSelect, type OptionSelectOption }

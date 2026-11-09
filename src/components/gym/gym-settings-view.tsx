@@ -112,13 +112,14 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
           ))}
         </ul>
         {owner && (
-          <div className="flex items-center gap-2 pt-1">
+          <div className="flex items-start gap-2 pt-1">
             <OptionSelect
               value={transferTo}
               onValueChange={setTransferTo}
               aria-label="관장 넘길 사람"
               placeholder="관장 넘기기 — 사람 고르기"
-              className="h-10 flex-1 text-[15px]"
+              className="flex-1"
+              triggerClassName="h-10 text-[15px]"
               options={[...data.staff.filter((s) => s.role === "coach"), ...data.members].map((p) => ({ value: p.userId, label: p.nick }))}
             />
             <Button variant="outline" size="sm" className="rounded-full" disabled={busy || !transferTo} onClick={() => run(() => transferOwner(data.gym.id, transferTo), "관장을 넘겼어요. 이제 코치예요.")}>
