@@ -53,6 +53,19 @@ export const GYM_NETWORK_ICONS: Partial<Record<(typeof GYM_NETWORKS)[number], st
   "트라이포스": "tri-force.png",
   "팀매드": "team-mad.png",
   "파라에스트라": "paraestra.png",
+  // D-146 — 2026-11-10 추가
+  "동천백산": "dongcheon-baeksan.png",
+  "또지코리아": "tozi-korea.png",
+  "쎈짐": "ssen-gym.png",
+  "아토스": "atos.png",
+  "와이어": "wire.png",
+  "주짓수랩": "jiujitsu-lab.png",
+  "코리안탑팀": "korean-top-team.png",
+  "킹덤": "kingdom.png",
+  "팀루츠": "team-roots.png",
+  "퍼스트짐": "first-gym.png",
+  "히베이로": "ribeiro.png",
+  "MARC": "marc.png",
 };
 export const isGymNetwork = (v: unknown): v is (typeof GYM_NETWORKS)[number] => typeof v === "string" && (GYM_NETWORKS as readonly string[]).includes(v);
 

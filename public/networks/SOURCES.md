@@ -21,4 +21,23 @@
 | tri-force.png | 트라이포스 | https://www.triforce-bjj.com/wp-content/uploads/Association-logo_circle_navy-small-favicon.png (일본 본부) | https://www.triforce-bjj.com/ |
 | urban.png | 어반 | 네이버 블로그 프로필 이미지 (blogpfthumb-phinf.pstatic.net …/profileImage.jpg) | https://blog.naver.com/urbanjiujitsu |
 
-로고를 못 구한 곳(글자 배지): 동천백산(네이버 카페만) · 또지코리아(Facebook 403) · 쎈짐 · 아토스 코리아 · 에볼루션 · 와이어(다음 카페만) · 주짓수랩 · 코리안탑팀 · 킹덤 · 팀루츠 · 퍼스트짐 · 히베이로 · MARC.
+## 2026-11-10 추가 (D-146)
+
+본부 공식 사이트가 아닌 것은 대부분 **지부 네이버 블로그 프로필 그림**이다(여러 지부가 같은 문양을 쓰면 그 문양). 128px PNG 로 줄임.
+
+| 파일 | 네트워크 | 이미지 주소 | 가져온 페이지 |
+|---|---|---|---|
+| atos.png | 아토스 | https://atosjiujitsuhq.com/wp-content/uploads/2022/06/Atos-Logo-reversed.svg (방패만 잘라냄) | https://atosjiujitsuhq.com (본부) |
+| dongcheon-baeksan.png | 동천백산 | 네이버 블로그 프로필(blogpfthumb-phinf.pstatic.net …/KakaoTalk_20181002_145633819.jpg) | https://m.blog.naver.com/scramble45 (기장일광) |
+| tozi-korea.png | 또지코리아 | 네이버 블로그 프로필(…/KakaoTalk_20250127_174516494.jpg) | https://m.blog.naver.com/tozikoreajinyeong (진영점, 일광 · 만덕 같은 문양) |
+| ssen-gym.png | 쎈짐 | 네이버 블로그 프로필(…wnstjd5124/profileImage.png) | https://m.blog.naver.com/wnstjd5124 (형곡지부) |
+| wire.png | 와이어 | 네이버 블로그 프로필(…kimjoong76/profileImage.png) | https://m.blog.naver.com/kimjoong76 (이천 본관) |
+| jiujitsu-lab.png | 주짓수랩 | 네이버 블로그 프로필(…no0am…/f.jpg) | https://m.blog.naver.com/no0am (HQ 부산대) |
+| korean-top-team.png | 코리안탑팀 | 네이버 블로그(…fri2005/KTT_logo(gif).jpg) | https://m.blog.naver.com/fri2005 (김포) |
+| kingdom.png | 킹덤 | 네이버 블로그 프로필(…kjwzz12/profileImage.png) | https://m.blog.naver.com/kjwzz12 (옥포지부) |
+| team-roots.png | 팀루츠 | https://www.rootsbjj.com.au/assets/logo-mark.png | https://www.rootsbjj.com.au (Roots BJJ 본부, 한국 Team Roots 운영) |
+| first-gym.png | 퍼스트짐 | 네이버 블로그 프로필(…okh11/profileImage.png, 원숭이 문양) | https://m.blog.naver.com/okh11 (혁신퍼스트짐). 반월 · 전주 퍼스트짐은 다른 "F" 문양이라 다른 팀이면 바꿔야 함 |
+| ribeiro.png | 히베이로 | https://smoothcomp.com/pictures/t/26944-hcx3/ribeiro-jiujitsu.jpg (제3자 Smoothcomp) | https://smoothcomp.com/en/affiliation/59 |
+| marc.png | MARC | 네이버 블로그 프로필(…gerac111/profileImage.jpg) | https://m.blog.naver.com/gerac111 (대한무술문화복지협회 MARC 주짓수) |
+
+로고를 못 구한 곳(글자 배지): 에볼루션(국내 팀 자료를 찾지 못함).
