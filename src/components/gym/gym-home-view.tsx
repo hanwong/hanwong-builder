@@ -51,12 +51,6 @@ export function GymHomeView({ data }: { data: GymHome }) {
           )}
         </Button>
       </div>
-      {off !== 0 && (
-        <Link href="/gym" scroll={false} className="-mt-2 self-center text-[13px] font-medium text-muted-foreground underline underline-offset-4">
-          이번 주로
-        </Link>
-      )}
-
       {/* 주 줄 */}
       <div role="tablist" aria-label={weekLabel} className="grid grid-cols-7 gap-1">
         {data.week.map((w) => {
@@ -92,6 +86,13 @@ export function GymHomeView({ data }: { data: GymHome }) {
           );
         })}
       </div>
+
+      {/* 이번 주로 — 날짜 줄 오른쪽 아래(다른 주를 볼 때만) */}
+      {off !== 0 && (
+        <Link href="/gym" scroll={false} className="-mt-2 self-end text-[13px] font-medium text-muted-foreground underline underline-offset-4">
+          이번 주로
+        </Link>
+      )}
 
       {/* 고른 날 수업 */}
       <section className="flex flex-col gap-2">
