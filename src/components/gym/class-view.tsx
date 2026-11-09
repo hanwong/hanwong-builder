@@ -51,7 +51,7 @@ export function ClassView({ data }: { data: ClassDetail }) {
         toast.error(res?.message ?? "지우지 못했어요.");
         return;
       }
-      toast.success("수업 내용을 지웠어요. 이미 가져간 관원 기록은 남아요.");
+      toast.success("수업 내용을 지웠어요. 출석과 관원이 가져간 기록은 남아요.");
       router.replace("/gym");
     });
   }
@@ -140,7 +140,7 @@ export function ClassView({ data }: { data: ClassDetail }) {
         )}
       </section>
 
-      <p className="text-[12px] text-muted-foreground">고치거나 지워도 이미 출석한 관원의 기록은 바뀌지 않아요.</p>
+      <p className="text-[12px] text-muted-foreground">고치거나 지워도 출석과 이미 출석한 관원의 기록은 그대로 남아요.</p>
       {confirm ? (
         <div className="flex items-center gap-2">
           <span className="text-[15px]">이 수업 내용을 지울까요?</span>
