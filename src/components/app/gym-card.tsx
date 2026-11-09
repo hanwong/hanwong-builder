@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useSyncExternalStore, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Building2, Check, ChevronRight, Loader2, X } from "lucide-react";
@@ -164,6 +164,18 @@ function TodaySlot({ slot, gymId, gymName }: { slot: MemberGymCard["today"][numb
   );
 }
 
+// 출석은 수업 시작 1시간 전부터(D-144, DB 도 같은 규칙) — 서울 시각 'HH:MM'
+const seoulHM = () => new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date());
+const everyHalfMinute = (cb: () => void) => {
+  const t = setInterval(cb, 30_000);
+  return () => clearInterval(t);
+};
+function hourBefore(startsAt: string): string {
+  const [h, m] = startsAt.split(":").map(Number);
+  const t = Math.max(0, h * 60 + m - 60);
+  return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+}
+
 // 수업 내용 팝업(D-139) — 기술 · 메모를 읽고, 아래 고정 영역(기술 고르기 팝업처럼)에서
 // "내 기록에 저장"(기록만, 출석 ✗) 또는 "출석 + 저장"
 function ClassContentDialog({ slot, gymId, gymName, onClose }: { slot: MemberGymCard["today"][number]; gymId: string; gymName: string; onClose: () => void }) {
@@ -172,6 +184,10 @@ function ClassContentDialog({ slot, gymId, gymName, onClose }: { slot: MemberGym
   const [busy, setBusy] = useState<"save" | "attend" | null>(null);
   const [, start] = useTransition();
   const posted = slot.status === "posted" && !!slot.classId;
+  const now = useSyncExternalStore(everyHalfMinute, seoulHM, () => "");
+  const opensAt = hourBefore(slot.startsAt);
+  const early = !!now && now < opensAt; // 아직 출석 시간 전
+  const earlyLabel = `${opensAt}부터 출석`;
 
   function run(kind: "save" | "attend") {
     if (!slot.classId) return;
@@ -260,13 +276,15 @@ function ClassContentDialog({ slot, gymId, gymName, onClose }: { slot: MemberGym
         <div className="flex shrink-0 gap-2">
           {!posted ? (
             // 내용 없음 — 출석 버튼만(D-143)
-            <Button className="h-12 flex-1 rounded-full text-base shadow-none" disabled={!!busy || slot.attended} onClick={attendOnly}>
+            <Button className="h-12 flex-1 rounded-full text-base shadow-none" disabled={!!busy || slot.attended || early} onClick={attendOnly}>
               {busy === "attend" && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
               {slot.attended ? (
                 <>
                   <Check data-icon="inline-start" aria-hidden />
                   출석했어요
                 </>
+              ) : early ? (
+                earlyLabel
               ) : (
                 "출석"
               )}
@@ -296,9 +314,9 @@ function ClassContentDialog({ slot, gymId, gymName, onClose }: { slot: MemberGym
                   내 기록에 저장
                 </Button>
               )}
-              <Button className="h-12 flex-1 rounded-full text-base shadow-none" disabled={!!busy} onClick={() => run("attend")}>
+              <Button className="h-12 flex-1 rounded-full text-base shadow-none" disabled={!!busy || early} onClick={() => run("attend")}>
                 {busy === "attend" && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
-                {slot.myLogId ? "출석하기" : "출석 + 저장"}
+                {early ? earlyLabel : slot.myLogId ? "출석하기" : "출석 + 저장"}
               </Button>
             </>
           )}

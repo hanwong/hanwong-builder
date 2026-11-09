@@ -323,7 +323,7 @@ export async function attendClass(classId: string): Promise<Res<{ id: string }>>
   const { data, error } = await supabase.rpc("attend_class", { p_class: classId });
   if (error || !data) {
     console.error("attendClass failed:", error?.code);
-    return fail(error?.code === "P0002" ? "수업 내용이 아직 없거나 휴강이에요." : error?.code === "42501" ? "이 체육관 관원이 아니에요." : "출석하지 못했어요. 다시 눌러 주세요.");
+    return fail(error?.code === "22023" ? "수업 시작 1시간 전부터 출석할 수 있어요." : error?.code === "P0002" ? "수업 내용이 아직 없거나 휴강이에요." : error?.code === "42501" ? "이 체육관 관원이 아니에요." : "출석하지 못했어요. 다시 눌러 주세요.");
   }
   revalidatePath("/app", "layout");
   revalidatePath("/gym", "layout");
@@ -337,7 +337,7 @@ export async function attendSlot(gymId: string, scheduleId: string): Promise<Res
   const { data, error } = await supabase.rpc("attend_slot", { p_gym: gymId, p_schedule: scheduleId });
   if (error || !data) {
     console.error("attendSlot failed:", error?.code);
-    return fail(error?.code === "P0002" ? "오늘 수업이 아니거나 휴강이에요." : error?.code === "42501" ? "이 체육관 관원이 아니에요." : "출석하지 못했어요. 다시 눌러 주세요.");
+    return fail(error?.code === "22023" ? "수업 시작 1시간 전부터 출석할 수 있어요." : error?.code === "P0002" ? "오늘 수업이 아니거나 휴강이에요." : error?.code === "42501" ? "이 체육관 관원이 아니에요." : "출석하지 못했어요. 다시 눌러 주세요.");
   }
   revalidatePath("/app", "layout");
   revalidatePath("/gym", "layout");
