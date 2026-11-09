@@ -4,7 +4,7 @@ import { createSupabaseServer } from "@/lib/supabase/server";
 import { addDays, seoulToday } from "@/lib/seoul-date";
 import { BELT_WEEKS, cleanStripes, isBelt, isStartMonth, type Belt } from "@/lib/belt";
 import { cleanNick, emailId } from "@/lib/nickname";
-import { queryDrillChips, type DrillChip } from "@/lib/drills-data";
+import { queryBeltProgress, type BeltProgress } from "@/lib/belt-techniques-data";
 import { queryMemberGymCards, type MemberGymCard } from "@/lib/gym-data";
 
 // 홈(T-21)에 필요한 것만 읽는다. RLS 로 본인 것만 나온다(DB.md 5).
@@ -18,7 +18,7 @@ export type HomeData = {
   thisMonth: string; // 서울 기준 이번 달 'YYYY-MM' — "수련 N년째" 계산용
   sparring: { month: number; total: number }; // 스파링 판 수(D-64) — 이번 달 · 전체
   weeks: { start: string; count: number }[]; // 최근 104주(월요일 시작, 서울) — 오래된 주부터
-  drills: DrillChip[]; // 기본 드릴(D-112) — 화이트 벨트일 때만 채움
+  beltProgress: BeltProgress; // 내 벨트 필수 기술 카드(D-140) — 지도 위
   gyms: MemberGymCard[]; // 내 체육관(D-127) — 오늘 수업 · 출석
 };
 
@@ -34,17 +34,19 @@ export async function getHomeData(): Promise<HomeData> {
   const monday = addDays(today, -((new Date(Date.UTC(y, m - 1, d)).getUTCDay() + 6) % 7));
   const firstWeek = addDays(monday, -7 * (BELT_WEEKS - 1));
 
-  const [days, me, positions, levels, drills] = await Promise.all([
+  const [days, me, positions, levels] = await Promise.all([
     // 벨트(최근 2년)와 스파링(전체)을 한 번에 — 기록은 사람당 많아야 수천 개
     supabase.from("class_logs").select("logged_on, sparring_rounds").limit(10000),
     supabase.auth.getUser(),
     supabase.from("positions").select("slug, name_ko").order("sort_order"),
     supabase.from("technique_levels").select("techniques(positions(slug))").limit(5000),
-    queryDrillChips(supabase), // 12줄이라 벨트를 알기 전에 같이 받는다
   ]);
   const error = days.error ?? positions.error ?? levels.error;
   if (error) throw new Error(`home: ${error.code ?? ""} ${error.message.slice(0, 80)}`);
-  const gyms = me.data.user ? await queryMemberGymCards(supabase, me.data.user.id) : [];
+  const [gyms, beltProgress] = await Promise.all([
+    me.data.user ? queryMemberGymCards(supabase, me.data.user.id) : Promise.resolve([]),
+    queryBeltProgress(supabase, me.data.user?.user_metadata?.belt),
+  ]);
 
   const weeks = Array.from({ length: BELT_WEEKS }, (_, i) => ({ start: addDays(firstWeek, i * 7), count: 0 }));
   const firstMs = Date.parse(firstWeek);
@@ -70,7 +72,7 @@ export async function getHomeData(): Promise<HomeData> {
   return {
     belt: myBelt,
     stripes: cleanStripes(me.data.user?.user_metadata?.stripes, myBelt),
-    drills: myBelt === "white" ? drills : [],
+    beltProgress,
     gyms,
     startedOn: isStartMonth(startedOn) ? startedOn : null,
     nick: cleanNick(me.data.user?.user_metadata?.nick) ?? "",

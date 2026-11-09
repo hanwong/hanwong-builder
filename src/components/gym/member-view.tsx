@@ -89,8 +89,7 @@ export function MemberView({ data, belts }: { data: MemberDetail; belts: BeltLis
             <p className="text-[15px] font-semibold">
               <span className="tabular-nums">
                 {list.learned}/{list.total}
-              </span>{" "}
-              적어 봤어요
+              </span>
             </p>
             <p className="text-[13px] text-muted-foreground">{pct}%</p>
           </div>

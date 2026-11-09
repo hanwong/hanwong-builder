@@ -1,4 +1,5 @@
 import "server-only";
+import { queryDrillChips, type DrillChip } from "@/lib/drills-data";
 import { cacheLife } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import type { Level } from "@/lib/mock/log-seed";
@@ -82,13 +83,14 @@ export async function queryBeltProgress(supabase: Client, belt: unknown): Promis
   return { belt: l.belt, label: l.label, color: l.color, learned: l.learned, total: l.total };
 }
 
-export async function getBeltTechniques(): Promise<{ myBelt: AdultBelt; belts: BeltList[] }> {
+export async function getBeltTechniques(): Promise<{ myBelt: AdultBelt; belts: BeltList[]; drills: DrillChip[] }> {
   "use cache: private"; // 내 데이터 — 다른 /app 화면과 같이 5분(D-45)
   cacheLife({ stale: 300 });
   const supabase = await createSupabaseServer();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const belts = await loadBeltLists(supabase);
-  return { myBelt: adultBeltOf(user?.user_metadata?.belt), belts };
+  // 기본 드릴은 화이트 벨트 목록 위에만(D-140)
+  const [belts, drills] = await Promise.all([loadBeltLists(supabase), queryDrillChips(supabase)]);
+  return { myBelt: adultBeltOf(user?.user_metadata?.belt), belts, drills };
 }

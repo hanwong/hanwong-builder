@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { HoverPrefetchLink } from "@/components/app/hover-prefetch-link";
 import { PositionPicture } from "@/components/app/position-picture";
 import { BeltDot } from "@/components/app/belt-dot";
+import { DrillChips } from "@/components/app/drill-chips";
+import type { DrillChip } from "@/lib/drills-data";
 import { LEVELS } from "@/lib/mock/log-seed";
 import type { AdultBelt, BeltList } from "@/lib/belt-techniques-data";
 import { cn } from "@/lib/utils";
@@ -16,7 +18,7 @@ const LEVEL_LABEL = new Map(LEVELS.map((l) => [l.value, l.label]));
 
 // 벨트별 기술 (D-126, FLOW · DESIGN '벨트별 기술') — 벨트 탭 5개(처음엔 내 벨트) → 포지션별 목록 → ✓ · N번 · 숙련도.
 // 앱이 "익혔다"를 판정하지 않는다 — ✓ 는 "내 기록에 적어 봤다"는 사실뿐.
-export function BeltsView({ myBelt, belts }: { myBelt: AdultBelt; belts: BeltList[] }) {
+export function BeltsView({ myBelt, belts, drills }: { myBelt: AdultBelt; belts: BeltList[]; drills: DrillChip[] }) {
   const router = useRouter();
   const [belt, setBelt] = useState<AdultBelt>(myBelt);
   const list = belts.find((b) => b.belt === belt) ?? belts[0];
@@ -58,14 +60,16 @@ export function BeltsView({ myBelt, belts }: { myBelt: AdultBelt; belts: BeltLis
         })}
       </div>
 
+      {/* 기본 드릴(D-112) — 화이트 벨트 기술 위에만(D-140) */}
+      {belt === "white" && <DrillChips drills={drills} wrap />}
+
       {/* 진행도 — 적어 본 기술 수 / 목록 수 */}
       <section className="flex flex-col gap-2 rounded-2xl bg-card px-4 py-3 ring-1 ring-border">
         <div className="flex items-baseline justify-between gap-2">
           <p className="text-[15px] font-semibold">
             <span className="tabular-nums">
               {list.learned}/{list.total}
-            </span>{" "}
-            적어 봤어요
+            </span>
           </p>
           <p className="text-[13px] text-muted-foreground">{list.learned === 0 ? "기록하면 ✓ 가 붙어요" : `${pct}%`}</p>
         </div>

@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getHomeData, type HomeData } from "@/lib/home-data";
 import { TrainingBelt } from "@/components/app/training-belt";
 import { JiujitsuMap } from "@/components/app/jiujitsu-map";
-import { DrillChips } from "@/components/app/drill-chips";
+import { BeltCard } from "@/components/app/belt-card";
 import { SparringTile } from "@/components/app/sparring-tile";
 import { HomeTiles } from "@/components/app/home-tiles";
 import { GymCard } from "@/components/app/gym-card";
@@ -32,7 +32,7 @@ export async function HomeSections() {
 }
 
 export function HomeView({ data }: { data: HomeData }) {
-  const { weeks, belt, stripes, startedOn, nick, defaultNick, thisMonth, map, sparring, drills, gyms } = data;
+  const { weeks, belt, stripes, startedOn, nick, defaultNick, thisMonth, map, sparring, beltProgress, gyms } = data;
 
   return (
     <>
@@ -45,8 +45,8 @@ export function HomeView({ data }: { data: HomeData }) {
       {/* ②-1 스파링 (D-64 · D-116) */}
       <SparringTile month={sparring.month} total={sparring.total} />
 
-      {/* ②-2 기본 드릴 (D-112) — 화이트 벨트만(블루 이상은 drills 가 빈 목록) */}
-      <DrillChips drills={drills} wrap />
+      {/* ②-2 내 벨트 필수 기술 (D-140) — 지도 위. 기본 드릴은 벨트별 기술의 화이트 벨트 위로 옮김 */}
+      <BeltCard progress={beltProgress} title={`${beltProgress.label} 벨트 필수 기술`} />
 
       {/* ②-2 내 주짓수 지도 (D-60) */}
       <JiujitsuMap map={map} />

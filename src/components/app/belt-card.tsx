@@ -4,7 +4,7 @@ import type { BeltProgress } from "@/lib/belt-techniques-data";
 import { BeltDot } from "@/components/app/belt-dot";
 
 // 기술 탭 기본 드릴 아래 — 내 벨트에서 흔히 배우는 기술 카드 (D-126, DESIGN '벨트별 기술'). 누르면 벨트별 기술 화면.
-export function BeltCard({ progress }: { progress: BeltProgress }) {
+export function BeltCard({ progress, title }: { progress: BeltProgress; title?: string }) {
   const pct = progress.total ? Math.round((progress.learned / progress.total) * 100) : 0;
   return (
     <Link
@@ -13,7 +13,7 @@ export function BeltCard({ progress }: { progress: BeltProgress }) {
     >
       <div className="flex items-center gap-2">
         <BeltDot color={progress.color} belt={progress.belt} />
-        <h2 className="min-w-0 flex-1 truncate text-[15px] font-semibold">{progress.label} 벨트에서 흔히 배우는 기술</h2>
+        <h2 className="min-w-0 flex-1 truncate text-[15px] font-semibold">{title ?? `${progress.label} 벨트에서 흔히 배우는 기술`}</h2>
         <span className="text-[15px] font-semibold tabular-nums">
           {progress.learned}/{progress.total}
         </span>

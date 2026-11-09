@@ -35,7 +35,7 @@ async function Loader() {
       </p>
     );
   }
-  return <BeltsView myBelt={data.myBelt} belts={data.belts} />;
+  return <BeltsView myBelt={data.myBelt} belts={data.belts} drills={data.drills} />;
 }
 
 function BeltsSkeleton() {

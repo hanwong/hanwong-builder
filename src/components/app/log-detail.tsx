@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { LogDateInput, LogReview } from "@/components/app/log-review";
@@ -20,8 +20,29 @@ export function LogDetail({ log }: { log: SavedLog }) {
   // 날짜도 고칠 수 있다(본인 요청 2026-10-31) — 새 기록과 같은 날짜 고르기
   const [loggedOn, setLoggedOn] = useState(log.loggedOn);
   const today = useSyncExternalStore(noSubscribe, seoulToday, () => "");
+
+  // 늘 저장된 값(DB) 기준으로(D-141) — 이 Next 는 떠난 화면을 숨겨 두었다가 뒤로 가기에 그대로 다시 보여 줘서
+  // 저장 안 한 수정이 남았다. 화면이 다시 보일 때마다(숨김 → 보임에 effect 가 다시 돈다) 서버 값을 새로 받고 고치던 칸을 버린다.
+  const [round, setRound] = useState(0);
+  const shown = useRef(false);
+  useEffect(() => {
+    if (!shown.current) {
+      shown.current = true;
+      return;
+    }
+    setRound((r) => r + 1); // 다시 보일 때 한 번, 고치던 칸 버리기
+    setLoggedOn(log.loggedOn);
+    router.refresh(); // 다른 화면에서 바뀌었을 수도 — DB 값 다시
+    // 다시 보일 때만 — 의존값 없음
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // 서버 값이 바뀌면(저장 · 새로고침) 칸도 그 값으로
+  const saved = useMemo(() => JSON.stringify(log), [log]);
+  useEffect(() => setLoggedOn(log.loggedOn), [saved, log.loggedOn]); // eslint-disable-line react-hooks/set-state-in-effect
+
   return (
     <LogReview
+      key={`${round}:${saved}`}
       initial={{ ...log, loggedOn: formatKoreanDate(log.loggedOn) }}
       date={<LogDateInput value={loggedOn} today={today} onChange={(v) => setLoggedOn(v || log.loggedOn)} />}
       saveLabel="고친 내용 저장"
