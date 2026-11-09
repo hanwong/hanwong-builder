@@ -5,7 +5,7 @@ import { createSupabaseServer } from "@/lib/supabase/server";
 import { addDays, seoulToday } from "@/lib/seoul-date";
 import { cleanStripes } from "@/lib/belt";
 import type { Level } from "@/lib/mock/log-seed";
-import { GYM_COOKIE, WEEKDAY_KO, WEEK_RANGE, hhmm } from "@/lib/gym-shared";
+import { GYM_COOKIE, WEEKDAY_KO, WEEK_RANGE, hhmm, isClassColor, type ClassColor } from "@/lib/gym-shared";
 export { GYM_COOKIE, WEEKDAY_KO, hhmm };
 
 // 관장님 버전 (D-127, FLOW 8 · DB 11) — 체육관 · 역할 · 스케줄 · 수업. 기록은 사람 것이라 여기서 안 읽는다(관원 기록은 함수로만).
@@ -147,9 +147,6 @@ export type GymHome = {
   today: string;
   week: { day: string; slots: DaySlot[] }[]; // 월~일
   weekOffset: number; // 0 = 이번 주, -1 = 지난주, 1 = 다음 주 (D-134)
-  members: number;
-  weekAttendance: number;
-  codes: { join: string; coach: string } | null; // 관장만
   coachNames: Record<string, string>; // 담당 코치 표시용
 };
 
@@ -163,18 +160,15 @@ export async function getGymHome(weekOffset = 0): Promise<GymHome | null> {
   const offset = Math.max(-WEEK_RANGE, Math.min(WEEK_RANGE, Math.trunc(weekOffset) || 0));
   const monday = addDays(mondayOf(today), offset * 7);
   const sunday = addDays(monday, 6);
-  const [schedules, classes, members, codes, names] = await Promise.all([
+  const [schedules, classes, names] = await Promise.all([
     querySchedules(supabase, cur.gym.id),
     queryClasses(supabase, cur.gym.id, monday, sunday),
-    supabase.from("gym_members").select("id", { count: "exact", head: true }).eq("gym_id", cur.gym.id),
-    cur.gym.role === "owner" ? supabase.rpc("gym_codes", { p_gym: cur.gym.id }) : Promise.resolve({ data: null }),
     supabase.rpc("gym_member_names", { p_gym: cur.gym.id }),
   ]);
   const week = Array.from({ length: 7 }, (_, i) => {
     const day = addDays(monday, i);
     return { day, slots: slotsOn(day, schedules, classes) };
   });
-  const c = codes.data as { join_code?: string; coach_code?: string } | null;
   const coachNames: Record<string, string> = {};
   for (const n of names.data ?? []) if (n.role !== "member") coachNames[n.user_id] = shownName(n);
   return {
@@ -183,25 +177,27 @@ export async function getGymHome(weekOffset = 0): Promise<GymHome | null> {
     today,
     week,
     weekOffset: offset,
-    members: members.count ?? 0,
-    weekAttendance: classes.reduce((n, x) => n + x.attendance, 0),
-    codes: c?.join_code && c.coach_code ? { join: c.join_code, coach: c.coach_code } : null,
     coachNames,
   };
 }
 
-export type GymSchedulePage = { gym: MyGym; schedules: Schedule[]; coaches: { id: string; nick: string }[] };
+export type GymSchedulePage = { gym: MyGym; schedules: Schedule[]; coaches: { id: string; nick: string }[]; colors: Record<string, ClassColor> };
 export async function getGymSchedule(): Promise<GymSchedulePage | null> {
   "use cache: private"; // 내 데이터 — 다른 /app 화면과 같이 5분(D-45). 미리 만들기 단계에서 조회가 끊기지 않게(2026-11-09 확인)
   cacheLife({ stale: 300 });
   const supabase = await createSupabaseServer();
   const cur = await currentStaffGym(supabase);
   if (!cur) return null;
-  const [schedules, names] = await Promise.all([querySchedules(supabase, cur.gym.id), supabase.rpc("gym_member_names", { p_gym: cur.gym.id })]);
+  const [schedules, names, colors] = await Promise.all([
+    querySchedules(supabase, cur.gym.id),
+    supabase.rpc("gym_member_names", { p_gym: cur.gym.id }),
+    supabase.from("gym_class_colors").select("name, color").eq("gym_id", cur.gym.id),
+  ]);
   return {
     gym: cur.gym,
     schedules,
     coaches: (names.data ?? []).filter((n) => n.role !== "member").map((n) => ({ id: n.user_id, nick: shownName(n) })),
+    colors: Object.fromEntries((colors.data ?? []).filter((c) => isClassColor(c.color)).map((c) => [c.name, c.color as ClassColor])),
   };
 }
 

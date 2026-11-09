@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import { GYM_COOKIE, isGymNetwork } from "@/lib/gym-shared";
+import { GYM_COOKIE, isClassColor, isGymNetwork } from "@/lib/gym-shared";
 import { isIsoDate, seoulToday, addDays } from "@/lib/seoul-date";
 
 // 관장님 버전 서버 동작 (D-127). 체육관 · 가입 · 스케줄 · 수업 · 출석 · 코멘트. 비밀값 없음 — 접근 규칙은 DB(RLS · 함수)가 지킨다.
@@ -131,6 +131,17 @@ export async function updateSchedule(id: string, input: { name: string; startsAt
   if (error) return fail("저장하지 못했어요. 다시 눌러 주세요.");
   revalidatePath("/gym", "layout");
   revalidatePath("/app", "layout");
+  return { ok: true };
+}
+
+// 수업 이름별 색(D-137) — 같은 이름 수업 모두 이 색으로. 관장 · 코치만(RLS)
+export async function setClassColor(gymId: string, name: string, color: string): Promise<Res> {
+  const n = name.trim();
+  if (!UUID.test(gymId) || n.length < 1 || n.length > 20 || !isClassColor(color)) return fail("색을 저장하지 못했어요.");
+  const supabase = await createSupabaseServer();
+  const { error } = await supabase.from("gym_class_colors").upsert({ gym_id: gymId, name: n, color, updated_at: new Date().toISOString() });
+  if (error) return fail("색을 저장하지 못했어요. 다시 눌러 주세요.");
+  revalidatePath("/gym", "layout");
   return { ok: true };
 }
 

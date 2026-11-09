@@ -19,8 +19,13 @@
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
   --color-chart-5: var(--chart-5);
-  --color-class-kids: var(--class-kids);
-  --color-class-basic: var(--class-basic);
+  --color-class-yellow: var(--class-yellow);
+  --color-class-mint: var(--class-mint);
+  --color-class-sky: var(--class-sky);
+  --color-class-pink: var(--class-pink);
+  --color-class-lavender: var(--class-lavender);
+  --color-class-peach: var(--class-peach);
+  --color-class-gray: var(--class-gray);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
@@ -70,9 +75,14 @@
   --border: #E4E2D6;
   --input: #E4E2D6;
   --ring: #B9D21E;
-  /* 시간표 칸 색(D-135) — 어린이 · 유소년 수업 / 초보 · 기본반 */
-  --class-kids: #FBEFC2;
-  --class-basic: #DCEFE3;
+  /* 시간표 칸 색(D-135 · D-137) — 수업 이름마다 고르는 색 */
+  --class-yellow: #FBEFC2;
+  --class-mint: #DCEFE3;
+  --class-sky: #DCEAF7;
+  --class-pink: #F8E1E7;
+  --class-lavender: #E8E2F4;
+  --class-peach: #FBE4D3;
+  --class-gray: #ECEBE4;
   --chart-1: #DDF542;
   --chart-2: #B9D21E;
   --chart-3: #8A9C1A;
@@ -108,8 +118,13 @@
   --border: #30302A;
   --input: #30302A;
   --ring: #C9E22E;
-  --class-kids: #4A3F14;
-  --class-basic: #1F3A2C;
+  --class-yellow: #4A3F14;
+  --class-mint: #1F3A2C;
+  --class-sky: #1C3247;
+  --class-pink: #46232D;
+  --class-lavender: #322946;
+  --class-peach: #4A2E1C;
+  --class-gray: #2E2E29;
   --chart-1: #C9E22E;
   --chart-2: #A3B824;
   --chart-3: #7A8A1C;

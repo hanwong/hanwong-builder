@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ChevronRight, Loader2, Plus, X } from "lucide-react";
+import { Check, Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,20 +10,21 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { BottomAction } from "@/components/app/bottom-action";
 import { GymHeader } from "@/components/gym/gym-header";
-import { ScheduleTable } from "@/components/gym/schedule-table";
-import { addSchedule, removeSchedule, updateSchedule } from "@/app/gym/actions";
-import { WEEKDAY_KO } from "@/lib/gym-shared";
+import { CLASS_BG, ScheduleTable } from "@/components/gym/schedule-table";
+import { addSchedule, removeSchedule, setClassColor, updateSchedule } from "@/app/gym/actions";
+import { CLASS_COLORS, WEEKDAY_KO, defaultClassColor, type ClassColor } from "@/lib/gym-shared";
 import type { GymSchedulePage, Schedule } from "@/lib/gym-data";
 import { cn } from "@/lib/utils";
 
-const NAMES = ["기본반", "노기", "오픈매트", "유소년", "스파링"];
+const NEW_NAME = "__new__";
 const LENGTHS = [45, 60, 90, 120];
 const ORDER = [1, 2, 3, 4, 5, 6, 0]; // 월~일
 
-// 수업 스케줄 (DESIGN '관장님 버전') — 요일 묶음 세로, 줄을 누르면 수정 팝업, 아래 고정 "+ 수업 추가"
+// 수업 스케줄 (DESIGN '관장님 버전') — 시간표(D-135) 하나, 칸을 누르면 수정 팝업, 아래 고정 "+ 수업 추가". 요일별 목록은 뺌(D-137)
 export function GymScheduleView({ data }: { data: GymSchedulePage }) {
   const [editing, setEditing] = useState<Schedule | "new" | null>(null);
-  const coachName = new Map(data.coaches.map((c) => [c.id, c.nick]));
+  // 지금까지 적은 수업 이름(D-137) — 고르기 목록
+  const knownNames = [...new Set([...data.schedules.map((s) => s.name), ...Object.keys(data.colors)])].sort((a, b) => a.localeCompare(b, "ko"));
 
   return (
     <div className="flex flex-col gap-4">
@@ -32,39 +33,7 @@ export function GymScheduleView({ data }: { data: GymSchedulePage }) {
       <p className="text-[13px] leading-relaxed text-muted-foreground">매주 반복되는 수업이에요. 하루 쉬는 날은 홈의 수업 카드에서 &lsquo;휴강&rsquo;으로.</p>
 
       {/* 시간표 (D-135) — 맨 위에 한눈에, 칸을 누르면 고치기 */}
-      <ScheduleTable schedules={data.schedules} onPick={setEditing} />
-
-      <div className="flex flex-col divide-y divide-border overflow-hidden rounded-2xl bg-card ring-1 ring-border">
-        {ORDER.map((wd) => {
-          const rows = data.schedules.filter((s) => s.weekday === wd);
-          return (
-            <section key={wd} className="flex flex-col py-2">
-              <h3 className="px-4 pb-1 text-[15px] font-semibold">{WEEKDAY_KO[wd]}요일</h3>
-              {rows.length === 0 ? (
-                <p className="px-4 pb-1 text-[13px] text-muted-foreground">수업 없음</p>
-              ) : (
-                rows.map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => setEditing(s)}
-                    className="flex items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-muted"
-                  >
-                    <span className="w-14 text-[15px] font-semibold tabular-nums">{s.startsAt}</span>
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate text-[15px]">{s.name}</span>
-                      <span className="text-[12px] text-muted-foreground">
-                        {s.minutes}분{s.coachId && coachName.get(s.coachId) ? ` · ${coachName.get(s.coachId)}` : ""}
-                      </span>
-                    </span>
-                    <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
-                  </button>
-                ))
-              )}
-            </section>
-          );
-        })}
-      </div>
+      <ScheduleTable schedules={data.schedules} colors={data.colors} onPick={setEditing} />
 
       <BottomAction>
         <Button className="h-12 w-full rounded-full text-base" onClick={() => setEditing("new")}>
@@ -73,7 +42,16 @@ export function GymScheduleView({ data }: { data: GymSchedulePage }) {
         </Button>
       </BottomAction>
 
-      {editing && <ScheduleDialog gymId={data.gym.id} schedule={editing === "new" ? null : editing} coaches={data.coaches} onClose={() => setEditing(null)} />}
+      {editing && (
+        <ScheduleDialog
+          gymId={data.gym.id}
+          schedule={editing === "new" ? null : editing}
+          coaches={data.coaches}
+          names={knownNames}
+          colors={data.colors}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </div>
   );
 }
@@ -82,22 +60,29 @@ function ScheduleDialog({
   gymId,
   schedule,
   coaches,
+  names,
+  colors,
   onClose,
 }: {
   gymId: string;
   schedule: Schedule | null;
   coaches: { id: string; nick: string }[];
+  names: string[];
+  colors: Record<string, ClassColor>;
   onClose: () => void;
 }) {
-  const [name, setName] = useState(schedule?.name ?? "기본반");
-  const [custom, setCustom] = useState(schedule && !NAMES.includes(schedule.name) ? schedule.name : "");
+  // 수업 이름(D-137): 적어 둔 이름에서 고르거나 "새 이름" → 직접 입력. 처음이면 바로 입력
+  const [name, setName] = useState(schedule?.name ?? names[0] ?? NEW_NAME);
+  const [custom, setCustom] = useState("");
+  const colorOf = (n: string): ClassColor => colors[n] ?? defaultClassColor(n);
+  const [color, setColor] = useState<ClassColor>(colorOf(schedule?.name ?? names[0] ?? ""));
   const [weekdays, setWeekdays] = useState<number[]>(schedule ? [schedule.weekday] : []);
   const [startsAt, setStartsAt] = useState(schedule?.startsAt ?? "20:00");
   const [minutes, setMinutes] = useState(schedule?.minutes ?? 60);
   const [coachId, setCoachId] = useState<string>(schedule?.coachId ?? "");
   const [saving, start] = useTransition();
   const [removing, startRemove] = useTransition();
-  const finalName = custom.trim() || name;
+  const finalName = name === NEW_NAME ? custom.trim() : name;
   const canSave = finalName.length > 0 && (schedule ? true : weekdays.length > 0) && /^\d{2}:\d{2}$/.test(startsAt);
 
   function save() {
@@ -108,6 +93,11 @@ function ScheduleDialog({
       if (!res || !res.ok) {
         toast.error(res?.message ?? "저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
         return;
+      }
+      // 이름별 색 — 저장된 색과 다르거나 처음 쓰는 이름이면 저장(같은 이름 수업 모두 이 색)
+      if (colors[finalName] !== color) {
+        const c = await setClassColor(gymId, finalName, color).catch(() => null);
+        if (!c || !c.ok) toast.error("수업은 저장했지만 색은 저장하지 못했어요. 다시 골라 주세요.");
       }
       toast.success(schedule ? "수업을 고쳤어요" : "수업을 추가했어요");
       onClose();
@@ -135,30 +125,67 @@ function ScheduleDialog({
             <X />
           </Button>
         </div>
-        <DialogDescription className="sr-only">수업 이름 · 요일 · 시작 시각 · 길이 · 담당 코치를 정해요.</DialogDescription>
+        <DialogDescription className="sr-only">수업 이름 · 색 · 요일 · 시작 시각 · 수업 시간 · 담당 코치를 정해요.</DialogDescription>
 
         <div className="flex flex-col gap-2">
-          <span className="text-[15px] font-semibold">수업 이름</span>
-          <div className="flex flex-wrap gap-1.5">
-            {NAMES.map((n) => (
+          <Label htmlFor="sch-name" className="text-[15px] font-semibold">
+            수업 이름
+          </Label>
+          {names.length > 0 && (
+            <NativeSelect
+              id="sch-name"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (e.target.value !== NEW_NAME) setColor(colorOf(e.target.value));
+              }}
+              className="h-11 w-full rounded-xl text-base"
+            >
+              {names.map((n) => (
+                <NativeSelectOption key={n} value={n}>
+                  {n}
+                </NativeSelectOption>
+              ))}
+              <NativeSelectOption value={NEW_NAME}>+ 새 이름 직접 입력</NativeSelectOption>
+            </NativeSelect>
+          )}
+          {name === NEW_NAME && (
+            <Input
+              id={names.length > 0 ? undefined : "sch-name"}
+              value={custom}
+              onChange={(e) => setCustom(e.target.value.slice(0, 20))}
+              placeholder="예: 도복 주짓수"
+              aria-label="새 수업 이름"
+              className="h-11 rounded-xl text-base"
+            />
+          )}
+        </div>
+
+        {/* 이름별 색(D-137) — 시간표 칸이 이 색으로. 같은 이름 수업 모두 같이 바뀜 */}
+        <div className="flex flex-col gap-2">
+          <span id="sch-color" className="text-[15px] font-semibold">
+            색 <span className="text-[12px] font-medium text-muted-foreground">같은 이름 수업 모두 이 색</span>
+          </span>
+          <div role="radiogroup" aria-labelledby="sch-color" className="grid grid-cols-8 gap-1.5">
+            {CLASS_COLORS.map((c) => (
               <button
-                key={n}
+                key={c.value}
                 type="button"
-                aria-pressed={!custom && name === n}
-                onClick={() => {
-                  setName(n);
-                  setCustom("");
-                }}
+                role="radio"
+                aria-checked={color === c.value}
+                aria-label={c.label}
+                title={c.label}
+                onClick={() => setColor(c.value)}
                 className={cn(
-                  "h-8 rounded-full border px-3 text-[13px] font-medium transition-colors",
-                  !custom && name === n ? "border-foreground bg-foreground text-background" : "border-border bg-card hover:bg-muted",
+                  "flex aspect-square items-center justify-center rounded-full ring-1 ring-border transition-shadow",
+                  CLASS_BG[c.value],
+                  color === c.value && "ring-2 ring-foreground",
                 )}
               >
-                {n}
+                {color === c.value && <Check className="size-4" strokeWidth={2.5} aria-hidden />}
               </button>
             ))}
           </div>
-          <Input value={custom} onChange={(e) => setCustom(e.target.value.slice(0, 20))} placeholder="직접 입력" aria-label="수업 이름 직접 입력" className="h-11 rounded-xl text-base" />
         </div>
 
         {!schedule && (
@@ -186,31 +213,30 @@ function ScheduleDialog({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="sch-time" className="text-[15px] font-semibold">
-              시작
-            </Label>
-            <Input id="sch-time" type="time" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} className="h-11 rounded-xl text-base" />
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="text-[15px] font-semibold">길이</span>
-            <div className="flex flex-wrap gap-1.5">
-              {LENGTHS.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  aria-pressed={minutes === m}
-                  onClick={() => setMinutes(m)}
-                  className={cn(
-                    "h-8 rounded-full border px-2.5 text-[13px] font-medium transition-colors",
-                    minutes === m ? "border-foreground bg-foreground text-background" : "border-border bg-card hover:bg-muted",
-                  )}
-                >
-                  {m}분
-                </button>
-              ))}
-            </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="sch-time" className="text-[15px] font-semibold">
+            시작 시각
+          </Label>
+          <Input id="sch-time" type="time" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} className="h-11 rounded-xl text-base" />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <span className="text-[15px] font-semibold">수업 시간</span>
+          <div className="flex flex-wrap gap-1.5">
+            {LENGTHS.map((m) => (
+              <button
+                key={m}
+                type="button"
+                aria-pressed={minutes === m}
+                onClick={() => setMinutes(m)}
+                className={cn(
+                  "h-9 rounded-full border px-3.5 text-[14px] font-medium transition-colors",
+                  minutes === m ? "border-foreground bg-foreground text-background" : "border-border bg-card hover:bg-muted",
+                )}
+              >
+                {m}분
+              </button>
+            ))}
           </div>
         </div>
 

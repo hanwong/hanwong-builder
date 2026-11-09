@@ -191,7 +191,7 @@
 - 기술 팝업(D-136, `TechniqueModal`): 관장 화면에서 기술을 누르면 떠 있는 팝업(내 설정과 같은 `useFloatingDialog`, 안에서 세로 스크롤). 위: 포지션 배지 · 22px bold 이름(mark-lime) · 영어 이름 13px muted · 오른쪽 포지션 그림 72px · 닫기 X. 아래: 규정 · 안전(`bg-muted/60` 상자, 있을 때만) → 세팅 과정 번호 목록 15px → AI 안내 12px → 유튜브 알약. 숙련도 · 정리 모음은 없음.
 
 ### 스케줄 `/gym/schedule`
-- 시간표(D-135, `ScheduleTable`): 맨 위 표 `rounded-2xl ring-1 ring-border bg-card`, 칸 사이 `border-border` 선. 시간 열 52px 11px semibold(끝 시각 muted), 요일 머리 13px semibold(토 `text-chart-3`, 일 `text-destructive`). 수업 칸 11px semibold 줄바꿈(`break-keep`), 최소 높이 44px. 칸 색은 이름으로: 어린이 · 유소년 · 키즈 · 유아 → `bg-class-kids`(연노랑), 초보 · 기본 · 입문 → `bg-class-basic`(연두), 나머지 `bg-card`. 휴대폰보다 넓으면 표만 가로 스크롤.
+- 시간표(D-135, `ScheduleTable`): 맨 위 표 `rounded-2xl ring-1 ring-border bg-card`, 칸 사이 `border-border` 선. 시간 열 52px 11px semibold(끝 시각 muted), 요일 머리 13px semibold(토 `text-chart-3`, 일 `text-destructive`). 수업 칸 11px semibold 줄바꿈(`break-keep`), 최소 높이 44px. 칸 색은 이름마다 고른 색(D-137, `bg-class-yellow · mint · sky · pink · lavender · peach · gray`, 흰색 = `bg-card`), 고른 적 없으면 어린이 · 유소년 → 노랑, 초보 · 기본 → 연두, 나머지 흰색. 칸 최소 높이 64px · 12px(D-137). 수업 팝업의 색 고르기: 8칸 동그라미, 고른 칸 `ring-2 ring-foreground` + 체크. 휴대폰보다 넓으면 표만 가로 스크롤.
 - 요일 7묶음 세로. 묶음 제목 "월요일" 15px semibold, 줄: 시간 15px `tabular-nums` · 이름 · 코치 캡션 · 오른쪽 `ChevronRight`. 수업 없는 요일은 "수업 없음" 13px muted 한 줄.
 - "+ 수업 추가"는 화면 아래 고정 검정 알약(`BottomAction` 재사용). 팝업은 기록 화면 팝업과 같은 `Dialog`: 이름(칩 5개 + 직접 입력), 요일(7칸 토글 — 선택 = `bg-foreground text-background`), 시작 시각(`<input type="time">`, 16px), 길이(45 · 60 · 90 칩), 담당 코치(`NativeSelect`), 저장.
 - 휴강 표시: 줄 오른쪽 "휴강" `Badge variant="outline"` + 취소선 이름.

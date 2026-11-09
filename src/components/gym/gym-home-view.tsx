@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { ChevronDown, ChevronLeft, ChevronRight, Copy, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 const shortDate = (iso: string) => `${Number(iso.slice(5, 7))}/${Number(iso.slice(8))}`;
 
-// 체육관 홈 (D-127, FLOW 8-3 · DESIGN '관장님 버전') — 주 줄(월~일, ‹ › 로 앞뒤 주 D-134) → 고른 날 수업 카드 → 숫자 → 가입 코드(관장)
+// 체육관 홈 (D-127, FLOW 8-3 · DESIGN '관장님 버전') — 주 줄(월~일, ‹ › 로 앞뒤 주 D-134) → 고른 날 수업 카드. 숫자 · 가입 코드 · 관원 보기는 뺌(D-137 — 코드는 설정, 관원은 아래 탭)
 export function GymHomeView({ data }: { data: GymHome }) {
   const [day, setDay] = useState(data.today);
   const picked = data.week.find((w) => w.day === day) ?? data.week[0];
@@ -119,18 +119,6 @@ export function GymHomeView({ data }: { data: GymHome }) {
         )}
       </section>
 
-      {/* 숫자 */}
-      <p className="text-[15px] font-semibold tabular-nums">
-        관원 {data.members} · {off === 0 ? "이번 주" : "이 주"} 출석 {data.weekAttendance}
-      </p>
-
-      {/* 가입 코드 (관장만) */}
-      {data.codes && <CodesCard join={data.codes.join} coach={data.codes.coach} />}
-
-      <Link href="/gym/members" className="flex items-center justify-between rounded-2xl bg-card px-4 py-3 text-[15px] font-medium ring-1 ring-border transition-colors hover:bg-muted">
-        관원 보기
-        <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
-      </Link>
     </div>
   );
 }
@@ -194,44 +182,5 @@ function SlotCard({ slot, gymId, coachNames, today }: { slot: DaySlot; gymId: st
         </div>
       )}
     </div>
-  );
-}
-
-function CodesCard({ join, coach }: { join: string; coach: string }) {
-  const [openCoach, setOpenCoach] = useState(false);
-  async function copy(text: string, label: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success(`${label}를 복사했어요`);
-    } catch {
-      toast.error("복사하지 못했어요. 길게 눌러 복사해 주세요.");
-    }
-  }
-  return (
-    <section className="flex flex-col gap-3 rounded-2xl bg-muted/60 px-4 py-3">
-      <div className="flex items-center gap-3">
-        <div className="flex min-w-0 flex-1 flex-col">
-          <span className="text-[13px] font-medium text-muted-foreground">관원 가입 코드 — 단톡방에 올려 주세요</span>
-          <span className="text-[24px] font-bold tracking-[0.3em] tabular-nums">{join}</span>
-        </div>
-        <Button variant="outline" size="sm" className="rounded-full bg-background" onClick={() => copy(join, "가입 코드")}>
-          <Copy data-icon="inline-start" aria-hidden />
-          복사
-        </Button>
-      </div>
-      <button type="button" onClick={() => setOpenCoach((v) => !v)} className="flex items-center gap-1 self-start text-[13px] font-medium text-muted-foreground">
-        코치 초대 코드
-        <ChevronDown className={cn("size-4 transition-transform", openCoach && "rotate-180")} aria-hidden />
-      </button>
-      {openCoach && (
-        <div className="flex items-center gap-3">
-          <span className="flex-1 text-[20px] font-bold tracking-[0.3em] tabular-nums">{coach}</span>
-          <Button variant="outline" size="sm" className="rounded-full bg-background" onClick={() => copy(coach, "코치 코드")}>
-            <Copy data-icon="inline-start" aria-hidden />
-            복사
-          </Button>
-        </div>
-      )}
-    </section>
   );
 }

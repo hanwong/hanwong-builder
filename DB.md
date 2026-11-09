@@ -409,6 +409,15 @@ FLOW 8 의 3단계. 표 6개를 더한다. 기존 표는 `class_logs` 에 칸 �
 | created_at | timestamptz | ✓ | now() | |
 - 수업 칸은 저장하지 않고 **규칙 + 날짜로 계산**(FLOW 8-3). 휴강은 아래 `gym_classes.status = 'canceled'`.
 
+### `gym_class_colors` (D-137) — 수업 이름별 시간표 색
+| 칸 | 종류 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|
+| gym_id | uuid → gyms | ✓ | | 체육관 지우면 같이 지움 |
+| name | text | ✓ | | 수업 이름(1~20자, `gym_schedules.name` 과 글자 그대로 맞춤) |
+| color | text | ✓ | | white · yellow · mint · sky · pink · lavender · peach · gray 중 하나(화면 토큰 `--class-<색>`) |
+| updated_at | timestamptz | ✓ | now() | |
+- (gym_id, name) 이 키. RLS: 같은 체육관 사람 보기 · 관장 · 코치 쓰기(추가 · 고치기 · 지우기). 없으면 이름으로 기본 색.
+
 ### `gym_classes` — 날짜가 붙은 수업 한 번 (내용 · 휴강)
 | 칸 | 종류 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|

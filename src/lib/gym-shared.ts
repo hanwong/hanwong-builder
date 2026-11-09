@@ -58,3 +58,23 @@ export const isGymNetwork = (v: unknown): v is (typeof GYM_NETWORKS)[number] => 
 
 // 체육관 홈 주 넘기기(D-134) — 앞뒤로 볼 수 있는 주 수(약 1년)
 export const WEEK_RANGE = 52;
+
+// 수업 이름별 색(D-137) — 시간표 칸 색. 값은 이름(DB 에 이 글자 그대로), 화면 색은 globals.css 의 --class-<값>
+export const CLASS_COLORS = [
+  { value: "white", label: "흰색" },
+  { value: "yellow", label: "노랑" },
+  { value: "mint", label: "연두" },
+  { value: "sky", label: "하늘" },
+  { value: "pink", label: "분홍" },
+  { value: "lavender", label: "보라" },
+  { value: "peach", label: "주황" },
+  { value: "gray", label: "회색" },
+] as const;
+export type ClassColor = (typeof CLASS_COLORS)[number]["value"];
+export const isClassColor = (v: unknown): v is ClassColor => CLASS_COLORS.some((c) => c.value === v);
+// 색을 고른 적 없는 이름의 기본 색 — 어린이 · 유소년 = 노랑, 초보 · 기본반 = 연두(D-135)
+export function defaultClassColor(name: string): ClassColor {
+  if (/어린이|유소년|키즈|유아|kids/i.test(name)) return "yellow";
+  if (/초보|기본|basic|입문/i.test(name)) return "mint";
+  return "white";
+}

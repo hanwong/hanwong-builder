@@ -3,11 +3,12 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { ChevronRight, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { GymHeader } from "@/components/gym/gym-header";
 import { deleteGym, demoteCoach, leaveGym, regenCode, transferOwner, updateGym } from "@/app/gym/actions";
@@ -23,7 +24,7 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
   const [network, setNetwork] = useState(data.network);
   const [codes, setCodes] = useState(data.codes);
   const [transferTo, setTransferTo] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [busy, start] = useTransition();
 
   const run = (fn: () => Promise<{ ok: boolean; message?: string } | null>, done: string) =>
@@ -128,50 +129,95 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
       </section>
 
       <section className="flex flex-col gap-2 rounded-2xl bg-card p-4 ring-1 ring-border">
-        <Link href="/app" className="text-[15px] font-medium underline-offset-4 hover:underline">
+        <Link href="/app" className="-mx-1 flex items-center justify-between rounded-lg px-1 py-1 text-[15px] font-medium transition-colors hover:bg-muted">
           수련자 화면으로
+          <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
         </Link>
         {!owner && (
           <Button variant="ghost" size="sm" className="self-start rounded-full text-destructive" disabled={busy} onClick={() => run(() => leaveGym(data.gym.id).then((r) => (r.ok ? (router.replace("/app"), r) : r)), "체육관에서 나왔어요")}>
             이 체육관 나가기
           </Button>
         )}
-        {owner &&
-          (confirmDelete ? (
-            <div className="flex flex-col gap-2 rounded-xl bg-muted/60 p-3">
-              <p className="text-[15px]">체육관을 지우면 시간표 · 수업 내용 · 코멘트가 사라져요. 관원의 기록은 관원 것으로 남아요.</p>
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" className="rounded-full" onClick={() => setConfirmDelete(false)}>
-                  아니요
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="rounded-full"
-                  disabled={busy}
-                  onClick={() =>
-                    start(async () => {
-                      const res = await deleteGym(data.gym.id).catch(() => null);
-                      if (!res || !res.ok) {
-                        toast.error(res?.message ?? "지우지 못했어요.");
-                        return;
-                      }
-                      toast.success("체육관을 지웠어요");
-                      router.replace("/app");
-                    })
-                  }
-                >
-                  {busy && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
-                  지우기
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <Button variant="ghost" size="sm" className="self-start rounded-full text-destructive" onClick={() => setConfirmDelete(true)}>
-              체육관 지우기
-            </Button>
-          ))}
       </section>
+
+      {/* 체육관 지우기(D-137) — 맨 아래 따로. 팝업에서 이름을 똑같이 적어야 삭제 → 경고 · 아니요 / 삭제 */}
+      {owner && (
+        <section className="flex flex-col gap-2 rounded-2xl p-4 ring-1 ring-destructive/30">
+          <h3 className="text-[15px] font-semibold text-destructive">체육관 지우기</h3>
+          <p className="text-[13px] leading-relaxed text-muted-foreground">시간표 · 수업 내용 · 코멘트가 모두 사라지고 되돌릴 수 없어요.</p>
+          <Button variant="outline" size="sm" className="self-start rounded-full border-destructive/40 text-destructive" onClick={() => setDeleteOpen(true)}>
+            체육관 지우기
+          </Button>
+        </section>
+      )}
+      {owner && deleteOpen && <DeleteGymDialog gymId={data.gym.id} gymName={data.gym.name} onClose={() => setDeleteOpen(false)} />}
     </div>
+  );
+}
+
+// 체육관 지우기 팝업(D-137) — ① 체육관 이름을 똑같이 적으면 "삭제"가 켜짐 ② 누르면 경고 + 아니요 / 삭제 ③ 삭제를 누르면 실제로 지움
+function DeleteGymDialog({ gymId, gymName, onClose }: { gymId: string; gymName: string; onClose: () => void }) {
+  const router = useRouter();
+  const [typed, setTyped] = useState("");
+  const [confirming, setConfirming] = useState(false);
+  const [busy, start] = useTransition();
+  const matches = typed.trim() === gymName.trim();
+
+  function remove() {
+    start(async () => {
+      const res = await deleteGym(gymId).catch(() => null);
+      if (!res || !res.ok) {
+        toast.error(res?.message ?? "지우지 못했어요.");
+        return;
+      }
+      toast.success("체육관을 지웠어요");
+      router.replace("/app");
+    });
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && !busy && onClose()}>
+      <DialogContent showCloseButton={false} className="flex flex-col gap-4 p-4 sm:max-w-md">
+        <div className="flex items-center justify-between">
+          <DialogTitle className="text-[17px] font-semibold text-destructive">체육관 지우기</DialogTitle>
+          <Button variant="ghost" size="icon" aria-label="닫기" className="-mr-1 rounded-full" disabled={busy} onClick={onClose}>
+            <X />
+          </Button>
+        </div>
+        <DialogDescription className="text-[14px] leading-relaxed text-muted-foreground">
+          지우려면 체육관 이름 <strong className="font-semibold text-foreground">{gymName}</strong> 을(를) 똑같이 적어 주세요.
+        </DialogDescription>
+        <Input
+          value={typed}
+          onChange={(e) => {
+            setTyped(e.target.value);
+            setConfirming(false);
+          }}
+          placeholder={gymName}
+          aria-label="체육관 이름 확인"
+          autoComplete="off"
+          className="h-11 rounded-xl text-base"
+          disabled={busy}
+        />
+        {confirming ? (
+          <div className="flex flex-col gap-2 rounded-xl bg-muted/60 p-3">
+            <p className="text-[15px]">체육관을 지우면 시간표 · 수업 내용 · 코멘트가 사라져요. 관원의 기록은 관원 것으로 남아요.</p>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" className="rounded-full" disabled={busy} onClick={() => setConfirming(false)}>
+                아니요
+              </Button>
+              <Button variant="destructive" size="sm" className="rounded-full" disabled={busy} onClick={remove}>
+                {busy && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
+                삭제
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Button variant="destructive" className="h-11 rounded-full text-[15px]" disabled={!matches} onClick={() => setConfirming(true)}>
+            삭제
+          </Button>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
