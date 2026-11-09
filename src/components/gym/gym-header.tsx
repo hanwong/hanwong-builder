@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { pickGym } from "@/app/gym/actions";
 import type { MyGym } from "@/lib/gym-data";
+import { NetworkMark } from "@/components/gym/network-mark";
 
 const ROLE_LABEL = { owner: "관장", coach: "코치", member: "관원" } as const;
 
@@ -36,7 +37,11 @@ export function GymHeader({ gym, all }: { gym: MyGym; all: MyGym[] }) {
       ) : (
         <h1 className="min-w-0 truncate text-[17px] font-bold tracking-tight">{gym.name}</h1>
       )}
-      {gym.network && <span className="shrink-0 text-[13px] font-medium text-muted-foreground">· {gym.network}</span>}
+      {gym.network && (
+        <span className="flex shrink-0 items-center gap-1 text-[13px] font-medium text-muted-foreground">
+          · <NetworkMark network={gym.network} size={16} /> {gym.network}
+        </span>
+      )}
       <Badge variant="secondary">{ROLE_LABEL[gym.role]}</Badge>
     </header>
   );

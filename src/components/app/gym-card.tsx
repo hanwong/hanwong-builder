@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { attendClass, joinGym, peekGym, type PeekedGym } from "@/app/gym/actions";
 import type { MemberGymCard } from "@/lib/gym-data";
+import { NetworkMark } from "@/components/gym/network-mark";
 
 // 홈 "내 체육관" (D-127, FLOW 8-3 관원 쪽 · DESIGN '관장님 버전')
 // 없음: 들어가기(코드 → 동의 한 장). 있음: 오늘 수업 카드 + "출석 · 내 기록으로"
@@ -39,7 +40,14 @@ export function GymCard({ gyms }: { gyms: MemberGymCard[] }) {
         <section key={g.id} className="flex flex-col gap-2 rounded-2xl bg-card p-4 ring-1 ring-border">
           <div className="flex items-center gap-2">
             <Building2 className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden />
-            <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-muted-foreground">{g.network ? `${g.name} · ${g.network}` : g.name}</span>
+            <span className="flex min-w-0 flex-1 items-center gap-1 truncate text-[13px] font-medium text-muted-foreground">
+              {g.name}
+              {g.network && (
+                <>
+                  · <NetworkMark network={g.network} size={16} /> {g.network}
+                </>
+              )}
+            </span>
             {g.role !== "member" && (
               <Link href="/gym" className="text-[13px] font-medium underline-offset-4 hover:underline">
                 관장 화면
@@ -184,7 +192,12 @@ export function JoinDialog({ onClose }: { onClose: () => void }) {
           <div className="flex flex-col gap-4">
             <div className="rounded-xl bg-muted/60 px-4 py-3">
               <p className="text-[17px] font-semibold">{gym.name}</p>
-              {(gym.network || gym.region) && <p className="text-[13px] text-muted-foreground">{[gym.network, gym.region].filter(Boolean).join(" · ")}</p>}
+              {(gym.network || gym.region) && (
+                <p className="flex items-center gap-1 text-[13px] text-muted-foreground">
+                  <NetworkMark network={gym.network} size={16} />
+                  {[gym.network, gym.region].filter(Boolean).join(" · ")}
+                </p>
+              )}
               {gym.role === "coach" && <Badge variant="secondary" className="mt-1">코치로 들어가요</Badge>}
             </div>
             {gym.already ? (
