@@ -5,7 +5,7 @@ import { createSupabaseServer } from "@/lib/supabase/server";
 import { addDays, seoulToday } from "@/lib/seoul-date";
 import { cleanStripes } from "@/lib/belt";
 import type { Level } from "@/lib/mock/log-seed";
-import { GYM_COOKIE, WEEKDAY_KO, hhmm } from "@/lib/gym-shared";
+import { GYM_COOKIE, WEEKDAY_KO, WEEK_RANGE, hhmm } from "@/lib/gym-shared";
 export { GYM_COOKIE, WEEKDAY_KO, hhmm };
 
 // 관장님 버전 (D-127, FLOW 8 · DB 11) — 체육관 · 역할 · 스케줄 · 수업. 기록은 사람 것이라 여기서 안 읽는다(관원 기록은 함수로만).
@@ -146,20 +146,22 @@ export type GymHome = {
   all: MyGym[];
   today: string;
   week: { day: string; slots: DaySlot[] }[]; // 월~일
+  weekOffset: number; // 0 = 이번 주, -1 = 지난주, 1 = 다음 주 (D-134)
   members: number;
   weekAttendance: number;
   codes: { join: string; coach: string } | null; // 관장만
   coachNames: Record<string, string>; // 담당 코치 표시용
 };
 
-export async function getGymHome(): Promise<GymHome | null> {
+export async function getGymHome(weekOffset = 0): Promise<GymHome | null> {
   "use cache: private"; // 내 데이터 — 다른 /app 화면과 같이 5분(D-45). 미리 만들기 단계에서 조회가 끊기지 않게(2026-11-09 확인)
   cacheLife({ stale: 300 });
   const supabase = await createSupabaseServer();
   const cur = await currentStaffGym(supabase);
   if (!cur) return null;
   const today = seoulToday();
-  const monday = mondayOf(today);
+  const offset = Math.max(-WEEK_RANGE, Math.min(WEEK_RANGE, Math.trunc(weekOffset) || 0));
+  const monday = addDays(mondayOf(today), offset * 7);
   const sunday = addDays(monday, 6);
   const [schedules, classes, members, codes, names] = await Promise.all([
     querySchedules(supabase, cur.gym.id),
@@ -180,6 +182,7 @@ export async function getGymHome(): Promise<GymHome | null> {
     all: cur.all,
     today,
     week,
+    weekOffset: offset,
     members: members.count ?? 0,
     weekAttendance: classes.reduce((n, x) => n + x.attendance, 0),
     codes: c?.join_code && c.coach_code ? { join: c.join_code, coach: c.coach_code } : null,

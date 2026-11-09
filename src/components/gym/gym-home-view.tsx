@@ -2,29 +2,63 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { ChevronDown, ChevronRight, Copy, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Copy, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GymHeader } from "@/components/gym/gym-header";
 import { cancelClass } from "@/app/gym/actions";
-import { WEEKDAY_KO } from "@/lib/gym-shared";
+import { WEEKDAY_KO, WEEK_RANGE } from "@/lib/gym-shared";
 import type { DaySlot, GymHome } from "@/lib/gym-data";
 import { addDays, formatKoreanDate } from "@/lib/seoul-date";
 import { cn } from "@/lib/utils";
 
-// 체육관 홈 (D-127, FLOW 8-3 · DESIGN '관장님 버전') — 이번 주 줄(월~일) → 고른 날 수업 카드 → 숫자 → 가입 코드(관장)
+const shortDate = (iso: string) => `${Number(iso.slice(5, 7))}/${Number(iso.slice(8))}`;
+
+// 체육관 홈 (D-127, FLOW 8-3 · DESIGN '관장님 버전') — 주 줄(월~일, ‹ › 로 앞뒤 주 D-134) → 고른 날 수업 카드 → 숫자 → 가입 코드(관장)
 export function GymHomeView({ data }: { data: GymHome }) {
   const [day, setDay] = useState(data.today);
   const picked = data.week.find((w) => w.day === day) ?? data.week[0];
   const isToday = picked.day === data.today;
+  const off = data.weekOffset;
+  const weekLabel = off === 0 ? "이번 주" : off === -1 ? "지난주" : off === 1 ? "다음 주" : off < 0 ? `${-off}주 전` : `${off}주 뒤`;
 
   return (
     <div className="flex flex-col gap-4">
       <GymHeader gym={data.gym} all={data.all} />
 
-      {/* 이번 주 줄 */}
-      <div role="tablist" aria-label="이번 주" className="grid grid-cols-7 gap-1">
+      {/* 주 넘기기 (D-134) — 주소 ?w= 로 앞뒤 주 */}
+      <div className="flex items-center gap-1">
+        <Button asChild={off > -WEEK_RANGE} variant="ghost" size="icon" aria-label="지난주 보기" className="rounded-full" disabled={off <= -WEEK_RANGE}>
+          {off > -WEEK_RANGE ? (
+            <Link href={off - 1 === 0 ? "/gym" : `/gym?w=${off - 1}`} scroll={false}>
+              <ChevronLeft />
+            </Link>
+          ) : (
+            <ChevronLeft />
+          )}
+        </Button>
+        <span className="flex-1 text-center text-[15px] font-semibold tabular-nums">
+          {weekLabel} <span className="text-[13px] font-medium text-muted-foreground">{shortDate(data.week[0].day)} ~ {shortDate(data.week[6].day)}</span>
+        </span>
+        <Button asChild={off < WEEK_RANGE} variant="ghost" size="icon" aria-label="다음 주 보기" className="rounded-full" disabled={off >= WEEK_RANGE}>
+          {off < WEEK_RANGE ? (
+            <Link href={off + 1 === 0 ? "/gym" : `/gym?w=${off + 1}`} scroll={false}>
+              <ChevronRight />
+            </Link>
+          ) : (
+            <ChevronRight />
+          )}
+        </Button>
+      </div>
+      {off !== 0 && (
+        <Link href="/gym" scroll={false} className="-mt-2 self-center text-[13px] font-medium text-muted-foreground underline underline-offset-4">
+          이번 주로
+        </Link>
+      )}
+
+      {/* 주 줄 */}
+      <div role="tablist" aria-label={weekLabel} className="grid grid-cols-7 gap-1">
         {data.week.map((w) => {
           const on = w.day === picked.day;
           const d = Number(w.day.slice(8));
@@ -69,9 +103,11 @@ export function GymHomeView({ data }: { data: GymHome }) {
           <div className="flex flex-col gap-2 rounded-2xl bg-card p-4 ring-1 ring-border">
             <p className="text-[15px] text-muted-foreground">{isToday ? "오늘은 수업이 없어요." : "이날은 수업이 없어요."}</p>
             <div className="flex gap-2">
-              <Button asChild variant="secondary" size="sm" className="rounded-full">
-                <Link href={`/gym/class/new?d=${picked.day}`}>이날 수업 하나 바로 등록</Link>
-              </Button>
+              {picked.day >= addDays(data.today, -7) && (
+                <Button asChild variant="secondary" size="sm" className="rounded-full">
+                  <Link href={`/gym/class/new?d=${picked.day}`}>이날 수업 하나 바로 등록</Link>
+                </Button>
+              )}
               <Button asChild variant="ghost" size="sm" className="rounded-full">
                 <Link href="/gym/schedule">시간표</Link>
               </Button>
@@ -84,7 +120,7 @@ export function GymHomeView({ data }: { data: GymHome }) {
 
       {/* 숫자 */}
       <p className="text-[15px] font-semibold tabular-nums">
-        관원 {data.members} · 이번 주 출석 {data.weekAttendance}
+        관원 {data.members} · {off === 0 ? "이번 주" : "이 주"} 출석 {data.weekAttendance}
       </p>
 
       {/* 가입 코드 (관장만) */}
@@ -103,8 +139,8 @@ function SlotCard({ slot, gymId, coachNames, today }: { slot: DaySlot; gymId: st
   const cls = slot.cls;
   const canceled = cls?.status === "canceled";
   const posted = cls?.status === "posted";
-  const future = slot.heldOn > today;
-  const tooOld = slot.heldOn < addDays(today, -7); // 7일 전까지만 등록 · 휴강(DB 정책과 같게)
+  // 앞날짜는 미리 등록 가능(D-134), 지난 수업은 7일 전까지만 등록 · 휴강(DB 정책과 같게)
+  const tooOld = slot.heldOn < addDays(today, -7);
   void coachNames;
 
   function toggleCancel() {
@@ -142,14 +178,14 @@ function SlotCard({ slot, gymId, coachNames, today }: { slot: DaySlot; gymId: st
           {busy && <Loader2 className="animate-spin" data-icon="inline-start" aria-hidden />}
           휴강 취소
         </Button>
-      ) : future ? (
-        <span className="text-[13px] text-muted-foreground">예정</span>
+      ) : tooOld ? (
+        <span className="text-[13px] text-muted-foreground">지난 수업</span>
       ) : (
         <div className="flex flex-col items-end gap-1">
           <Button asChild size="sm" className="rounded-full">
             <Link href={`/gym/class/new?d=${slot.heldOn}${slot.scheduleId ? `&s=${slot.scheduleId}` : ""}`}>내용 등록</Link>
           </Button>
-          {slot.scheduleId && !tooOld && (
+          {slot.scheduleId && (
             <button type="button" onClick={toggleCancel} disabled={busy} className="text-[12px] text-muted-foreground underline-offset-4 hover:underline">
               휴강
             </button>

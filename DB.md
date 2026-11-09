@@ -421,7 +421,7 @@ FLOW 8 의 3단계. 표 6개를 더한다. 기존 표는 `class_logs` 에 칸 �
 | body | text | ✓ | `''` | 메모(0~2000자) |
 | posted_by | uuid → auth.users | ✓ | | 올린 관장 · 코치 |
 | created_at · updated_at | timestamptz | ✓ | now() | |
-- (gym_id, schedule_id, held_on) 유일(schedule_id 가 있을 때) — 같은 수업 하루 한 번. 지난 날짜는 7일 전까지만(정책에서 `held_on >= current_date - 7`).
+- (gym_id, schedule_id, held_on) 유일(schedule_id 가 있을 때) — 같은 수업 하루 한 번. 지난 날짜는 7일 전까지만(정책에서 `held_on >= current_date - 7`), 앞날짜는 제한 없음(D-134).
 
 ### `gym_class_techniques` — 그 수업에서 배운 기술
 | 칸 | 종류 | 필수 | 설명 |
@@ -493,7 +493,7 @@ FLOW 8 의 3단계. 표 6개를 더한다. 기존 표는 `class_logs` 에 칸 �
 - `gyms.join_code` · `coach_code` 유일 · 6자 · 허용 문자 체크. 코드 맞추기는 함수 안에서만(표를 훑어 코드를 알아내지 못하게 select 정책은 자기 체육관만).
 - `gym_members (gym_id, user_id)` 유일 · `gym_classes (gym_id, schedule_id, held_on)` 유일 · `gym_attendance (gym_class_id, user_id)` 유일.
 - `class_logs (gym_class_id)` 인덱스 · `log_comments (class_log_id)` 인덱스 · `gym_members (user_id)` 인덱스.
-- `gym_classes.held_on` 은 오늘(서울)보다 뒤일 수 없음 · 7일 전까지(정책).
+- `gym_classes.held_on` 은 7일 전부터 앞날짜 어디든(정책, D-134 — 미리 올리기). 출석(`attend_class`)은 수업 날짜(서울)부터만.
 
 ### 개인정보 (7 에 더함)
 - 관장 · 코치가 보는 것: 관원의 닉네임 · 벨트 · 수련 시작 연월 · 출석 · **기록 전부(기술 · 메모 · 스파링)** · 숙련도 · 달성도. 이메일 · 로그인 정보 ✗.

@@ -222,7 +222,7 @@ export async function postClass(gymId: string, input: ClassInput): Promise<Res<{
   if (error || !cls) {
     console.error("postClass failed:", error?.code);
     return fail(
-      error?.code === "23505" ? "이 수업은 이미 등록됐어요." : error?.code === "42501" ? "오늘부터 7일 전까지의 수업만 등록할 수 있어요." : "등록하지 못했어요. 다시 눌러 주세요.",
+      error?.code === "23505" ? "이 수업은 이미 등록됐어요." : error?.code === "42501" ? "지난 수업은 7일 전까지만 등록할 수 있어요." : "등록하지 못했어요. 다시 눌러 주세요.",
     );
   }
   const t = await techniqueRows(supabase, cls.id, v);

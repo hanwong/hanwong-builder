@@ -55,3 +55,6 @@ export const GYM_NETWORK_ICONS: Partial<Record<(typeof GYM_NETWORKS)[number], st
   "파라에스트라": "paraestra.png",
 };
 export const isGymNetwork = (v: unknown): v is (typeof GYM_NETWORKS)[number] => typeof v === "string" && (GYM_NETWORKS as readonly string[]).includes(v);
+
+// 체육관 홈 주 넘기기(D-134) — 앞뒤로 볼 수 있는 주 수(약 1년)
+export const WEEK_RANGE = 52;
