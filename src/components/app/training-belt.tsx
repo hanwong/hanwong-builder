@@ -20,6 +20,8 @@ import {
   BELT_ROWS,
   BELT_WEEKS,
   BELT_WHITE_EDGE,
+  LIGHT_BELTS,
+  STRIPE_EDGE,
   WEEK_SHADES,
   maxStripes,
   trainingSpan,
@@ -164,14 +166,14 @@ export function TrainingBelt({
       {/* 벨트: 바깥 = 벨트 색, 위아래는 높이의 약 1%(≈ 너비의 0.17%). 누르면 기록 달력(D-99 · D-106) */}
       <Link
         href="/app/logs/cal"
-        className="block rounded-[3px] outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="relative block rounded-[3px] outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50"
         style={{
           backgroundColor: color,
           padding: "max(1px, 0.17%) 5%",
           // 화이트는 크림 바탕에 묻혀서 벨트 전체에 테두리(D-35)
           boxShadow: belt === "white" ? `0 0 0 1px ${BELT_WHITE_EDGE}` : undefined,
         }}
-        aria-label={`${label} 벨트, 최근 2년 동안 ${total}번 수련 — 누르면 기록 달력`}
+        aria-label={`${label} 벨트${stripes > 0 ? ` ${stripes}그랄` : ""}, 최근 2년 동안 ${total}번 수련 — 누르면 기록 달력`}
       >
         <div
           className="grid gap-[2px] p-[3px]"
@@ -200,6 +202,25 @@ export function TrainingBelt({
             />
           ))}
         </div>
+        {/* 그랄(D-133) — 오른쪽 벨트 색 부분에 위에서 아래로 쌓은 흰 줄. 밝은 벨트(화이트 · 옐로)는 진한 회색 테두리로 */}
+        {stripes > 0 && (
+          <span
+            aria-hidden
+            className="absolute inset-y-0 right-0 flex w-[5%] flex-col items-center justify-center"
+            style={{ gap: stripes > 4 ? "max(1px, 0.25vw)" : "max(2px, 0.6vw)" }}
+          >
+            {Array.from({ length: stripes }, (_, i) => (
+              <span
+                key={i}
+                className="w-[62%] rounded-[1px] bg-white"
+                style={{
+                  height: stripes > 4 ? 2 : 3,
+                  boxShadow: LIGHT_BELTS.includes(belt) ? `0 0 0 1px ${STRIPE_EDGE}` : undefined,
+                }}
+              />
+            ))}
+          </span>
+        )}
       </Link>
 
       <div className="flex items-center justify-between gap-2">

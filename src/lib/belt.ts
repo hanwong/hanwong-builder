@@ -21,6 +21,7 @@ export const BELT_ROWS = 4; // 4줄 × 26칸
 export const BELT_BG = "#0A0A0A"; // 가운데 바탕(요즘 웹의 거의 검정)
 export const BELT_BLACK_BAR = "#DE1F2E"; // 블랙 벨트일 때 가운데 바탕 = 칸지 블랙 벨트 랭크바 빨강(D-35)
 export const BELT_WHITE_EDGE = "#D4D3CC"; // 화이트 벨트일 때 벨트 전체 테두리(크림 바탕과 구분, D-35)
+export const STRIPE_EDGE = "#5E5E5E"; // 밝은 벨트(화이트 · 옐로) 위 그랄 줄 테두리 — 진한 회색(D-133)
 
 // 주별 수련 횟수 0 · 1 · 2 · 3 · 4 · 5회 이상 → 5회 이상이 가장 하얗다
 export const WEEK_SHADES = ["#1C1C1C", "#3A3A3A", "#5E5E5E", "#8C8C8C", "#C2C2C2", "#FAFAFA"] as const;
