@@ -5,7 +5,7 @@ import { waitingCount } from "@/lib/admin/admin-data";
 
 // 홈 맨 위 알림 (D-47): 내 알림("○○ 이(가) 기술 목록에 추가됐어요") + 운영자에게만 "목록 추가 대기 N개".
 export type HomeNotices = {
-  notices: { id: string; message: string; slug: string | null }[];
+  notices: { id: string; message: string; slug: string | null; logId: string | null }[]; // logId = 코멘트 알림(D-127) → 기록으로
   waiting: number | null; // 운영자가 아니면 null
 };
 
@@ -16,14 +16,14 @@ export async function getHomeNotices(): Promise<HomeNotices> {
   const [notices, waiting] = await Promise.all([
     supabase
       .from("notices")
-      .select("id, message, techniques(slug)")
+      .select("id, message, class_log_id, techniques(slug)")
       .is("read_at", null)
       .order("created_at", { ascending: false })
       .limit(5),
     waitingCount(supabase),
   ]);
   return {
-    notices: (notices.data ?? []).map((n) => ({ id: n.id, message: n.message, slug: n.techniques?.slug ?? null })),
+    notices: (notices.data ?? []).map((n) => ({ id: n.id, message: n.message, slug: n.techniques?.slug ?? null, logId: n.class_log_id ?? null })),
     waiting,
   };
 }

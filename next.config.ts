@@ -14,6 +14,14 @@ const nextConfig: NextConfig = {
         source: "/app",
         headers: [{ key: "Cache-Control", value: "private, no-store, max-age=0" }],
       },
+      {
+        source: "/gym/:path*",
+        headers: [{ key: "Cache-Control", value: "private, no-store, max-age=0" }],
+      },
+      {
+        source: "/gym",
+        headers: [{ key: "Cache-Control", value: "private, no-store, max-age=0" }],
+      },
     ];
   },
   // 질문 화면 옛 주소(D-119)

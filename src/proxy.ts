@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-// 로그인 보호 (T-03): /app 아래는 로그인한 사람만. 안 됐으면 /app/login 으로 보내고,
+// 로그인 보호 (T-03): /app · /gym(D-127) 아래는 로그인한 사람만. 안 됐으면 /app/login 으로 보내고,
 // 로그인 뒤 원래 가려던 곳(next)으로 돌려보낸다. 세션 쿠키도 여기서 갱신한다.
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -45,5 +45,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/app/:path*"],
+  matcher: ["/app/:path*", "/gym", "/gym/:path*"],
 };

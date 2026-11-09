@@ -7,6 +7,7 @@ import { cookies } from "next/headers";
 import { getLog } from "@/lib/log-data";
 import { getSharedLog } from "@/lib/shared-log-data";
 import { SharedLogView } from "@/components/app/shared-log-view";
+import { LogComments } from "@/components/app/log-comments";
 
 export const metadata: Metadata = {
   title: "기록 보기 — Re:Re:롤",
@@ -40,7 +41,16 @@ async function Loader({ params }: { params: Promise<{ id: string }> }) {
       </p>
     );
   }
-  if (log) return <LogDetail log={log} />;
+  if (log)
+    return (
+      <div className="flex flex-col gap-5">
+        <LogDetail log={log} />
+        {/* 관장님 코멘트 (D-127) — 없으면 안 보인다 */}
+        <Suspense fallback={null}>
+          <LogComments logId={id} />
+        </Suspense>
+      </div>
+    );
   // 내 것이 아니다 — 같이 수업한 사람이 공유를 켠 기록이면 가져오기 화면
   let shared;
   try {

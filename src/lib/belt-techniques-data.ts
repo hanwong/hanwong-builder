@@ -1,14 +1,12 @@
 import "server-only";
 import { cacheLife } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import { BELTS, isBelt } from "@/lib/belt";
 import type { Level } from "@/lib/mock/log-seed";
+import { ADULT_BELTS, adultBeltOf, type AdultBelt } from "@/lib/adult-belt";
+export { ADULT_BELTS, adultBeltOf, type AdultBelt };
 
 // 벨트별 흔히 배우는 기술 (D-126) — 공용 표 belt_techniques × 내 기록 · 숙련도.
 // 앱이 "익혔다"를 판정하지 않는다(D-06) — 적어 봤는지(기록 연결 또는 숙련도 있음) · 기록 횟수 · 내 숙련도만.
-export type AdultBelt = "white" | "blue" | "purple" | "brown" | "black";
-export const ADULT_BELTS = BELTS.filter((b) => !("youth" in b)) as { value: AdultBelt; label: string; color: string }[];
-
 export type BeltSkill = {
   slug: string;
   nameKo: string;
@@ -22,19 +20,16 @@ export type BeltProgress = { belt: AdultBelt; label: string; color: string; lear
 
 type Client = Awaited<ReturnType<typeof createSupabaseServer>>;
 
-// 유소년 벨트(그레이 · 옐로 · 오렌지 · 그린)는 화이트 목록을 본다(D-126 ④)
-export function adultBeltOf(belt: unknown): AdultBelt {
-  if (!isBelt(belt)) return "white";
-  const found = ADULT_BELTS.find((b) => b.value === belt);
-  return found ? found.value : "white";
-}
-
-async function loadBeltLists(supabase: Client): Promise<BeltList[]> {
+// 내 것(기본) 또는 넘겨받은 숙련도 · 기록 횟수(관장이 관원을 볼 때, D-127)로 벨트 목록을 만든다
+export async function loadBeltLists(
+  supabase: Client,
+  mine?: { levels: Map<string, Level>; counts: Map<string, number> },
+): Promise<BeltList[]> {
   const [rows, positions, levels, linked] = await Promise.all([
     supabase.from("belt_techniques").select("belt, technique_slug, sort_order").order("sort_order"),
     supabase.from("positions").select("id, slug, name_ko").order("sort_order"),
-    supabase.from("technique_levels").select("technique_id, level"),
-    supabase.from("class_log_techniques").select("technique_id"), // 내 것만(RLS)
+    mine ? Promise.resolve({ data: [], error: null }) : supabase.from("technique_levels").select("technique_id, level"),
+    mine ? Promise.resolve({ data: [], error: null }) : supabase.from("class_log_techniques").select("technique_id"), // 내 것만(RLS)
   ]);
   const error = rows.error ?? positions.error ?? levels.error ?? linked.error;
   if (error) throw new Error(`belts: ${error.code ?? ""} ${error.message.slice(0, 80)}`);
@@ -48,9 +43,9 @@ async function loadBeltLists(supabase: Client): Promise<BeltList[]> {
   if (techs.error) throw new Error(`belts techs: ${techs.error.code ?? ""} ${techs.error.message.slice(0, 80)}`);
 
   const bySlug = new Map((techs.data ?? []).map((t) => [t.slug, t]));
-  const levelOf = new Map((levels.data ?? []).map((l) => [l.technique_id, l.level as Level]));
-  const countOf = new Map<string, number>();
-  for (const l of linked.data ?? []) if (l.technique_id) countOf.set(l.technique_id, (countOf.get(l.technique_id) ?? 0) + 1);
+  const levelOf = mine?.levels ?? new Map((levels.data ?? []).map((l) => [l.technique_id, l.level as Level]));
+  const countOf = mine?.counts ?? new Map<string, number>();
+  if (!mine) for (const l of linked.data ?? []) if (l.technique_id) countOf.set(l.technique_id, (countOf.get(l.technique_id) ?? 0) + 1);
 
   return ADULT_BELTS.map((b) => {
     const groups = new Map<string, BeltSkill[]>();

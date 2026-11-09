@@ -5,6 +5,7 @@ import { JiujitsuMap } from "@/components/app/jiujitsu-map";
 import { DrillChips } from "@/components/app/drill-chips";
 import { SparringTile } from "@/components/app/sparring-tile";
 import { HomeTiles } from "@/components/app/home-tiles";
+import { GymCard } from "@/components/app/gym-card";
 import { cookies } from "next/headers";
 
 // 홈 ② 수련 벨트 · ③ 내 주짓수 지도 (FLOW 3 · DESIGN 6, 오늘 복습 D-58 · 최근 기록 D-61 로 뺌). 로그인 쿠키를 읽으므로 page 에서 Suspense 로 감싼다.
@@ -31,12 +32,15 @@ export async function HomeSections() {
 }
 
 export function HomeView({ data }: { data: HomeData }) {
-  const { weeks, belt, startedOn, nick, defaultNick, thisMonth, map, sparring, drills } = data;
+  const { weeks, belt, startedOn, nick, defaultNick, thisMonth, map, sparring, drills, gyms } = data;
 
   return (
     <>
       {/* ② 수련 벨트 (D-33) */}
       <TrainingBelt weeks={weeks} belt={belt} startedOn={startedOn} nick={nick} defaultNick={defaultNick} thisMonth={thisMonth} />
+
+      {/* ②-0 내 체육관 (D-127) — 없으면 들어가기, 있으면 오늘 수업 · 출석 */}
+      <GymCard gyms={gyms} />
 
       {/* ②-1 스파링 (D-64 · D-116) */}
       <SparringTile month={sparring.month} total={sparring.total} />

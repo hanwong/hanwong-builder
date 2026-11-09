@@ -19,8 +19,8 @@ export function NoticeList({ notices }: { notices: HomeNotices["notices"] }) {
         {notices.map((n) => (
           <li key={n.id} className="flex items-start gap-2 text-[15px]">
             <Sparkles className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
-            {n.slug ? (
-              <Link href={`/app/skills/${n.slug}`} className="underline-offset-4 hover:underline">
+            {n.slug || n.logId ? (
+              <Link href={n.logId ? `/app/log/${n.logId}` : `/app/skills/${n.slug}`} className="underline-offset-4 hover:underline">
                 {n.message}
               </Link>
             ) : (

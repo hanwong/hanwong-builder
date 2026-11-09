@@ -5,6 +5,7 @@ import { addDays, seoulToday } from "@/lib/seoul-date";
 import { BELT_WEEKS, isBelt, isStartMonth, type Belt } from "@/lib/belt";
 import { cleanNick, emailId } from "@/lib/nickname";
 import { queryDrillChips, type DrillChip } from "@/lib/drills-data";
+import { queryMemberGymCards, type MemberGymCard } from "@/lib/gym-data";
 
 // 홈(T-21)에 필요한 것만 읽는다. RLS 로 본인 것만 나온다(DB.md 5).
 export type HomeData = {
@@ -17,6 +18,7 @@ export type HomeData = {
   sparring: { month: number; total: number }; // 스파링 판 수(D-64) — 이번 달 · 전체
   weeks: { start: string; count: number }[]; // 최근 104주(월요일 시작, 서울) — 오래된 주부터
   drills: DrillChip[]; // 기본 드릴(D-112) — 화이트 벨트일 때만 채움
+  gyms: MemberGymCard[]; // 내 체육관(D-127) — 오늘 수업 · 출석
 };
 
 export async function getHomeData(): Promise<HomeData> {
@@ -41,6 +43,7 @@ export async function getHomeData(): Promise<HomeData> {
   ]);
   const error = days.error ?? positions.error ?? levels.error;
   if (error) throw new Error(`home: ${error.code ?? ""} ${error.message.slice(0, 80)}`);
+  const gyms = me.data.user ? await queryMemberGymCards(supabase, me.data.user.id) : [];
 
   const weeks = Array.from({ length: BELT_WEEKS }, (_, i) => ({ start: addDays(firstWeek, i * 7), count: 0 }));
   const firstMs = Date.parse(firstWeek);
@@ -66,6 +69,7 @@ export async function getHomeData(): Promise<HomeData> {
   return {
     belt: myBelt,
     drills: myBelt === "white" ? drills : [],
+    gyms,
     startedOn: isStartMonth(startedOn) ? startedOn : null,
     nick: cleanNick(me.data.user?.user_metadata?.nick) ?? "",
     defaultNick: emailId(me.data.user?.email),
