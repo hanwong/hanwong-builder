@@ -1,5 +1,5 @@
 import { Label } from "@/components/ui/label";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { OptionSelect } from "@/components/ui/select";
 import { GYM_NETWORKS, GYM_NETWORK_CONTACT } from "@/lib/gym-shared";
 import { NetworkMark } from "@/components/gym/network-mark";
 
@@ -11,15 +11,17 @@ export function NetworkSelect({ value, onChange, id = "gym-network" }: { value: 
         소속 네트워크 (선택)
       </Label>
       <div className="flex items-center gap-2">
-        <NativeSelect id={id} value={value} onChange={(e) => onChange(e.target.value)} className="h-12 min-w-0 flex-1 rounded-xl text-base">
-          <NativeSelectOption value="">없음 · 독립 체육관</NativeSelectOption>
-          {GYM_NETWORKS.map((n) => (
-            <NativeSelectOption key={n} value={n}>
-              {n}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
-        {value && <NetworkMark network={value} size={36} className="rounded-lg" />}
+        {/* 목록 · 고른 칸 모두 로고와 함께(D-149) */}
+        <OptionSelect
+          id={id}
+          value={value}
+          onValueChange={onChange}
+          className="h-12"
+          options={[
+            { value: "", label: "없음 · 독립 체육관" },
+            ...GYM_NETWORKS.map((n) => ({ value: n, label: n, icon: <NetworkMark network={n} size={24} /> })),
+          ]}
+        />
       </div>
       <p className="text-[12px] leading-relaxed text-muted-foreground">
         목록에 없는 네트워크는{" "}

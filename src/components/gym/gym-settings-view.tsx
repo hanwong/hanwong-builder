@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogDescription, DialogTitle, ModalBody, ModalContent, ModalFooter } from "@/components/ui/dialog";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { OptionSelect } from "@/components/ui/select";
 import { GymHeader } from "@/components/gym/gym-header";
 import { deleteGym, demoteCoach, leaveGym, regenCode, transferOwner, updateGym } from "@/app/gym/actions";
 import type { SettingsPage } from "@/lib/gym-data";
@@ -113,14 +113,14 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
         </ul>
         {owner && (
           <div className="flex items-center gap-2 pt-1">
-            <NativeSelect value={transferTo} onChange={(e) => setTransferTo(e.target.value)} aria-label="관장 넘길 사람" className="h-10 flex-1 rounded-xl text-[15px]">
-              <NativeSelectOption value="">관장 넘기기 — 사람 고르기</NativeSelectOption>
-              {[...data.staff.filter((s) => s.role === "coach"), ...data.members].map((p) => (
-                <NativeSelectOption key={p.userId} value={p.userId}>
-                  {p.nick}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
+            <OptionSelect
+              value={transferTo}
+              onValueChange={setTransferTo}
+              aria-label="관장 넘길 사람"
+              placeholder="관장 넘기기 — 사람 고르기"
+              className="h-10 flex-1 text-[15px]"
+              options={[...data.staff.filter((s) => s.role === "coach"), ...data.members].map((p) => ({ value: p.userId, label: p.nick }))}
+            />
             <Button variant="outline" size="sm" className="rounded-full" disabled={busy || !transferTo} onClick={() => run(() => transferOwner(data.gym.id, transferTo), "관장을 넘겼어요. 이제 코치예요.")}>
               넘기기
             </Button>

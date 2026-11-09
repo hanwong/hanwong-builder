@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { OptionSelect } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   approveDraft,
@@ -278,18 +278,12 @@ function DraftCard({ draft, positions }: { draft: AdminDraft; positions: AdminDa
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={id("kind")}>종류</Label>
-        <NativeSelect
+        <OptionSelect
           id={id("kind")}
-          className="w-full"
           value={kind}
-          onChange={(e) => setKind(e.target.value as DraftKind)}
-        >
-          {(Object.keys(KIND_LABEL) as DraftKind[]).map((k) => (
-            <NativeSelectOption key={k} value={k}>
-              {KIND_LABEL[k]}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
+          onValueChange={(v) => setKind(v as DraftKind)}
+          options={(Object.keys(KIND_LABEL) as DraftKind[]).map((k) => ({ value: k, label: KIND_LABEL[k] }))}
+        />
       </div>
 
       {kind === "alias" && <AliasPicker value={aliasOf} onChange={setAliasOf} inputId={id("alias")} />}
@@ -298,19 +292,12 @@ function DraftCard({ draft, positions }: { draft: AdminDraft; positions: AdminDa
         <>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={id("position")}>포지션</Label>
-            <NativeSelect
+            <OptionSelect
               id={id("position")}
-              className="w-full"
               value={position}
-              onChange={(e) => setPosition(e.target.value)}
-            >
-              <NativeSelectOption value="">고르기</NativeSelectOption>
-              {positions.map((p) => (
-                <NativeSelectOption key={p.slug} value={p.slug}>
-                  {p.nameKo}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
+              onValueChange={setPosition}
+              options={positions.map((p) => ({ value: p.slug, label: p.nameKo }))}
+            />
           </div>
           <Field id={id("ko")} label="한국어 이름" value={nameKo} onChange={setNameKo} />
           <Field id={id("en")} label="영어 이름" value={nameEn} onChange={setNameEn} />
@@ -635,19 +622,12 @@ function UserTechniqueRow({
         <div className="flex flex-col gap-3 border-t border-border p-4 pt-3">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={id("position")}>포지션</Label>
-            <NativeSelect
+            <OptionSelect
               id={id("position")}
-              className="w-full"
               value={position}
-              onChange={(e) => setPosition(e.target.value)}
-            >
-              <NativeSelectOption value="">고르기</NativeSelectOption>
-              {positions.map((p) => (
-                <NativeSelectOption key={p.slug} value={p.slug}>
-                  {p.nameKo}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
+              onValueChange={setPosition}
+              options={positions.map((p) => ({ value: p.slug, label: p.nameKo }))}
+            />
           </div>
           <Field id={id("ko")} label="한국어 이름" value={nameKo} onChange={setNameKo} />
           <Field id={id("en")} label="영어 이름" value={nameEn} onChange={setNameEn} />

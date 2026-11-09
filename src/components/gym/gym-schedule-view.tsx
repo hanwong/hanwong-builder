@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { OptionSelect } from "@/components/ui/select";
 import { Dialog, DialogDescription, DialogTitle, ModalBody, ModalContent, ModalFooter } from "@/components/ui/dialog";
 import { FloatingAction } from "@/components/app/tab-bar";
 import { GymHeader } from "@/components/gym/gym-header";
@@ -130,22 +130,22 @@ function ScheduleDialog({
             수업 이름
           </Label>
           {names.length > 0 && (
-            <NativeSelect
+            <OptionSelect
               id="sch-name"
               value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                if (e.target.value !== NEW_NAME) setColor(colorOf(e.target.value));
+              onValueChange={(v) => {
+                setName(v);
+                if (v !== NEW_NAME) setColor(colorOf(v));
               }}
-              className="h-11 w-full rounded-xl text-base"
-            >
-              {names.map((n) => (
-                <NativeSelectOption key={n} value={n}>
-                  {n}
-                </NativeSelectOption>
-              ))}
-              <NativeSelectOption value={NEW_NAME}>+ 새 이름 직접 입력</NativeSelectOption>
-            </NativeSelect>
+              options={[
+                ...names.map((n) => ({
+                  value: n,
+                  label: n,
+                  icon: <span className={cn("size-4 shrink-0 rounded-full ring-1 ring-border", CLASS_BG[colorOf(n)])} aria-hidden />,
+                })),
+                { value: NEW_NAME, label: "+ 새 이름 직접 입력" },
+              ]}
+            />
           )}
           {name === NEW_NAME && (
             <Input
@@ -242,14 +242,12 @@ function ScheduleDialog({
           <Label htmlFor="sch-coach" className="text-[15px] font-semibold">
             담당 (선택)
           </Label>
-          <NativeSelect id="sch-coach" value={coachId} onChange={(e) => setCoachId(e.target.value)} className="h-11 rounded-xl text-base">
-            <NativeSelectOption value="">정하지 않음</NativeSelectOption>
-            {coaches.map((c) => (
-              <NativeSelectOption key={c.id} value={c.id}>
-                {c.nick}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
+          <OptionSelect
+            id="sch-coach"
+            value={coachId}
+            onValueChange={setCoachId}
+            options={[{ value: "", label: "정하지 않음" }, ...coaches.map((c) => ({ value: c.id, label: c.nick }))]}
+          />
         </div>
         </ModalBody>
 

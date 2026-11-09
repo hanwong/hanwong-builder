@@ -1,9 +1,8 @@
 "use client";
 
 import { useTransition } from "react";
-import { ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { OptionSelect } from "@/components/ui/select";
 import { pickGym } from "@/app/gym/actions";
 import type { MyGym } from "@/lib/gym-data";
 import { GymName, NetworkMark } from "@/components/gym/network-mark";
@@ -16,25 +15,14 @@ export function GymHeader({ gym, all }: { gym: MyGym; all: MyGym[] }) {
   return (
     <header className="flex items-center gap-2">
       {all.length > 1 ? (
-        <label className="relative flex min-w-0 items-center gap-1.5">
-          <NetworkMark network={gym.network} size={20} />
-          <span className="sr-only">체육관 고르기</span>
-          <NativeSelect
-            value={gym.id}
-            onChange={(e) => {
-              const id = e.target.value;
-              start(() => pickGym(id));
-            }}
-            className="h-9 min-w-0 appearance-none border-0 bg-transparent pr-6 pl-0 text-[17px] font-bold tracking-tight shadow-none"
-          >
-            {all.map((g) => (
-              <NativeSelectOption key={g.id} value={g.id}>
-                {g.name}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-          <ChevronDown className="pointer-events-none absolute right-1 size-4 text-muted-foreground" aria-hidden />
-        </label>
+        // 체육관 바꿔 고르기 — 목록에도 로고(D-149)
+        <OptionSelect
+          value={gym.id}
+          onValueChange={(id) => start(() => pickGym(id))}
+          aria-label="체육관 고르기"
+          className="h-9 w-auto border-0 bg-transparent px-0 text-[17px] font-bold tracking-tight shadow-none"
+          options={all.map((g) => ({ value: g.id, label: g.name, icon: <NetworkMark network={g.network} size={20} /> }))}
+        />
       ) : (
         <h1 className="flex min-w-0 text-[17px] font-bold tracking-tight">
           <GymName name={gym.name} network={gym.network} size={20} />

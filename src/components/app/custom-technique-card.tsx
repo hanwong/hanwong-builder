@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { OptionSelect } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createOwnTechnique, generateTechnique, techniquePositions, type GenerateResult } from "@/app/app/log/actions";
 import { forgetPicker } from "@/lib/picker-store";
@@ -127,14 +127,7 @@ function ManualTechniqueForm({
       <p className="text-[13px] font-medium text-muted-foreground">직접 적어서 만들기 — 관리자가 확인 후 모두의 기술 카드가 돼요.</p>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={id("position")}>포지션</Label>
-        <NativeSelect id={id("position")} className="w-full" value={position} onChange={(e) => setPosition(e.target.value)}>
-          <NativeSelectOption value="">고르기</NativeSelectOption>
-          {positions.map((p) => (
-            <NativeSelectOption key={p.slug} value={p.slug}>
-              {p.nameKo}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
+        <OptionSelect id={id("position")} value={position} onValueChange={setPosition} options={positions.map((p) => ({ value: p.slug, label: p.nameKo }))} />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={id("name")}>기술 이름</Label>

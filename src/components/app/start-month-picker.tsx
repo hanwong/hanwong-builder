@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { OptionSelect } from "@/components/ui/select";
 
 // 수련 시작 연 · 월 고르기 (D-59) — 브라우저마다 모양이 다른 month 입력 대신 연도 · 월 두 칸.
 // 둘 다 고르면 'YYYY-MM', 아니면 ''. 이번 달 뒤는 못 고른다. 글자 16px — 아이폰이 눌렀을 때 확대하지 않게.
-const big = { fontSize: 16, height: 44 };
 
 export function StartMonthPicker({
   value,
@@ -33,36 +32,28 @@ export function StartMonthPicker({
 
   return (
     <div className="flex gap-2">
-      <NativeSelect
+      <OptionSelect
         id={`${idPrefix}-year`}
         aria-label="시작한 해"
         className="flex-1"
-        style={big}
+        placeholder="연도"
         value={year}
-        onChange={(e) => emit(e.target.value, month)}
-      >
-        <NativeSelectOption value="">연도</NativeSelectOption>
-        {years.map((y) => (
-          <NativeSelectOption key={y} value={y}>
-            {y}년
-          </NativeSelectOption>
-        ))}
-      </NativeSelect>
-      <NativeSelect
+        onValueChange={(v) => emit(v, month)}
+        options={years.map((y) => ({ value: String(y), label: `${y}년` }))}
+      />
+      <OptionSelect
         id={`${idPrefix}-month`}
         aria-label="시작한 달"
         className="flex-1"
-        style={big}
+        placeholder="월"
         value={month}
-        onChange={(e) => emit(year, e.target.value)}
-      >
-        <NativeSelectOption value="">월</NativeSelectOption>
-        {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0")).map((m) => (
-          <NativeSelectOption key={m} value={m} disabled={Number(m) > lastMonth}>
-            {Number(m)}월
-          </NativeSelectOption>
-        ))}
-      </NativeSelect>
+        onValueChange={(v) => emit(year, v)}
+        options={Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0")).map((m) => ({
+          value: m,
+          label: `${Number(m)}월`,
+          disabled: Number(m) > lastMonth,
+        }))}
+      />
     </div>
   );
 }
