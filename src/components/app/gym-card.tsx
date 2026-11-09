@@ -94,7 +94,17 @@ export function GymCard({ gyms }: { gyms: MemberGymCard[] }) {
               오늘은 수업이 없어요.
             </p>
           ) : (
-            g.today.map((s) => <TodaySlot key={s.key} slot={s} />)
+            <>
+              {/* "오늘 수업"은 위에 한 번만(D-138), 아래로 수업마다 이름 · 시각 */}
+              <h3 className="text-[13px] font-medium text-muted-foreground">오늘 수업</h3>
+              <div className="flex flex-col divide-y divide-border">
+                {g.today.map((s) => (
+                  <div key={s.key} className="py-2.5 first:pt-0 last:pb-0">
+                    <TodaySlot slot={s} />
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </section>
       ))}
@@ -125,7 +135,7 @@ function TodaySlot({ slot }: { slot: MemberGymCard["today"][number] }) {
   return (
     <div className="flex flex-col gap-2">
       <p className="text-[15px] font-semibold">
-        오늘 수업 · {slot.name}{" "}
+        {slot.name}{" "}
         <span className="tabular-nums">{slot.startsAt}</span>
       </p>
       {slot.status === "posted" && slot.techniques.length > 0 && (
