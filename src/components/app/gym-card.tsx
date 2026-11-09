@@ -3,7 +3,7 @@
 import { useState, useSyncExternalStore, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Building2, Check, ChevronRight, Loader2, X } from "lucide-react";
+import { Building2, Check, ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,10 @@ import {
   setGymRealName,
   type PeekedGym,
 } from "@/app/gym/actions";
-import type { MemberGymCard } from "@/lib/gym-data";
+import type { MemberGymCard, MemberSlot } from "@/lib/gym-data";
+import { WEEKDAY_KO } from "@/lib/gym-shared";
+import { formatKoreanDate } from "@/lib/seoul-date";
+import { cn } from "@/lib/utils";
 import { GymName } from "@/components/gym/network-mark";
 import { useFloatingDialog } from "@/lib/use-floating-dialog";
 
@@ -95,35 +98,91 @@ export function GymCard({ gyms }: { gyms: MemberGymCard[] }) {
             )}
           </div>
           {g.needsRealName && <RealNameRow gymId={g.id} />}
-          {g.today.length === 0 ? (
-            <p className="text-[13px] text-muted-foreground">
-              오늘은 수업이 없어요.
-            </p>
-          ) : (
-            <>
-              {/* "오늘 수업"은 위에 한 번만(D-138), 아래로 수업마다 이름 · 시각 */}
-              <h3 className="text-[13px] font-medium text-muted-foreground">오늘 수업</h3>
-              <div className="flex flex-col divide-y divide-border">
-                {g.today.map((s) => (
-                  <div key={s.key} className="py-2.5 first:pt-0 last:pb-0">
-                    <TodaySlot slot={s} gymId={g.id} gymName={g.name} gymNetwork={g.network} />
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+          <MemberWeek gym={g} />
         </section>
       ))}
     </>
   );
 }
 
+// 수련자 홈 수업 — 주 줄(월~일)로 지난주 · 이번 주 · 다음 주를 ‹ › 로 한 주씩(D-153). 처음엔 오늘
+function MemberWeek({ gym: g }: { gym: MemberGymCard }) {
+  const today = g.todayDate;
+  const thisWeek = Math.floor(g.days.findIndex((d) => d.day === today) / 7);
+  const [week, setWeek] = useState(thisWeek);
+  const [day, setDay] = useState(today);
+  const days = g.days.slice(week * 7, week * 7 + 7);
+  const picked = days.find((d) => d.day === day) ?? days[0];
+  const off = week - thisWeek;
+  const label = off === 0 ? "이번 주" : off < 0 ? "지난주" : "다음 주";
+  const go = (w: number) => {
+    setWeek(w);
+    const next = g.days.slice(w * 7, w * 7 + 7);
+    setDay(next.some((d) => d.day === today) ? today : next[0].day);
+  };
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="flex items-center gap-1">
+        <Button variant="ghost" size="icon-sm" aria-label="지난주 보기" className="rounded-full" disabled={week === 0} onClick={() => go(week - 1)}>
+          <ChevronLeft />
+        </Button>
+        <span className="flex-1 text-center text-[13px] font-semibold">{label}</span>
+        <Button variant="ghost" size="icon-sm" aria-label="다음 주 보기" className="rounded-full" disabled={(week + 1) * 7 >= g.days.length} onClick={() => go(week + 1)}>
+          <ChevronRight />
+        </Button>
+      </div>
+      <div role="tablist" aria-label={label} className="grid grid-cols-7 gap-1">
+        {days.map((d) => {
+          const on = d.day === picked.day;
+          return (
+            <button
+              key={d.day}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              onClick={() => setDay(d.day)}
+              className={cn(
+                "flex flex-col items-center gap-0.5 rounded-xl py-1.5 text-[11px] font-medium transition-colors",
+                on ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted",
+                d.day === today && !on && "ring-1 ring-foreground",
+              )}
+            >
+              <span>{WEEKDAY_KO[new Date(d.day + "T00:00:00Z").getUTCDay()]}</span>
+              <span className={cn("text-[14px] font-semibold tabular-nums", on ? "text-background" : "text-foreground")}>{Number(d.day.slice(8))}</span>
+              <span className="flex h-1.5 gap-0.5">
+                {d.slots.map((s) => (
+                  <span key={s.key} className={cn("size-1.5 rounded-full", s.status === "posted" ? "bg-accent" : on ? "bg-background/50" : "bg-muted-foreground/40")} />
+                ))}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {/* 고른 날 수업 — 제목은 위에 한 번만(D-138) */}
+      <h3 className="pt-1 text-[13px] font-medium text-muted-foreground">
+        {picked.day === today ? "오늘 수업" : `${formatKoreanDate(picked.day)} 수업`}
+      </h3>
+      {picked.slots.length === 0 ? (
+        <p className="text-[13px] text-muted-foreground">수업이 없어요.</p>
+      ) : (
+        <div className="flex flex-col divide-y divide-border">
+          {picked.slots.map((s) => (
+            <div key={s.key} className="py-2.5 first:pt-0 last:pb-0">
+              <TodaySlot slot={s} today={today} gymId={g.id} gymName={g.name} gymNetwork={g.network} />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // 오늘 수업 한 줄(D-138 · D-139) — 이름 · 시각 · 기술 배지. 내용이 올라온 수업은 오른쪽 화살표 → 누르면 수업 내용 팝업
-function TodaySlot({ slot, gymId, gymName, gymNetwork }: { slot: MemberGymCard["today"][number]; gymId: string; gymName: string; gymNetwork: string | null }) {
+function TodaySlot({ slot, today, gymId, gymName, gymNetwork }: { slot: MemberSlot; today: string; gymId: string; gymName: string; gymNetwork: string | null }) {
   const [open, setOpen] = useState(false);
   const posted = slot.status === "posted" && !!slot.classId;
-  // 내용이 없어도(대기) 화살표 → 팝업에서 출석만(D-143). 휴강 · 규칙 없는 칸은 누를 게 없음
-  const tappable = posted || (slot.status === "waiting" && !!slot.scheduleId);
+  // 내용이 없어도(대기) 화살표 → 팝업에서 출석만(D-143, 오늘만). 지난 · 다음 날은 내용이 있을 때만(D-153). 휴강 · 규칙 없는 칸은 누를 게 없음
+  const tappable = posted || (slot.day === today && slot.status === "waiting" && !!slot.scheduleId);
   const body = (
     <>
       <span className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -140,7 +199,7 @@ function TodaySlot({ slot, gymId, gymName, gymNetwork }: { slot: MemberGymCard["
             {slot.techniques.length > 3 && <span className="text-[12px] text-muted-foreground">+{slot.techniques.length - 3}</span>}
           </span>
         )}
-        {slot.status === "canceled" && <span className="text-[13px] text-muted-foreground">오늘 휴강이에요.</span>}
+        {slot.status === "canceled" && <span className="text-[13px] text-muted-foreground">휴강이에요.</span>}
         {tappable && (slot.attended || slot.myLogId) && (
           <span className="flex items-center gap-1 text-[13px] font-medium text-muted-foreground">
             <Check className="size-3.5" aria-hidden />
@@ -162,7 +221,7 @@ function TodaySlot({ slot, gymId, gymName, gymNetwork }: { slot: MemberGymCard["
       >
         {body}
       </button>
-      {open && <ClassContentDialog slot={slot} gymId={gymId} gymName={gymName} gymNetwork={gymNetwork} onClose={() => setOpen(false)} />}
+      {open && <ClassContentDialog slot={slot} today={today} gymId={gymId} gymName={gymName} gymNetwork={gymNetwork} onClose={() => setOpen(false)} />}
     </>
   );
 }
@@ -181,12 +240,14 @@ function hourBefore(startsAt: string): string {
 
 // 수업 내용 팝업(D-139) — 기술 · 메모를 읽고, 아래 고정 영역(기술 고르기 팝업처럼)에서
 // "내 기록에 저장"(기록만, 출석 ✗) 또는 "출석 + 저장"
-function ClassContentDialog({ slot, gymId, gymName, gymNetwork, onClose }: { slot: MemberGymCard["today"][number]; gymId: string; gymName: string; gymNetwork: string | null; onClose: () => void }) {
+function ClassContentDialog({ slot, today, gymId, gymName, gymNetwork, onClose }: { slot: MemberSlot; today: string; gymId: string; gymName: string; gymNetwork: string | null; onClose: () => void }) {
   const router = useRouter();
   const floating = useFloatingDialog(true);
   const [busy, setBusy] = useState<"save" | "attend" | null>(null);
   const [, start] = useTransition();
   const posted = slot.status === "posted" && !!slot.classId;
+  // 지난 수업은 "내 기록에 저장"만, 다음 수업은 보기만(D-153). 출석은 그날 시작 1시간 전부터(D-144)
+  const when = slot.day < today ? "past" : slot.day > today ? "future" : "today";
   const now = useSyncExternalStore(everyHalfMinute, seoulHM, () => "");
   const opensAt = hourBefore(slot.startsAt);
   const early = !!now && now < opensAt; // 아직 출석 시간 전
@@ -233,7 +294,7 @@ function ClassContentDialog({ slot, gymId, gymName, gymNetwork, onClose }: { slo
         <div className="flex items-start gap-2">
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="flex items-center gap-1 text-[13px] font-medium text-muted-foreground">
-              <GymName name={gymName} network={gymNetwork} size={16} /> · 오늘
+              <GymName name={gymName} network={gymNetwork} size={16} /> · {when === "today" ? "오늘" : formatKoreanDate(slot.day)}
             </span>
             <DialogTitle className="text-[20px] font-bold tracking-tight">
               {slot.name} <span className="tabular-nums">{slot.startsAt}</span>
@@ -243,7 +304,7 @@ function ClassContentDialog({ slot, gymId, gymName, gymNetwork, onClose }: { slo
             <X />
           </Button>
         </div>
-        <DialogDescription className="sr-only">관장님 · 코치가 올린 오늘 수업 내용이에요.</DialogDescription>
+        <DialogDescription className="sr-only">관장님 · 코치가 올린 수업 내용이에요.</DialogDescription>
 
         {/* 내용 — 길면 이 안에서만 스크롤 */}
         {!posted ? (
@@ -279,7 +340,26 @@ function ClassContentDialog({ slot, gymId, gymName, gymNetwork, onClose }: { slo
 
         {/* 아래 고정 — 기술 고르기 팝업과 같은 자리 */}
         <div className="flex shrink-0 gap-2">
-          {!posted ? (
+          {when === "future" ? (
+            <p className="flex-1 rounded-xl bg-muted/60 px-3 py-3 text-center text-[14px] text-muted-foreground">
+              수업 날, 시작 1시간 전부터 출석할 수 있어요.
+            </p>
+          ) : when === "past" ? (
+            // 지난 수업 — 출석은 못 하고 기록 저장만(D-153)
+            slot.myLogId ? (
+              <Button asChild className="h-12 flex-1 rounded-full text-base shadow-none">
+                <Link href={`/app/log/${slot.myLogId}`}>
+                  <Check data-icon="inline-start" aria-hidden />
+                  {slot.attended ? "출석했어요 · 내 기록 보기" : "내 기록 보기"}
+                </Link>
+              </Button>
+            ) : (
+              <Button className="h-12 flex-1 rounded-full text-base shadow-none" disabled={!!busy} onClick={() => run("save")}>
+                {busy === "save" && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
+                내 기록에 저장
+              </Button>
+            )
+          ) : !posted ? (
             // 내용 없음 — 출석 버튼만(D-143)
             <Button className="h-12 flex-1 rounded-full text-base shadow-none" disabled={!!busy || slot.attended || early} onClick={attendOnly}>
               {busy === "attend" && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}

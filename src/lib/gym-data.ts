@@ -278,30 +278,36 @@ export type MemberGymCard = {
   network: string | null;
   role: GymRole;
   needsRealName: boolean; // 본명을 아직 안 적은 관원 · 코치(D-130 전 가입) — 홈 카드에 "본명 입력" 줄
-  today: {
-    key: string;
-    name: string;
-    startsAt: string;
-    classId: string | null;
-    scheduleId: string | null; // 내용 없는 수업 출석(D-143)
-    status: "waiting" | "posted" | "canceled"; // open(출석만 열림)은 waiting 으로
-    techniques: string[];
-    body: string; // 수업 메모(팝업, D-139)
-    attended: boolean; // 출석했나
-    myLogId: string | null; // 이 수업으로 만든 내 기록(출석 또는 저장만, D-139)
-  }[];
+  todayDate: string; // 오늘(서울)
+  // 지난주 · 이번 주 · 다음 주(D-153) — 월요일부터 21일. 화면에서 ‹ › 로 한 주씩
+  days: { day: string; slots: MemberSlot[] }[];
+};
+export type MemberSlot = {
+  key: string;
+  day: string;
+  name: string;
+  startsAt: string;
+  classId: string | null;
+  scheduleId: string | null; // 내용 없는 수업 출석(D-143)
+  status: "waiting" | "posted" | "canceled"; // open(출석만 열림)은 waiting 으로
+  techniques: string[];
+  body: string; // 수업 메모(팝업, D-139)
+  attended: boolean; // 출석했나
+  myLogId: string | null; // 이 수업으로 만든 내 기록(출석 또는 저장만, D-139)
 };
 export async function queryMemberGymCards(supabase: Client, userId: string): Promise<MemberGymCard[]> {
   const gyms = await queryMyGyms(supabase, userId);
   if (!gyms.length) return [];
   const today = seoulToday();
+  const from = addDays(mondayOf(today), -7);
+  const to = addDays(from, 20);
   const { data: realNames } = await supabase.rpc("my_gym_real_names");
   const realName = new Map((realNames ?? []).map((r) => [r.gym_id, r.real_name]));
   const cards = await Promise.all(
     gyms.map(async (g) => {
       const [schedules, classes, att] = await Promise.all([
         querySchedules(supabase, g.id),
-        queryClasses(supabase, g.id, today, today),
+        queryClasses(supabase, g.id, from, to),
         supabase.from("gym_attendance").select("gym_class_id, class_log_id").eq("user_id", userId),
       ]);
       const mine = new Map((att.data ?? []).map((a) => [a.gym_class_id, a.class_log_id]));
@@ -317,8 +323,12 @@ export async function queryMemberGymCards(supabase: Client, userId: string): Pro
         network: g.network,
         role: g.role,
         needsRealName: g.role !== "owner" && !realName.get(g.id),
-        today: slotsOn(today, schedules, classes).map((s) => ({
+        todayDate: today,
+        days: Array.from({ length: 21 }, (_, i) => addDays(from, i)).map((day) => ({
+          day,
+          slots: slotsOn(day, schedules, classes).map((s) => ({
           key: s.key,
+          day,
           name: s.name,
           startsAt: s.startsAt,
           classId: s.cls?.id ?? null,
@@ -328,6 +338,7 @@ export async function queryMemberGymCards(supabase: Client, userId: string): Pro
           body: s.cls?.body ?? "",
           attended: !!s.cls && mine.has(s.cls.id),
           myLogId: s.cls ? (mine.get(s.cls.id) ?? savedLog.get(s.cls.id) ?? null) : null,
+          })),
         })),
       };
     }),
