@@ -239,8 +239,8 @@ export function TrainingBelt({
         <DialogContent
           showCloseButton={false}
           className="sm:max-w-md"
-          // 화면보다 길면 팝업 안에서 위아래로 스크롤(뒤 화면은 고정)
-          style={{ ...floating, display: "flex", flexDirection: "column", gap: "14px", padding: "14px", overflowY: "auto", overscrollBehavior: "contain" }}
+          // 칸들만 팝업 안에서 위아래로 스크롤(D-132), "완료"는 아래 고정(D-139)
+          style={{ ...floating, display: "flex", flexDirection: "column", gap: "14px", padding: "14px", overscrollBehavior: "contain" }}
         >
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[17px] font-semibold">내 설정</DialogTitle>
@@ -257,6 +257,7 @@ export function TrainingBelt({
           <DialogDescription className="sr-only">
             닉네임, 벨트 색, 그랄, 수련을 시작한 연도 · 달을 바꿔요. 바꾸면 바로 저장돼요.
           </DialogDescription>
+          <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto overscroll-contain px-1">
           <div className="flex flex-col gap-2">
             <Label htmlFor="nick-setting" className="text-[15px] font-semibold">
               닉네임
@@ -327,7 +328,8 @@ export function TrainingBelt({
               {startedOn ? `${trainingSpan(startedOn, thisMonth)}로 보여요.` : "연도와 달을 고르면 바로 저장돼요."}
             </p>
           </div>
-          <Button className="h-12 w-full rounded-full text-base shadow-none" onClick={() => toggleSettings(false)}>
+          </div>
+          <Button className="h-12 w-full shrink-0 rounded-full text-base shadow-none" onClick={() => toggleSettings(false)}>
             완료
           </Button>
         </DialogContent>

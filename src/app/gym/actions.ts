@@ -298,6 +298,19 @@ export async function attendClass(classId: string): Promise<Res<{ id: string }>>
   return { ok: true, id: data };
 }
 
+// 내 기록에 저장만(D-139) — 출석은 남기지 않는다. 이미 저장했으면 그 기록 id
+export async function saveClassLog(classId: string): Promise<Res<{ id: string }>> {
+  if (!UUID.test(classId)) return fail("없는 수업이에요.");
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase.rpc("save_class_log", { p_class: classId });
+  if (error || !data) {
+    console.error("saveClassLog failed:", error?.code);
+    return fail(error?.code === "P0002" ? "수업 내용이 아직 없거나 휴강이에요." : error?.code === "42501" ? "이 체육관 관원이 아니에요." : "저장하지 못했어요. 다시 눌러 주세요.");
+  }
+  revalidatePath("/app", "layout");
+  return { ok: true, id: data };
+}
+
 // ---------- 코멘트 (FLOW 8-3) ----------
 export async function addComment(gymId: string, logId: string, body: string): Promise<Res<{ id: string }>> {
   if (!UUID.test(gymId) || !UUID.test(logId)) return fail("없는 기록이에요.");

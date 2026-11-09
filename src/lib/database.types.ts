@@ -604,6 +604,9 @@ isOneToOne: false
 "attend_class":
 { Args: { "p_class": string }; Returns: string
                            },
+"class_log_for":
+{ Args: { "p_class": string }; Returns: string
+                           },
 "comment_log":
 { Args: { "p_body": string,"p_gym": string,"p_log": string }; Returns: string
                            },
@@ -686,6 +689,9 @@ isOneToOne: false
                            },
 "reject_user_technique":
 { Args: { "p_id": string }; Returns: undefined
+                           },
+"save_class_log":
+{ Args: { "p_class": string }; Returns: string
                            },
 "set_gym_real_name":
 { Args: { "p_gym": string,"p_real_name": string }; Returns: undefined

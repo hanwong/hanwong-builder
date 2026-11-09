@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Building2, Check, Loader2, X } from "lucide-react";
+import { Building2, Check, ChevronRight, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,12 +17,14 @@ import {
 import {
   attendClass,
   joinGym,
+  saveClassLog,
   peekGym,
   setGymRealName,
   type PeekedGym,
 } from "@/app/gym/actions";
 import type { MemberGymCard } from "@/lib/gym-data";
 import { NetworkMark } from "@/components/gym/network-mark";
+import { useFloatingDialog } from "@/lib/use-floating-dialog";
 
 // 홈 "내 체육관" (D-127, FLOW 8-3 관원 쪽 · DESIGN '관장님 버전')
 // 없음: 들어가기(코드 → 동의 한 장). 있음: 오늘 수업 카드 + "출석 · 내 기록으로"
@@ -100,7 +102,7 @@ export function GymCard({ gyms }: { gyms: MemberGymCard[] }) {
               <div className="flex flex-col divide-y divide-border">
                 {g.today.map((s) => (
                   <div key={s.key} className="py-2.5 first:pt-0 last:pb-0">
-                    <TodaySlot slot={s} />
+                    <TodaySlot slot={s} gymName={g.name} />
                   </div>
                 ))}
               </div>
@@ -112,82 +114,152 @@ export function GymCard({ gyms }: { gyms: MemberGymCard[] }) {
   );
 }
 
-function TodaySlot({ slot }: { slot: MemberGymCard["today"][number] }) {
+// 오늘 수업 한 줄(D-138 · D-139) — 이름 · 시각 · 기술 배지. 내용이 올라온 수업은 오른쪽 화살표 → 누르면 수업 내용 팝업
+function TodaySlot({ slot, gymName }: { slot: MemberGymCard["today"][number]; gymName: string }) {
+  const [open, setOpen] = useState(false);
+  const posted = slot.status === "posted" && !!slot.classId;
+  const body = (
+    <>
+      <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <span className="text-[15px] font-semibold">
+          {slot.name} <span className="tabular-nums">{slot.startsAt}</span>
+        </span>
+        {posted && slot.techniques.length > 0 && (
+          <span className="flex flex-wrap gap-1">
+            {slot.techniques.slice(0, 3).map((t, i) => (
+              <Badge key={i} variant="secondary">
+                {t}
+              </Badge>
+            ))}
+            {slot.techniques.length > 3 && <span className="text-[12px] text-muted-foreground">+{slot.techniques.length - 3}</span>}
+          </span>
+        )}
+        {slot.status === "canceled" && <span className="text-[13px] text-muted-foreground">오늘 휴강이에요.</span>}
+        {posted && (slot.attended || slot.myLogId) && (
+          <span className="flex items-center gap-1 text-[13px] font-medium text-muted-foreground">
+            <Check className="size-3.5" aria-hidden />
+            {slot.attended ? "출석했어요" : "내 기록에 저장했어요"}
+          </span>
+        )}
+      </span>
+      {posted && <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />}
+    </>
+  );
+  if (!posted) return <div className="flex items-start gap-2">{body}</div>;
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label={`${slot.name} ${slot.startsAt} 수업 내용 보기`}
+        className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-2 rounded-xl px-2 py-1 text-left transition-colors hover:bg-muted"
+      >
+        {body}
+      </button>
+      {open && <ClassContentDialog slot={slot} gymName={gymName} onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+// 수업 내용 팝업(D-139) — 기술 · 메모를 읽고, 아래 고정 영역(기술 고르기 팝업처럼)에서
+// "내 기록에 저장"(기록만, 출석 ✗) 또는 "출석 + 저장"
+function ClassContentDialog({ slot, gymName, onClose }: { slot: MemberGymCard["today"][number]; gymName: string; onClose: () => void }) {
   const router = useRouter();
-  const [busy, start] = useTransition();
-  function attend() {
+  const floating = useFloatingDialog(true);
+  const [busy, setBusy] = useState<"save" | "attend" | null>(null);
+  const [, start] = useTransition();
+
+  function run(kind: "save" | "attend") {
     if (!slot.classId) return;
+    setBusy(kind);
     start(async () => {
-      const res = await attendClass(slot.classId!).catch(() => null);
+      const res = await (kind === "save" ? saveClassLog(slot.classId!) : attendClass(slot.classId!)).catch(() => null);
+      setBusy(null);
       if (!res || !res.ok) {
-        toast.error(
-          res?.message ??
-            "출석하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.",
-        );
+        toast.error(res?.message ?? "저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
         return;
       }
-      toast.success(
-        "출석했어요. 내 기록이 생겼어요 — 메모는 내 것으로 고쳐도 돼요.",
-      );
+      toast.success(kind === "save" ? "내 기록에 저장했어요 — 출석은 하지 않았어요." : "출석했어요. 내 기록이 생겼어요 — 메모는 내 것으로 고쳐도 돼요.");
       router.push(`/app/log/${res.id}`);
     });
   }
+
   return (
-    <div className="flex flex-col gap-2">
-      <p className="text-[15px] font-semibold">
-        {slot.name}{" "}
-        <span className="tabular-nums">{slot.startsAt}</span>
-      </p>
-      {slot.status === "posted" && slot.techniques.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {slot.techniques.slice(0, 3).map((t, i) => (
-            <Badge key={i} variant="secondary">
-              {t}
-            </Badge>
-          ))}
-          {slot.techniques.length > 3 && (
-            <span className="text-[12px] text-muted-foreground">
-              +{slot.techniques.length - 3}
-            </span>
+    <Dialog open onOpenChange={(o) => !o && !busy && onClose()}>
+      <DialogContent
+        showCloseButton={false}
+        className="sm:max-w-md"
+        style={{ ...floating, display: "flex", flexDirection: "column", gap: "12px", padding: "14px", overscrollBehavior: "contain" }}
+      >
+        <div className="flex items-start gap-2">
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="text-[13px] font-medium text-muted-foreground">{gymName} · 오늘</span>
+            <DialogTitle className="text-[20px] font-bold tracking-tight">
+              {slot.name} <span className="tabular-nums">{slot.startsAt}</span>
+            </DialogTitle>
+          </div>
+          <Button variant="ghost" size="icon" aria-label="닫기" className="-mr-1 rounded-full" disabled={!!busy} onClick={onClose}>
+            <X />
+          </Button>
+        </div>
+        <DialogDescription className="sr-only">관장님 · 코치가 올린 오늘 수업 내용이에요.</DialogDescription>
+
+        {/* 내용 — 길면 이 안에서만 스크롤 */}
+        <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-1">
+          <section className="flex flex-col gap-2">
+            <h3 className="text-[15px] font-semibold">
+              배운 기술 <span className="text-muted-foreground tabular-nums">{slot.techniques.length}</span>
+            </h3>
+            {slot.techniques.length === 0 ? (
+              <p className="text-[14px] text-muted-foreground">기술 없이 메모만 있는 수업이에요.</p>
+            ) : (
+              <ul className="flex flex-col gap-1.5">
+                {slot.techniques.map((t, i) => (
+                  <li key={i} className="rounded-xl bg-muted/60 px-3 py-2.5 text-[15px] font-semibold">
+                    <span className="mark-lime">{t}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+          {slot.body && (
+            <section className="flex flex-col gap-2">
+              <h3 className="text-[15px] font-semibold">메모</h3>
+              <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{slot.body}</p>
+            </section>
           )}
         </div>
-      )}
-      {slot.status === "canceled" ? (
-        <p className="text-[13px] text-muted-foreground">오늘 휴강이에요.</p>
-      ) : slot.status === "waiting" ? (
-        <p className="text-[13px] text-muted-foreground">
-          수업 내용 대기 — 관장님 · 코치가 올리면 여기에 떠요.
-        </p>
-      ) : slot.myLogId ? (
-        <Button
-          asChild
-          variant="outline"
-          size="sm"
-          className="h-10 self-start rounded-full"
-        >
-          <Link href={`/app/log/${slot.myLogId}`}>
-            <Check data-icon="inline-start" aria-hidden />
-            출석했어요 · 내 기록 보기
-          </Link>
-        </Button>
-      ) : (
-        <Button
-          size="sm"
-          className="h-10 self-start rounded-full px-4"
-          disabled={busy}
-          onClick={attend}
-        >
-          {busy && (
-            <Loader2
-              data-icon="inline-start"
-              className="animate-spin"
-              aria-hidden
-            />
+
+        {/* 아래 고정 — 기술 고르기 팝업과 같은 자리 */}
+        <div className="flex shrink-0 gap-2">
+          {slot.attended && slot.myLogId ? (
+            <Button asChild className="h-12 flex-1 rounded-full text-base shadow-none">
+              <Link href={`/app/log/${slot.myLogId}`}>
+                <Check data-icon="inline-start" aria-hidden />
+                출석했어요 · 내 기록 보기
+              </Link>
+            </Button>
+          ) : (
+            <>
+              {slot.myLogId ? (
+                <Button asChild variant="outline" className="h-12 flex-1 rounded-full text-base shadow-none">
+                  <Link href={`/app/log/${slot.myLogId}`}>내 기록 보기</Link>
+                </Button>
+              ) : (
+                <Button variant="outline" className="h-12 flex-1 rounded-full text-base shadow-none" disabled={!!busy} onClick={() => run("save")}>
+                  {busy === "save" && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
+                  내 기록에 저장
+                </Button>
+              )}
+              <Button className="h-12 flex-1 rounded-full text-base shadow-none" disabled={!!busy} onClick={() => run("attend")}>
+                {busy === "attend" && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
+                {slot.myLogId ? "출석하기" : "출석 + 저장"}
+              </Button>
+            </>
           )}
-          출석 · 내 기록으로
-        </Button>
-      )}
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

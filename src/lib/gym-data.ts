@@ -278,7 +278,17 @@ export type MemberGymCard = {
   network: string | null;
   role: GymRole;
   needsRealName: boolean; // 본명을 아직 안 적은 관원 · 코치(D-130 전 가입) — 홈 카드에 "본명 입력" 줄
-  today: { key: string; name: string; startsAt: string; classId: string | null; status: "waiting" | "posted" | "canceled"; techniques: string[]; myLogId: string | null }[];
+  today: {
+    key: string;
+    name: string;
+    startsAt: string;
+    classId: string | null;
+    status: "waiting" | "posted" | "canceled";
+    techniques: string[];
+    body: string; // 수업 메모(팝업, D-139)
+    attended: boolean; // 출석했나
+    myLogId: string | null; // 이 수업으로 만든 내 기록(출석 또는 저장만, D-139)
+  }[];
 };
 export async function queryMemberGymCards(supabase: Client, userId: string): Promise<MemberGymCard[]> {
   const gyms = await queryMyGyms(supabase, userId);
@@ -294,6 +304,12 @@ export async function queryMemberGymCards(supabase: Client, userId: string): Pro
         supabase.from("gym_attendance").select("gym_class_id, class_log_id").eq("user_id", userId),
       ]);
       const mine = new Map((att.data ?? []).map((a) => [a.gym_class_id, a.class_log_id]));
+      // 출석 없이 "내 기록에 저장"만 한 것(D-139)
+      const ids = classes.map((c) => c.id);
+      const saved = ids.length
+        ? await supabase.from("class_logs").select("id, gym_class_id").eq("user_id", userId).in("gym_class_id", ids)
+        : { data: [] as { id: string; gym_class_id: string | null }[] };
+      const savedLog = new Map((saved.data ?? []).map((l) => [l.gym_class_id, l.id]));
       return {
         id: g.id,
         name: g.name,
@@ -307,7 +323,9 @@ export async function queryMemberGymCards(supabase: Client, userId: string): Pro
           classId: s.cls?.id ?? null,
           status: (s.cls ? s.cls.status : "waiting") as "waiting" | "posted" | "canceled",
           techniques: s.cls?.techniques.map((t) => t.nameKo) ?? [],
-          myLogId: s.cls ? (mine.get(s.cls.id) ?? null) : null,
+          body: s.cls?.body ?? "",
+          attended: !!s.cls && mine.has(s.cls.id),
+          myLogId: s.cls ? (mine.get(s.cls.id) ?? savedLog.get(s.cls.id) ?? null) : null,
         })),
       };
     }),
