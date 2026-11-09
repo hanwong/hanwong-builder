@@ -28,3 +28,24 @@ export function NetworkMark({ network, size = 18, className }: { network: string
     </span>
   );
 }
+
+// 체육관 이름 표기 (D-146) — 어디서나 "[네트워크 로고] 체육관 이름" 한 가지로. 네트워크 글자는 따로 쓰지 않는다
+// (로고의 alt 로만). 네트워크가 없으면 이름만.
+export function GymName({
+  name,
+  network,
+  size = 18,
+  className,
+}: {
+  name: string;
+  network: string | null | undefined;
+  size?: number;
+  className?: string;
+}) {
+  return (
+    <span className={cn("inline-flex min-w-0 items-center gap-1.5", className)}>
+      <NetworkMark network={network} size={size} />
+      <span className="min-w-0 truncate">{name}</span>
+    </span>
+  );
+}

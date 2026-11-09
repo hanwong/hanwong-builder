@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { pickGym } from "@/app/gym/actions";
 import type { MyGym } from "@/lib/gym-data";
-import { NetworkMark } from "@/components/gym/network-mark";
+import { GymName, NetworkMark } from "@/components/gym/network-mark";
 
 const ROLE_LABEL = { owner: "관장", coach: "코치", member: "관원" } as const;
 
@@ -16,7 +16,8 @@ export function GymHeader({ gym, all }: { gym: MyGym; all: MyGym[] }) {
   return (
     <header className="flex items-center gap-2">
       {all.length > 1 ? (
-        <label className="relative flex min-w-0 items-center gap-1">
+        <label className="relative flex min-w-0 items-center gap-1.5">
+          <NetworkMark network={gym.network} size={20} />
           <span className="sr-only">체육관 고르기</span>
           <NativeSelect
             value={gym.id}
@@ -28,19 +29,16 @@ export function GymHeader({ gym, all }: { gym: MyGym; all: MyGym[] }) {
           >
             {all.map((g) => (
               <NativeSelectOption key={g.id} value={g.id}>
-                {g.network ? `${g.name} · ${g.network}` : g.name}
+                {g.name}
               </NativeSelectOption>
             ))}
           </NativeSelect>
           <ChevronDown className="pointer-events-none absolute right-1 size-4 text-muted-foreground" aria-hidden />
         </label>
       ) : (
-        <h1 className="min-w-0 truncate text-[17px] font-bold tracking-tight">{gym.name}</h1>
-      )}
-      {gym.network && (
-        <span className="flex shrink-0 items-center gap-1 text-[13px] font-medium text-muted-foreground">
-          · <NetworkMark network={gym.network} size={16} /> {gym.network}
-        </span>
+        <h1 className="flex min-w-0 text-[17px] font-bold tracking-tight">
+          <GymName name={gym.name} network={gym.network} size={20} />
+        </h1>
       )}
       <Badge variant="secondary">{ROLE_LABEL[gym.role]}</Badge>
     </header>

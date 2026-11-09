@@ -27,7 +27,7 @@ import {
   type PeekedGym,
 } from "@/app/gym/actions";
 import type { MemberGymCard } from "@/lib/gym-data";
-import { NetworkMark } from "@/components/gym/network-mark";
+import { GymName } from "@/components/gym/network-mark";
 import { useFloatingDialog } from "@/lib/use-floating-dialog";
 
 // 홈 "내 체육관" (D-127, FLOW 8-3 관원 쪽 · DESIGN '관장님 버전')
@@ -72,19 +72,19 @@ export function GymCard({ gyms }: { gyms: MemberGymCard[] }) {
           className="flex flex-col gap-2 rounded-2xl bg-card p-4 ring-1 ring-border"
         >
           <div className="flex items-center gap-2">
-            <Building2
-              className="size-4 shrink-0 text-muted-foreground"
-              strokeWidth={1.75}
-              aria-hidden
+            {!g.network && (
+              <Building2
+                className="size-4 shrink-0 text-muted-foreground"
+                strokeWidth={1.75}
+                aria-hidden
+              />
+            )}
+            <GymName
+              name={g.name}
+              network={g.network}
+              size={16}
+              className="flex-1 text-[13px] font-medium text-muted-foreground"
             />
-            <span className="flex min-w-0 flex-1 items-center gap-1 truncate text-[13px] font-medium text-muted-foreground">
-              {g.name}
-              {g.network && (
-                <>
-                  · <NetworkMark network={g.network} size={16} /> {g.network}
-                </>
-              )}
-            </span>
             {g.role !== "member" && (
               <Link
                 href="/gym"
@@ -106,7 +106,7 @@ export function GymCard({ gyms }: { gyms: MemberGymCard[] }) {
               <div className="flex flex-col divide-y divide-border">
                 {g.today.map((s) => (
                   <div key={s.key} className="py-2.5 first:pt-0 last:pb-0">
-                    <TodaySlot slot={s} gymId={g.id} gymName={g.name} />
+                    <TodaySlot slot={s} gymId={g.id} gymName={g.name} gymNetwork={g.network} />
                   </div>
                 ))}
               </div>
@@ -119,7 +119,7 @@ export function GymCard({ gyms }: { gyms: MemberGymCard[] }) {
 }
 
 // 오늘 수업 한 줄(D-138 · D-139) — 이름 · 시각 · 기술 배지. 내용이 올라온 수업은 오른쪽 화살표 → 누르면 수업 내용 팝업
-function TodaySlot({ slot, gymId, gymName }: { slot: MemberGymCard["today"][number]; gymId: string; gymName: string }) {
+function TodaySlot({ slot, gymId, gymName, gymNetwork }: { slot: MemberGymCard["today"][number]; gymId: string; gymName: string; gymNetwork: string | null }) {
   const [open, setOpen] = useState(false);
   const posted = slot.status === "posted" && !!slot.classId;
   // 내용이 없어도(대기) 화살표 → 팝업에서 출석만(D-143). 휴강 · 규칙 없는 칸은 누를 게 없음
@@ -162,7 +162,7 @@ function TodaySlot({ slot, gymId, gymName }: { slot: MemberGymCard["today"][numb
       >
         {body}
       </button>
-      {open && <ClassContentDialog slot={slot} gymId={gymId} gymName={gymName} onClose={() => setOpen(false)} />}
+      {open && <ClassContentDialog slot={slot} gymId={gymId} gymName={gymName} gymNetwork={gymNetwork} onClose={() => setOpen(false)} />}
     </>
   );
 }
@@ -181,7 +181,7 @@ function hourBefore(startsAt: string): string {
 
 // 수업 내용 팝업(D-139) — 기술 · 메모를 읽고, 아래 고정 영역(기술 고르기 팝업처럼)에서
 // "내 기록에 저장"(기록만, 출석 ✗) 또는 "출석 + 저장"
-function ClassContentDialog({ slot, gymId, gymName, onClose }: { slot: MemberGymCard["today"][number]; gymId: string; gymName: string; onClose: () => void }) {
+function ClassContentDialog({ slot, gymId, gymName, gymNetwork, onClose }: { slot: MemberGymCard["today"][number]; gymId: string; gymName: string; gymNetwork: string | null; onClose: () => void }) {
   const router = useRouter();
   const floating = useFloatingDialog(true);
   const [busy, setBusy] = useState<"save" | "attend" | null>(null);
@@ -232,7 +232,9 @@ function ClassContentDialog({ slot, gymId, gymName, onClose }: { slot: MemberGym
       >
         <div className="flex items-start gap-2">
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span className="text-[13px] font-medium text-muted-foreground">{gymName} · 오늘</span>
+            <span className="flex items-center gap-1 text-[13px] font-medium text-muted-foreground">
+              <GymName name={gymName} network={gymNetwork} size={16} /> · 오늘
+            </span>
             <DialogTitle className="text-[20px] font-bold tracking-tight">
               {slot.name} <span className="tabular-nums">{slot.startsAt}</span>
             </DialogTitle>
@@ -501,12 +503,11 @@ export function JoinDialog({ onClose }: { onClose: () => void }) {
           <>
           <ModalBody>
             <div className="rounded-xl bg-muted/60 px-4 py-3">
-              <p className="text-[17px] font-semibold">{gym.name}</p>
-              {(gym.network || gym.region) && (
-                <p className="flex items-center gap-1 text-[13px] text-muted-foreground">
-                  <NetworkMark network={gym.network} size={16} />
-                  {[gym.network, gym.region].filter(Boolean).join(" · ")}
-                </p>
+              <p className="flex text-[17px] font-semibold">
+                <GymName name={gym.name} network={gym.network} size={22} />
+              </p>
+              {gym.region && (
+                <p className="text-[13px] text-muted-foreground">{gym.region}</p>
               )}
               {gym.role === "coach" && (
                 <Badge variant="secondary" className="mt-1">
