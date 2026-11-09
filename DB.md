@@ -426,7 +426,7 @@ FLOW 8 의 3단계. 표 6개를 더한다. 기존 표는 `class_logs` 에 칸 �
 | schedule_id | uuid → gym_schedules | | | 규칙에서 온 수업. 규칙 없이 "그 날짜만" 만든 수업은 비움(이름 · 시각은 아래 칸) |
 | held_on | date | ✓ | | 수업 날짜(서울) |
 | name · starts_at | text · time | ✓ | | 규칙에서 복사(규칙이 나중에 바뀌어도 그날 수업은 그대로) |
-| status | text | ✓ | `'posted'` | `posted` 내용 등록됨 · `canceled` 휴강 |
+| status | text | ✓ | `'posted'` | `posted` 내용 등록됨 · `canceled` 휴강 · `open` 내용 없이 관원이 먼저 출석(D-143, 내용을 올리면 posted) |
 | body | text | ✓ | `''` | 메모(0~2000자) |
 | posted_by | uuid → auth.users | ✓ | | 올린 관장 · 코치 |
 | created_at · updated_at | timestamptz | ✓ | now() | |

@@ -51,7 +51,7 @@ export type ClassRow = {
   heldOn: string;
   name: string;
   startsAt: string;
-  status: "posted" | "canceled";
+  status: "posted" | "canceled" | "open"; // open = 내용 없이 출석만 열린 줄(D-143)
   body: string;
   techniques: { slug: string | null; nameKo: string }[];
   attendance: number;
@@ -283,7 +283,8 @@ export type MemberGymCard = {
     name: string;
     startsAt: string;
     classId: string | null;
-    status: "waiting" | "posted" | "canceled";
+    scheduleId: string | null; // 내용 없는 수업 출석(D-143)
+    status: "waiting" | "posted" | "canceled"; // open(출석만 열림)은 waiting 으로
     techniques: string[];
     body: string; // 수업 메모(팝업, D-139)
     attended: boolean; // 출석했나
@@ -321,7 +322,8 @@ export async function queryMemberGymCards(supabase: Client, userId: string): Pro
           name: s.name,
           startsAt: s.startsAt,
           classId: s.cls?.id ?? null,
-          status: (s.cls ? s.cls.status : "waiting") as "waiting" | "posted" | "canceled",
+          scheduleId: s.scheduleId,
+          status: (s.cls && s.cls.status !== "open" ? s.cls.status : "waiting") as "waiting" | "posted" | "canceled",
           techniques: s.cls?.techniques.map((t) => t.nameKo) ?? [],
           body: s.cls?.body ?? "",
           attended: !!s.cls && mine.has(s.cls.id),
@@ -358,7 +360,7 @@ export async function getMembers(): Promise<MembersPage | null> {
     supabase.rpc("gym_member_names", { p_gym: cur.gym.id }),
     supabase.from("gym_attendance").select("user_id, gym_classes!inner(gym_id, held_on)").eq("gym_classes.gym_id", cur.gym.id),
     // 출석률 분모 = 내용이 올라간 수업(출석은 그 수업에만 할 수 있다). 휴강은 뺀다
-    supabase.from("gym_classes").select("held_on").eq("gym_id", cur.gym.id).eq("status", "posted").lte("held_on", today),
+    supabase.from("gym_classes").select("held_on").eq("gym_id", cur.gym.id).in("status", ["posted", "open"]).lte("held_on", today), // open = 내용 없이 출석만(D-143)
   ]);
   if (names.error) throw new Error(`members: ${names.error.code ?? ""} ${names.error.message.slice(0, 80)}`);
   const dates = new Map<string, string[]>();

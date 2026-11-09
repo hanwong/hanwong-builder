@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   attendClass,
+  attendSlot,
   joinGym,
   saveClassLog,
   peekGym,
@@ -102,7 +103,7 @@ export function GymCard({ gyms }: { gyms: MemberGymCard[] }) {
               <div className="flex flex-col divide-y divide-border">
                 {g.today.map((s) => (
                   <div key={s.key} className="py-2.5 first:pt-0 last:pb-0">
-                    <TodaySlot slot={s} gymName={g.name} />
+                    <TodaySlot slot={s} gymId={g.id} gymName={g.name} />
                   </div>
                 ))}
               </div>
@@ -115,9 +116,11 @@ export function GymCard({ gyms }: { gyms: MemberGymCard[] }) {
 }
 
 // 오늘 수업 한 줄(D-138 · D-139) — 이름 · 시각 · 기술 배지. 내용이 올라온 수업은 오른쪽 화살표 → 누르면 수업 내용 팝업
-function TodaySlot({ slot, gymName }: { slot: MemberGymCard["today"][number]; gymName: string }) {
+function TodaySlot({ slot, gymId, gymName }: { slot: MemberGymCard["today"][number]; gymId: string; gymName: string }) {
   const [open, setOpen] = useState(false);
   const posted = slot.status === "posted" && !!slot.classId;
+  // 내용이 없어도(대기) 화살표 → 팝업에서 출석만(D-143). 휴강 · 규칙 없는 칸은 누를 게 없음
+  const tappable = posted || (slot.status === "waiting" && !!slot.scheduleId);
   const body = (
     <>
       <span className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -135,39 +138,40 @@ function TodaySlot({ slot, gymName }: { slot: MemberGymCard["today"][number]; gy
           </span>
         )}
         {slot.status === "canceled" && <span className="text-[13px] text-muted-foreground">오늘 휴강이에요.</span>}
-        {posted && (slot.attended || slot.myLogId) && (
+        {tappable && (slot.attended || slot.myLogId) && (
           <span className="flex items-center gap-1 text-[13px] font-medium text-muted-foreground">
             <Check className="size-3.5" aria-hidden />
             {slot.attended ? "출석했어요" : "내 기록에 저장했어요"}
           </span>
         )}
       </span>
-      {posted && <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />}
+      {tappable && <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />}
     </>
   );
-  if (!posted) return <div className="flex items-start gap-2">{body}</div>;
+  if (!tappable) return <div className="flex items-start gap-2">{body}</div>;
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label={`${slot.name} ${slot.startsAt} 수업 내용 보기`}
+        aria-label={`${slot.name} ${slot.startsAt} ${posted ? "수업 내용 보기" : "출석"}`}
         className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-2 rounded-xl px-2 py-1 text-left transition-colors hover:bg-muted"
       >
         {body}
       </button>
-      {open && <ClassContentDialog slot={slot} gymName={gymName} onClose={() => setOpen(false)} />}
+      {open && <ClassContentDialog slot={slot} gymId={gymId} gymName={gymName} onClose={() => setOpen(false)} />}
     </>
   );
 }
 
 // 수업 내용 팝업(D-139) — 기술 · 메모를 읽고, 아래 고정 영역(기술 고르기 팝업처럼)에서
 // "내 기록에 저장"(기록만, 출석 ✗) 또는 "출석 + 저장"
-function ClassContentDialog({ slot, gymName, onClose }: { slot: MemberGymCard["today"][number]; gymName: string; onClose: () => void }) {
+function ClassContentDialog({ slot, gymId, gymName, onClose }: { slot: MemberGymCard["today"][number]; gymId: string; gymName: string; onClose: () => void }) {
   const router = useRouter();
   const floating = useFloatingDialog(true);
   const [busy, setBusy] = useState<"save" | "attend" | null>(null);
   const [, start] = useTransition();
+  const posted = slot.status === "posted" && !!slot.classId;
 
   function run(kind: "save" | "attend") {
     if (!slot.classId) return;
@@ -181,6 +185,22 @@ function ClassContentDialog({ slot, gymName, onClose }: { slot: MemberGymCard["t
       }
       toast.success(kind === "save" ? "내 기록에 저장했어요 — 출석은 하지 않았어요." : "출석했어요. 내 기록이 생겼어요 — 메모는 내 것으로 고쳐도 돼요.");
       router.push(`/app/log/${res.id}`);
+    });
+  }
+  // 내용 없는 수업 출석(D-143) — 출석만, 기록은 안 생김
+  function attendOnly() {
+    if (!slot.scheduleId) return;
+    setBusy("attend");
+    start(async () => {
+      const res = await attendSlot(gymId, slot.scheduleId!).catch(() => null);
+      setBusy(null);
+      if (!res || !res.ok) {
+        toast.error(res?.message ?? "출석하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
+        return;
+      }
+      toast.success("출석했어요. 수업 내용이 올라오면 내 기록에 저장할 수 있어요.");
+      onClose();
+      router.refresh();
     });
   }
 
@@ -205,6 +225,11 @@ function ClassContentDialog({ slot, gymName, onClose }: { slot: MemberGymCard["t
         <DialogDescription className="sr-only">관장님 · 코치가 올린 오늘 수업 내용이에요.</DialogDescription>
 
         {/* 내용 — 길면 이 안에서만 스크롤 */}
+        {!posted ? (
+          <p className="text-[15px] leading-relaxed text-muted-foreground">
+            아직 수업 내용이 올라오지 않았어요. 출석만 먼저 할 수 있어요 — 내용이 올라오면 여기서 내 기록에 저장할 수 있어요.
+          </p>
+        ) : (
         <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-1">
           <section className="flex flex-col gap-2">
             <h3 className="text-[15px] font-semibold">
@@ -229,10 +254,30 @@ function ClassContentDialog({ slot, gymName, onClose }: { slot: MemberGymCard["t
             </section>
           )}
         </div>
+        )}
 
         {/* 아래 고정 — 기술 고르기 팝업과 같은 자리 */}
         <div className="flex shrink-0 gap-2">
-          {slot.attended && slot.myLogId ? (
+          {!posted ? (
+            // 내용 없음 — 출석 버튼만(D-143)
+            <Button className="h-12 flex-1 rounded-full text-base shadow-none" disabled={!!busy || slot.attended} onClick={attendOnly}>
+              {busy === "attend" && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
+              {slot.attended ? (
+                <>
+                  <Check data-icon="inline-start" aria-hidden />
+                  출석했어요
+                </>
+              ) : (
+                "출석"
+              )}
+            </Button>
+          ) : slot.attended && !slot.myLogId ? (
+            // 내용 없을 때 먼저 출석 → 이제 내용이 올라옴: 같은 출석에 기록만 붙인다
+            <Button className="h-12 flex-1 rounded-full text-base shadow-none" disabled={!!busy} onClick={() => run("attend")}>
+              {busy === "attend" && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
+              내 기록에 저장
+            </Button>
+          ) : slot.attended && slot.myLogId ? (
             <Button asChild className="h-12 flex-1 rounded-full text-base shadow-none">
               <Link href={`/app/log/${slot.myLogId}`}>
                 <Check data-icon="inline-start" aria-hidden />

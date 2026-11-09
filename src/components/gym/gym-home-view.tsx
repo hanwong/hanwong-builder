@@ -128,6 +128,7 @@ function SlotCard({ slot, gymId, coachNames, today }: { slot: DaySlot; gymId: st
   const cls = slot.cls;
   const canceled = cls?.status === "canceled";
   const posted = cls?.status === "posted";
+  const openOnly = cls?.status === "open"; // 내용 없이 관원이 먼저 출석(D-143)
   // 앞날짜는 미리 등록 가능(D-134), 지난 수업은 7일 전까지만 등록 · 휴강(DB 정책과 같게)
   const tooOld = slot.heldOn < addDays(today, -7);
   void coachNames;
@@ -157,6 +158,7 @@ function SlotCard({ slot, gymId, coachNames, today }: { slot: DaySlot; gymId: st
           </span>
         )}
         {canceled && <Badge variant="outline">휴강</Badge>}
+        {openOnly && <span className="mt-1 text-[13px] text-muted-foreground">내용 없이 출석 {cls.attendance}명</span>}
       </div>
       {posted ? (
         <Button asChild variant="outline" size="sm" className="rounded-full">

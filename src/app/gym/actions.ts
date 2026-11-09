@@ -166,9 +166,21 @@ export async function cancelClass(gymId: string, scheduleId: string, heldOn: str
   } = await supabase.auth.getUser();
   if (!user) return fail("로그인이 풀렸어요.");
   if (undo) {
-    const { error } = await supabase.from("gym_classes").delete().eq("gym_id", gymId).eq("schedule_id", scheduleId).eq("held_on", heldOn).eq("status", "canceled");
+    // 출석이 있던 줄(먼저 출석 → 휴강, D-143)은 지우지 않고 출석만 열린 상태로 되돌린다
+    const row = await supabase.from("gym_classes").select("id, gym_attendance(id)").eq("gym_id", gymId).eq("schedule_id", scheduleId).eq("held_on", heldOn).eq("status", "canceled").maybeSingle();
+    const { error } = row.data?.gym_attendance.length
+      ? await supabase.from("gym_classes").update({ status: "open" }).eq("id", row.data.id)
+      : await supabase.from("gym_classes").delete().eq("gym_id", gymId).eq("schedule_id", scheduleId).eq("held_on", heldOn).eq("status", "canceled");
     if (error) return fail("되돌리지 못했어요.");
   } else {
+    // 관원이 먼저 출석한 줄(open)이 있으면 그 줄을 휴강으로
+    const open = await supabase.from("gym_classes").update({ status: "canceled" }).eq("gym_id", gymId).eq("schedule_id", scheduleId).eq("held_on", heldOn).eq("status", "open").select("id");
+    if (open.error) return fail("휴강으로 바꾸지 못했어요.");
+    if (open.data?.length) {
+      revalidatePath("/gym", "layout");
+      revalidatePath("/app", "layout");
+      return { ok: true };
+    }
     const { error } = await supabase
       .from("gym_classes")
       .insert({ gym_id: gymId, schedule_id: scheduleId, held_on: heldOn, name: name.slice(0, 20), starts_at: startsAt, status: "canceled", posted_by: user.id });
@@ -225,6 +237,26 @@ export async function postClass(gymId: string, input: ClassInput): Promise<Res<{
   if (!user) return fail("로그인이 풀렸어요.");
   // 휴강으로 만들어 둔 줄이 있으면 그 줄을 쓴다
   if (v.scheduleId) await supabase.from("gym_classes").delete().eq("gym_id", gymId).eq("schedule_id", v.scheduleId).eq("held_on", v.heldOn).eq("status", "canceled");
+  // 관원이 내용 없이 먼저 출석한 줄(open, D-143)이 있으면 그 줄에 내용을 올린다 — 출석은 그대로
+  const open = v.scheduleId
+    ? await supabase.from("gym_classes").select("id").eq("gym_id", gymId).eq("schedule_id", v.scheduleId).eq("held_on", v.heldOn).eq("status", "open").maybeSingle()
+    : { data: null };
+  if (open.data) {
+    const { error: upErr } = await supabase
+      .from("gym_classes")
+      .update({ status: "posted", name: v.name, starts_at: v.startsAt, body: v.body, posted_by: user.id, updated_at: new Date().toISOString() })
+      .eq("id", open.data.id);
+    if (upErr) return fail("등록하지 못했어요. 다시 눌러 주세요.");
+    const t0 = await techniqueRows(supabase, open.data.id, v);
+    if (t0.error || !t0.rows) return fail("기술을 저장하지 못했어요. 다시 눌러 주세요.");
+    if (t0.rows.length) {
+      const { error: tErr } = await supabase.from("gym_class_techniques").insert(t0.rows);
+      if (tErr) return fail("기술을 저장하지 못했어요. 다시 눌러 주세요.");
+    }
+    revalidatePath("/gym", "layout");
+    revalidatePath("/app", "layout");
+    return { ok: true, id: open.data.id };
+  }
   const { data: cls, error } = await supabase
     .from("gym_classes")
     .insert({ gym_id: gymId, schedule_id: v.scheduleId, held_on: v.heldOn, name: v.name, starts_at: v.startsAt, body: v.body, posted_by: user.id })
@@ -292,6 +324,20 @@ export async function attendClass(classId: string): Promise<Res<{ id: string }>>
   if (error || !data) {
     console.error("attendClass failed:", error?.code);
     return fail(error?.code === "P0002" ? "수업 내용이 아직 없거나 휴강이에요." : error?.code === "42501" ? "이 체육관 관원이 아니에요." : "출석하지 못했어요. 다시 눌러 주세요.");
+  }
+  revalidatePath("/app", "layout");
+  revalidatePath("/gym", "layout");
+  return { ok: true, id: data };
+}
+
+// 내용 없는 오늘 수업에 출석(D-143) — 출석만 남고 기록은 안 생긴다(내용이 있으면 출석 + 저장과 같음)
+export async function attendSlot(gymId: string, scheduleId: string): Promise<Res<{ id: string }>> {
+  if (!UUID.test(gymId) || !UUID.test(scheduleId)) return fail("없는 수업이에요.");
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase.rpc("attend_slot", { p_gym: gymId, p_schedule: scheduleId });
+  if (error || !data) {
+    console.error("attendSlot failed:", error?.code);
+    return fail(error?.code === "P0002" ? "오늘 수업이 아니거나 휴강이에요." : error?.code === "42501" ? "이 체육관 관원이 아니에요." : "출석하지 못했어요. 다시 눌러 주세요.");
   }
   revalidatePath("/app", "layout");
   revalidatePath("/gym", "layout");

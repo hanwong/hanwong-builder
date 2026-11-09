@@ -604,6 +604,9 @@ isOneToOne: false
 "attend_class":
 { Args: { "p_class": string }; Returns: string
                            },
+"attend_slot":
+{ Args: { "p_gym": string,"p_schedule": string }; Returns: string
+                           },
 "class_log_for":
 { Args: { "p_class": string }; Returns: string
                            },

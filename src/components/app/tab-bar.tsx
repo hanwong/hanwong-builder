@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { House, PenLine, Map, MessageCircleQuestion, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// 하단 탭 4개 (DESIGN.md 4). 복습 탭은 D-58 로 뺐다. 홈 · 기록 탭에는 위에 떠 있는 기록하기(D-67).
+// 하단 탭 4개 (DESIGN.md 4). 복습 탭은 D-58 로 뺐다. 기록 탭에는 위에 떠 있는 기록하기(D-67, 홈에서는 D-143 로 뺌).
 const tabs: { href: string; label: string; Icon: typeof House; ready: boolean; match?: string[] }[] = [
   { href: "/app", label: "홈", Icon: House, ready: true },
   { href: "/app/ask", label: "질문하기", Icon: MessageCircleQuestion, ready: true }, // 질문 홈 · 답 보기(D-118 · D-119)
@@ -19,7 +19,8 @@ export function TabBar() {
   if (pathname === "/app/login" || pathname === "/app/start") return null; // 로그인 · 시작하기(D-59)는 탭 없이 카드 하나만
   return (
     <>
-      {(pathname === "/app" || pathname === "/app/logs") && <RecordButton key={pathname} />}
+      {/* 홈에서는 뺌(D-143) — 기록 탭에만 */}
+      {pathname === "/app/logs" && <RecordButton key={pathname} />}
       <TabBarView pathname={pathname} />
     </>
   );
