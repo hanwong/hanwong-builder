@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogDescription, DialogTitle, ModalBody, ModalContent, ModalFooter } from "@/components/ui/dialog";
 import { BottomAction } from "@/components/app/bottom-action";
 import { GymHeader } from "@/components/gym/gym-header";
 import { CLASS_BG, ScheduleTable } from "@/components/gym/schedule-table";
@@ -118,7 +118,7 @@ function ScheduleDialog({
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent showCloseButton={false} className="flex flex-col gap-4 p-4 sm:max-w-md">
+      <ModalContent>
         <div className="flex items-center justify-between">
           <DialogTitle className="text-[17px] font-semibold">{schedule ? "수업 고치기" : "수업 추가"}</DialogTitle>
           <Button variant="ghost" size="icon" aria-label="닫기" className="-mr-1 rounded-full" onClick={onClose}>
@@ -127,6 +127,7 @@ function ScheduleDialog({
         </div>
         <DialogDescription className="sr-only">수업 이름 · 색 · 요일 · 시작 시각 · 수업 시간 · 담당 코치를 정해요.</DialogDescription>
 
+        <ModalBody>
         <div className="flex flex-col gap-2">
           <Label htmlFor="sch-name" className="text-[15px] font-semibold">
             수업 이름
@@ -253,8 +254,9 @@ function ScheduleDialog({
             ))}
           </NativeSelect>
         </div>
+        </ModalBody>
 
-        <div className="flex items-center gap-2">
+        <ModalFooter>
           {schedule && (
             <Button variant="ghost" className="rounded-full text-destructive" disabled={removing} onClick={remove}>
               {removing && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
@@ -265,8 +267,8 @@ function ScheduleDialog({
             {saving && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
             저장
           </Button>
-        </div>
-      </DialogContent>
+        </ModalFooter>
+      </ModalContent>
     </Dialog>
   );
 }

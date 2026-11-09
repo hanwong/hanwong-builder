@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogDescription, DialogTitle, ModalBody, ModalContent, ModalFooter } from "@/components/ui/dialog";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { GymHeader } from "@/components/gym/gym-header";
 import { deleteGym, demoteCoach, leaveGym, regenCode, transferOwner, updateGym } from "@/app/gym/actions";
@@ -177,47 +177,53 @@ function DeleteGymDialog({ gymId, gymName, onClose }: { gymId: string; gymName: 
 
   return (
     <Dialog open onOpenChange={(o) => !o && !busy && onClose()}>
-      <DialogContent showCloseButton={false} className="flex flex-col gap-4 p-4 sm:max-w-md">
+      <ModalContent>
         <div className="flex items-center justify-between">
           <DialogTitle className="text-[17px] font-semibold text-destructive">체육관 지우기</DialogTitle>
           <Button variant="ghost" size="icon" aria-label="닫기" className="-mr-1 rounded-full" disabled={busy} onClick={onClose}>
             <X />
           </Button>
         </div>
-        <DialogDescription className="text-[14px] leading-relaxed text-muted-foreground">
-          지우려면 체육관 이름 <strong className="font-semibold text-foreground">{gymName}</strong> 을(를) 똑같이 적어 주세요.
-        </DialogDescription>
-        <Input
-          value={typed}
-          onChange={(e) => {
-            setTyped(e.target.value);
-            setConfirming(false);
-          }}
-          placeholder={gymName}
-          aria-label="체육관 이름 확인"
-          autoComplete="off"
-          className="h-11 rounded-xl text-base"
-          disabled={busy}
-        />
-        {confirming ? (
-          <div className="flex flex-col gap-2 rounded-xl bg-muted/60 p-3">
-            <p className="text-[15px]">체육관을 지우면 시간표 · 수업 내용 · 코멘트가 사라져요. 관원의 기록은 관원 것으로 남아요.</p>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" className="rounded-full" disabled={busy} onClick={() => setConfirming(false)}>
+        <ModalBody className="gap-3">
+          <DialogDescription className="text-[14px] leading-relaxed text-muted-foreground">
+            지우려면 체육관 이름 <strong className="font-semibold text-foreground">{gymName}</strong> 을(를) 똑같이 적어 주세요.
+          </DialogDescription>
+          <Input
+            value={typed}
+            onChange={(e) => {
+              setTyped(e.target.value);
+              setConfirming(false);
+            }}
+            placeholder={gymName}
+            aria-label="체육관 이름 확인"
+            autoComplete="off"
+            className="h-11 rounded-xl text-base"
+            disabled={busy}
+          />
+          {confirming && (
+            <p className="rounded-xl bg-muted/60 p-3 text-[15px]">
+              체육관을 지우면 시간표 · 수업 내용 · 코멘트가 사라져요. 관원의 기록은 관원 것으로 남아요.
+            </p>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          {confirming ? (
+            <>
+              <Button variant="outline" className="h-11 flex-1 rounded-full text-[15px] shadow-none" disabled={busy} onClick={() => setConfirming(false)}>
                 아니요
               </Button>
-              <Button variant="destructive" size="sm" className="rounded-full" disabled={busy} onClick={remove}>
+              <Button variant="destructive" className="h-11 flex-1 rounded-full text-[15px]" disabled={busy} onClick={remove}>
                 {busy && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
                 삭제
               </Button>
-            </div>
-          </div>
-        ) : (
-          <Button variant="destructive" className="h-11 rounded-full text-[15px]" disabled={!matches} onClick={() => setConfirming(true)}>
-            삭제
-          </Button>
-        )}
-      </DialogContent>
+            </>
+          ) : (
+            <Button variant="destructive" className="h-11 w-full rounded-full text-[15px]" disabled={!matches} onClick={() => setConfirming(true)}>
+              삭제
+            </Button>
+          )}
+        </ModalFooter>
+      </ModalContent>
     </Dialog>
   );
 }

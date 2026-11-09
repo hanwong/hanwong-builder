@@ -6,6 +6,7 @@ import { Dialog as DialogPrimitive } from "radix-ui"
 
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
+import { useFloatingDialog } from "@/lib/use-floating-dialog"
 
 function Dialog({
   ...props
@@ -154,7 +155,56 @@ function DialogDescription({
   )
 }
 
+// 리리롤 공통 팝업 틀 (D-145) — 모든 팝업은 이 셋으로 만든다.
+// ModalContent: 화면 위쪽에 떠 있고(키보드가 올라와도 보이는 영역 안), 뒤 화면은 고정.
+// ModalBody: 내용 — 길면 이 안에서만 위아래로 스크롤.
+// ModalFooter: 아래 버튼 줄 — 스크롤과 상관없이 항상 보임.
+function ModalContent({
+  open = true,
+  className,
+  style,
+  ...props
+}: Omit<React.ComponentProps<typeof DialogContent>, "showCloseButton"> & {
+  open?: boolean
+}) {
+  const floating = useFloatingDialog(open)
+  return (
+    <DialogContent
+      showCloseButton={false}
+      className={cn("flex flex-col gap-3.5 p-3.5 sm:max-w-md", className)}
+      style={{ ...floating, overscrollBehavior: "contain", ...style }}
+      {...props}
+    />
+  )
+}
+
+function ModalBody({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="modal-body"
+      className={cn(
+        "-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-1",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function ModalFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="modal-footer"
+      className={cn("flex shrink-0 items-center gap-2", className)}
+      {...props}
+    />
+  )
+}
+
 export {
+  ModalBody,
+  ModalContent,
+  ModalFooter,
   Dialog,
   DialogClose,
   DialogContent,

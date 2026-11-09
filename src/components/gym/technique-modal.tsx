@@ -4,18 +4,16 @@ import { useEffect, useState } from "react";
 import { Loader2, ShieldAlert, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogDescription, DialogTitle, ModalBody, ModalContent } from "@/components/ui/dialog";
 import { PositionPicture } from "@/components/app/position-picture";
 import { YoutubeLink } from "@/components/app/youtube-link";
 import { getTechniqueCard, type TechniqueCard } from "@/app/gym/actions";
-import { useFloatingDialog } from "@/lib/use-floating-dialog";
 import { AI_NOTICE } from "@/lib/ai-notice";
 
 // 관장 화면 기술 팝업 (D-136) — 관원 기술 · 수업 기술을 누르면 기술 목록 탭으로 넘어가지 않고 이 자리에서 읽는다.
 // 내 숙련도 · 내 정리는 보는 사람(관장) 것이라 넣지 않고, 기술 설명만. slug 가 null 이면 닫힘
 export function TechniqueModal({ slug, onClose }: { slug: string | null; onClose: () => void }) {
   const open = slug !== null;
-  const floating = useFloatingDialog(open);
   const [card, setCard] = useState<{ slug: string; data: TechniqueCard | null } | null>(null);
   const loading = open && card?.slug !== slug;
 
@@ -34,11 +32,7 @@ export function TechniqueModal({ slug, onClose }: { slug: string | null; onClose
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent
-        showCloseButton={false}
-        className="sm:max-w-md"
-        style={{ ...floating, display: "flex", flexDirection: "column", gap: "14px", padding: "16px", overflowY: "auto", overscrollBehavior: "contain" }}
-      >
+      <ModalContent open={open}>
         <div className="flex items-start gap-3">
           <div className="flex min-w-0 flex-1 flex-col gap-1.5">
             {t?.position && (
@@ -62,6 +56,8 @@ export function TechniqueModal({ slug, onClose }: { slug: string | null; onClose
           </Button>
         </div>
         <DialogDescription className="sr-only">기술 설명 — 세팅 과정과 규정 · 안전</DialogDescription>
+
+        <ModalBody className="gap-3.5">
 
         {loading ? (
           <div className="flex justify-center py-8">
@@ -99,7 +95,8 @@ export function TechniqueModal({ slug, onClose }: { slug: string | null; onClose
             </section>
           </>
         )}
-      </DialogContent>
+        </ModalBody>
+      </ModalContent>
     </Dialog>
   );
 }

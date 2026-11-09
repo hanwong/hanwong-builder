@@ -13,6 +13,9 @@ import {
   DialogContent,
   DialogDescription,
   DialogTitle,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
 } from "@/components/ui/dialog";
 import {
   attendClass,
@@ -422,10 +425,7 @@ export function JoinDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent
-        showCloseButton={false}
-        className="flex flex-col gap-4 p-4 sm:max-w-md"
-      >
+      <ModalContent>
         <div className="flex items-center justify-between">
           <DialogTitle className="text-[17px] font-semibold">
             {gym ? "관장님 · 코치가 보는 것" : "내 체육관 들어가기"}
@@ -446,7 +446,10 @@ export function JoinDialog({ onClose }: { onClose: () => void }) {
         </DialogDescription>
 
         {!gym ? (
+          <>
+          <ModalBody className="gap-3">
           <form
+            id="join-gym-code"
             className="flex flex-col gap-3"
             onSubmit={(e) => {
               e.preventDefault();
@@ -474,9 +477,13 @@ export function JoinDialog({ onClose }: { onClose: () => void }) {
             <p className="text-[13px] text-muted-foreground">
               관장님이 단톡방에 올린 6자리 코드예요.
             </p>
+          </form>
+          </ModalBody>
+          <ModalFooter>
             <Button
               type="submit"
-              className="h-12 rounded-full text-base"
+              form="join-gym-code"
+              className="h-12 w-full rounded-full text-base"
               disabled={code.length !== 6 || checking}
             >
               {checking && (
@@ -488,9 +495,11 @@ export function JoinDialog({ onClose }: { onClose: () => void }) {
               )}
               확인
             </Button>
-          </form>
+          </ModalFooter>
+          </>
         ) : (
-          <div className="flex flex-col gap-4">
+          <>
+          <ModalBody>
             <div className="rounded-xl bg-muted/60 px-4 py-3">
               <p className="text-[17px] font-semibold">{gym.name}</p>
               {(gym.network || gym.region) && (
@@ -554,7 +563,8 @@ export function JoinDialog({ onClose }: { onClose: () => void }) {
                 </p>
               </div>
             )}
-            <div className="flex items-center gap-2">
+          </ModalBody>
+            <ModalFooter>
               <Button
                 variant="ghost"
                 className="rounded-full"
@@ -578,10 +588,10 @@ export function JoinDialog({ onClose }: { onClose: () => void }) {
                   동의하고 들어가기
                 </Button>
               )}
-            </div>
-          </div>
+            </ModalFooter>
+          </>
         )}
-      </DialogContent>
+      </ModalContent>
     </Dialog>
   );
 }
