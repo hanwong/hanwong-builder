@@ -10,6 +10,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { BottomAction } from "@/components/app/bottom-action";
 import { GymHeader } from "@/components/gym/gym-header";
+import { ScheduleTable } from "@/components/gym/schedule-table";
 import { addSchedule, removeSchedule, updateSchedule } from "@/app/gym/actions";
 import { WEEKDAY_KO } from "@/lib/gym-shared";
 import type { GymSchedulePage, Schedule } from "@/lib/gym-data";
@@ -29,6 +30,9 @@ export function GymScheduleView({ data }: { data: GymSchedulePage }) {
       <GymHeader gym={data.gym} all={[data.gym]} />
       <h2 className="text-[22px] font-bold tracking-tight">수업 스케줄</h2>
       <p className="text-[13px] leading-relaxed text-muted-foreground">매주 반복되는 수업이에요. 하루 쉬는 날은 홈의 수업 카드에서 &lsquo;휴강&rsquo;으로.</p>
+
+      {/* 시간표 (D-135) — 맨 위에 한눈에, 칸을 누르면 고치기 */}
+      <ScheduleTable schedules={data.schedules} onPick={setEditing} />
 
       <div className="flex flex-col divide-y divide-border overflow-hidden rounded-2xl bg-card ring-1 ring-border">
         {ORDER.map((wd) => {

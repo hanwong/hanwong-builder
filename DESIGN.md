@@ -189,6 +189,7 @@
 - 숫자 줄: "관원 12 · 이번 주 출석 31" 15px semibold, 숫자만 `tabular-nums`. 가입 코드 카드: 연한 상자(`bg-muted/60` rounded-xl) 안 코드 6자 24px bold `tracking-[0.3em]` + outline "복사" + 13px "단톡방에 올려 주세요". 코치 코드는 관장만, 접힌 줄("코치 초대 코드" + `ChevronDown`).
 
 ### 스케줄 `/gym/schedule`
+- 시간표(D-135, `ScheduleTable`): 맨 위 표 `rounded-2xl ring-1 ring-border bg-card`, 칸 사이 `border-border` 선. 시간 열 52px 11px semibold(끝 시각 muted), 요일 머리 13px semibold(토 `text-chart-3`, 일 `text-destructive`). 수업 칸 11px semibold 줄바꿈(`break-keep`), 최소 높이 44px. 칸 색은 이름으로: 어린이 · 유소년 · 키즈 · 유아 → `bg-class-kids`(연노랑), 초보 · 기본 · 입문 → `bg-class-basic`(연두), 나머지 `bg-card`. 휴대폰보다 넓으면 표만 가로 스크롤.
 - 요일 7묶음 세로. 묶음 제목 "월요일" 15px semibold, 줄: 시간 15px `tabular-nums` · 이름 · 코치 캡션 · 오른쪽 `ChevronRight`. 수업 없는 요일은 "수업 없음" 13px muted 한 줄.
 - "+ 수업 추가"는 화면 아래 고정 검정 알약(`BottomAction` 재사용). 팝업은 기록 화면 팝업과 같은 `Dialog`: 이름(칩 5개 + 직접 입력), 요일(7칸 토글 — 선택 = `bg-foreground text-background`), 시작 시각(`<input type="time">`, 16px), 길이(45 · 60 · 90 칩), 담당 코치(`NativeSelect`), 저장.
 - 휴강 표시: 줄 오른쪽 "휴강" `Badge variant="outline"` + 취소선 이름.
