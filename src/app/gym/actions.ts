@@ -371,3 +371,35 @@ export async function deleteGym(gymId: string): Promise<Res> {
   revalidatePath("/app", "layout");
   return { ok: true };
 }
+
+// 관장 화면 기술 팝업(D-136) — 기술 설명만(이름 · 포지션 · 세팅 과정 · 규정). 읽기 권한은 techniques 접근 규칙 그대로
+export type TechniqueCard = {
+  slug: string;
+  nameKo: string;
+  nameEn: string;
+  aliases: string[];
+  position: string;
+  positionSlug: string | null;
+  steps: string[];
+  rules: string[];
+};
+export async function getTechniqueCard(slug: string): Promise<TechniqueCard | null> {
+  if (!/^[a-z0-9-]{1,100}$/.test(slug)) return null;
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase
+    .from("techniques")
+    .select("slug, name_ko, name_en, aliases, steps, rules, positions(slug, name_ko)")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error || !data) return null;
+  return {
+    slug: data.slug,
+    nameKo: data.name_ko,
+    nameEn: data.name_en,
+    aliases: data.aliases ?? [],
+    position: data.positions?.name_ko ?? "",
+    positionSlug: data.positions?.slug ?? null,
+    steps: data.steps ?? [],
+    rules: data.rules ?? [],
+  };
+}

@@ -188,6 +188,8 @@
 - 오늘 수업 카드(등록 전): 카드 안 왼쪽 시간 20px bold(`20:00`) + 수업 이름 15px · 코치 캡션 → 오른쪽 **검정 알약 "내용 등록"**(화면의 주 동작). 등록 뒤: 기술 칩 최대 3개 + "+N" · "출석 N명" 13px muted → 오른쪽 outline "보기".
 - 숫자 줄: "관원 12 · 이번 주 출석 31" 15px semibold, 숫자만 `tabular-nums`. 가입 코드 카드: 연한 상자(`bg-muted/60` rounded-xl) 안 코드 6자 24px bold `tracking-[0.3em]` + outline "복사" + 13px "단톡방에 올려 주세요". 코치 코드는 관장만, 접힌 줄("코치 초대 코드" + `ChevronDown`).
 
+- 기술 팝업(D-136, `TechniqueModal`): 관장 화면에서 기술을 누르면 떠 있는 팝업(내 설정과 같은 `useFloatingDialog`, 안에서 세로 스크롤). 위: 포지션 배지 · 22px bold 이름(mark-lime) · 영어 이름 13px muted · 오른쪽 포지션 그림 72px · 닫기 X. 아래: 규정 · 안전(`bg-muted/60` 상자, 있을 때만) → 세팅 과정 번호 목록 15px → AI 안내 12px → 유튜브 알약. 숙련도 · 정리 모음은 없음.
+
 ### 스케줄 `/gym/schedule`
 - 시간표(D-135, `ScheduleTable`): 맨 위 표 `rounded-2xl ring-1 ring-border bg-card`, 칸 사이 `border-border` 선. 시간 열 52px 11px semibold(끝 시각 muted), 요일 머리 13px semibold(토 `text-chart-3`, 일 `text-destructive`). 수업 칸 11px semibold 줄바꿈(`break-keep`), 최소 높이 44px. 칸 색은 이름으로: 어린이 · 유소년 · 키즈 · 유아 → `bg-class-kids`(연노랑), 초보 · 기본 · 입문 → `bg-class-basic`(연두), 나머지 `bg-card`. 휴대폰보다 넓으면 표만 가로 스크롤.
 - 요일 7묶음 세로. 묶음 제목 "월요일" 15px semibold, 줄: 시간 15px `tabular-nums` · 이름 · 코치 캡션 · 오른쪽 `ChevronRight`. 수업 없는 요일은 "수업 없음" 13px muted 한 줄.

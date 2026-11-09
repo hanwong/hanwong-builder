@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { TechniqueModal } from "@/components/gym/technique-modal";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -20,6 +21,7 @@ export function MemberLogView({ data }: { data: MemberLog }) {
   const router = useRouter();
   const { log, gym } = data;
   const [draft, setDraft] = useState("");
+  const [tech, setTech] = useState<string | null>(null); // 기술 팝업(D-136)
   const [sending, start] = useTransition();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
@@ -93,9 +95,9 @@ export function MemberLogView({ data }: { data: MemberLog }) {
             </CardContent>
           );
           return t.public && t.slug ? (
-            <Link key={i} href={`/app/skills/${t.slug}`} className="block rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
-              <Card className="rounded-2xl ring-border">{body}</Card>
-            </Link>
+            <button key={i} type="button" onClick={() => setTech(t.slug)} className="block w-full rounded-2xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+              <Card className="rounded-2xl ring-border transition-colors hover:bg-muted">{body}</Card>
+            </button>
           ) : (
             <Card key={i} className="rounded-2xl ring-border">
               {body}
@@ -178,6 +180,7 @@ export function MemberLogView({ data }: { data: MemberLog }) {
           </Button>
         </div>
       </BottomAction>
+      <TechniqueModal slug={tech} onClose={() => setTech(null)} />
     </div>
   );
 }

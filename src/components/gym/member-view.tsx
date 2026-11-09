@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BeltDot } from "@/components/app/belt-dot";
 import { PositionPicture } from "@/components/app/position-picture";
+import { TechniqueModal } from "@/components/gym/technique-modal";
 import { BELTS, trainingSpan } from "@/lib/belt";
 import { adultBeltOf, type AdultBelt } from "@/lib/adult-belt";
 import type { BeltList } from "@/lib/belt-techniques-data";
@@ -23,6 +24,7 @@ export function MemberView({ data, belts }: { data: MemberDetail; belts: BeltLis
   const { member, month, logs } = data;
   const b = BELTS.find((x) => x.value === member.belt);
   const [belt, setBelt] = useState<AdultBelt>(adultBeltOf(member.belt));
+  const [tech, setTech] = useState<string | null>(null); // 기술 팝업(D-136)
   const list = belts.find((x) => x.belt === belt) ?? belts[0];
   const pct = list.total ? Math.round((list.learned / list.total) * 100) : 0;
 
@@ -109,7 +111,7 @@ export function MemberView({ data, belts }: { data: MemberDetail; belts: BeltLis
               <ul className="flex flex-col pb-2">
                 {g.skills.map((s) => (
                   <li key={s.slug}>
-                    <Link href={`/app/skills/${s.slug}`} className="flex min-w-0 items-center gap-2.5 px-4 py-2 transition-colors hover:bg-muted">
+                    <button type="button" onClick={() => setTech(s.slug)} className="flex w-full min-w-0 items-center gap-2.5 px-4 py-2 text-left transition-colors hover:bg-muted">
                       {s.learned ? (
                         <CircleCheck className="size-5 shrink-0 fill-accent text-foreground" strokeWidth={1.75} aria-label="적어 봤음" />
                       ) : (
@@ -118,7 +120,7 @@ export function MemberView({ data, belts }: { data: MemberDetail; belts: BeltLis
                       <span className="min-w-0 flex-1 truncate text-[15px]">{s.nameKo}</span>
                       {s.count > 0 && <span className="text-[13px] text-muted-foreground tabular-nums">{s.count}번</span>}
                       {s.level && <Badge variant="secondary">{LEVEL_LABEL.get(s.level)}</Badge>}
-                    </Link>
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -157,6 +159,7 @@ export function MemberView({ data, belts }: { data: MemberDetail; belts: BeltLis
           </ul>
         )}
       </section>
+      <TechniqueModal slug={tech} onClose={() => setTech(null)} />
     </div>
   );
 }

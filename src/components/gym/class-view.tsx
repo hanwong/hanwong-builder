@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { TechniqueModal } from "@/components/gym/technique-modal";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -19,6 +20,7 @@ import { formatKoreanDate } from "@/lib/seoul-date";
 export function ClassView({ data }: { data: ClassDetail }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
+  const [tech, setTech] = useState<string | null>(null); // 기술 팝업(D-136)
   const [confirm, setConfirm] = useState(false);
   const [deleting, start] = useTransition();
   const { cls, attendees } = data;
@@ -83,13 +85,13 @@ export function ClassView({ data }: { data: ClassDetail }) {
         {cls.techniques.length === 0 && <p className="text-[15px] text-muted-foreground">기술 없이 메모만 있는 수업이에요.</p>}
         {cls.techniques.map((t, i) =>
           t.slug ? (
-            <Link key={i} href={`/app/skills/${t.slug}`} className="block rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
-              <Card className="rounded-2xl ring-border" size="sm">
+            <button key={i} type="button" onClick={() => setTech(t.slug)} className="block w-full rounded-2xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+              <Card className="rounded-2xl ring-border transition-colors hover:bg-muted" size="sm">
                 <CardContent className="text-[17px] font-semibold">
                   <span className="mark-lime">{t.nameKo}</span>
                 </CardContent>
               </Card>
-            </Link>
+            </button>
           ) : (
             <Card key={i} className="rounded-2xl ring-border" size="sm">
               <CardContent className="flex items-center gap-2">
@@ -155,6 +157,7 @@ export function ClassView({ data }: { data: ClassDetail }) {
           이 수업 내용 지우기
         </Button>
       )}
+      <TechniqueModal slug={tech} onClose={() => setTech(null)} />
     </div>
   );
 }
