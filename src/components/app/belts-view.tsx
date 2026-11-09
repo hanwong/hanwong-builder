@@ -19,7 +19,7 @@ const LEVEL_LABEL = new Map(LEVELS.map((l) => [l.value, l.label]));
 // 벨트별 기술 (D-126, FLOW · DESIGN '벨트별 기술') — 벨트 탭 5개(처음엔 내 벨트) → 포지션별 목록 → ✓ · N번 · 숙련도.
 // 앱이 "익혔다"를 판정하지 않는다 — ✓ 는 "내 기록에 적어 봤다"는 사실뿐.
 export function BeltsView({ myBelt, belts, drills }: { myBelt: AdultBelt; belts: BeltList[]; drills: DrillChip[] }) {
-  const router = useRouter();
+  const router = useRouter(); // 뒤로: 들어온 화면(홈 카드, D-142), 없으면 홈
   const [belt, setBelt] = useState<AdultBelt>(myBelt);
   const list = belts.find((b) => b.belt === belt) ?? belts[0];
   const pct = list.total ? Math.round((list.learned / list.total) * 100) : 0;
@@ -27,7 +27,7 @@ export function BeltsView({ myBelt, belts, drills }: { myBelt: AdultBelt; belts:
   return (
     <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-2">
-        <Button variant="ghost" size="icon" aria-label="뒤로" className="-ml-2 rounded-full" onClick={() => (window.history.length > 1 ? router.back() : router.push("/app"))} // 들어오는 길은 홈 카드(D-142)>
+        <Button variant="ghost" size="icon" aria-label="뒤로" className="-ml-2 rounded-full" onClick={() => (window.history.length > 1 ? router.back() : router.push("/app"))}>
           <ArrowLeft className="size-5" strokeWidth={1.75} />
         </Button>
         <h1 className="text-[22px] font-bold tracking-tight">벨트별 기술</h1>
