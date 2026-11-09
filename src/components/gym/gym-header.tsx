@@ -27,7 +27,7 @@ export function GymHeader({ gym, all }: { gym: MyGym; all: MyGym[] }) {
           >
             {all.map((g) => (
               <NativeSelectOption key={g.id} value={g.id}>
-                {g.name}
+                {g.network ? `${g.name} · ${g.network}` : g.name}
               </NativeSelectOption>
             ))}
           </NativeSelect>
@@ -36,6 +36,7 @@ export function GymHeader({ gym, all }: { gym: MyGym; all: MyGym[] }) {
       ) : (
         <h1 className="min-w-0 truncate text-[17px] font-bold tracking-tight">{gym.name}</h1>
       )}
+      {gym.network && <span className="shrink-0 text-[13px] font-medium text-muted-foreground">· {gym.network}</span>}
       <Badge variant="secondary">{ROLE_LABEL[gym.role]}</Badge>
     </header>
   );

@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import { GYM_COOKIE } from "@/lib/gym-shared";
+import { GYM_COOKIE, isGymNetwork } from "@/lib/gym-shared";
 import { isIsoDate, seoulToday, addDays } from "@/lib/seoul-date";
 
 // 관장님 버전 서버 동작 (D-127). 체육관 · 가입 · 스케줄 · 수업 · 출석 · 코멘트. 비밀값 없음 — 접근 규칙은 DB(RLS · 함수)가 지킨다.
@@ -12,11 +12,17 @@ const UUID = /^[0-9a-f-]{36}$/i;
 const CODE = /^[A-HJ-NP-Z2-9]{6}$/;
 const fail = (message: string): { ok: false; message: string } => ({ ok: false, message });
 
-export async function createGym(input: { name: string; si: string; gu: string }): Promise<Res<{ id: string }>> {
+export async function createGym(input: { name: string; si: string; gu: string; network: string }): Promise<Res<{ id: string }>> {
   const name = input.name.trim();
   if (name.length < 1 || name.length > 30) return fail("체육관 이름은 1~30자로 적어 주세요.");
+  if (input.network && !isGymNetwork(input.network)) return fail("목록에 있는 네트워크만 고를 수 있어요. 없으면 '없음'으로 두고 관리자에게 알려 주세요.");
   const supabase = await createSupabaseServer();
-  const { data, error } = await supabase.rpc("create_gym", { p_name: name, p_si: input.si.trim().slice(0, 20), p_gu: input.gu.trim().slice(0, 20) });
+  const { data, error } = await supabase.rpc("create_gym", {
+    p_name: name,
+    p_si: input.si.trim().slice(0, 20),
+    p_gu: input.gu.trim().slice(0, 20),
+    p_network: input.network || undefined,
+  });
   if (error || !data) {
     console.error("createGym failed:", error?.code);
     return fail(error?.code === "P0003" ? "체육관은 5개까지 등록할 수 있어요." : "등록하지 못했어요. 다시 눌러 주세요.");
@@ -33,7 +39,7 @@ export async function pickGym(id: string): Promise<void> {
   revalidatePath("/gym", "layout");
 }
 
-export type PeekedGym = { id: string; name: string; region: string | null; role: "member" | "coach"; already: string | null };
+export type PeekedGym = { id: string; name: string; network: string | null; region: string | null; role: "member" | "coach"; already: string | null };
 export async function peekGym(code: string): Promise<Res<{ gym: PeekedGym | null }>> {
   const c = code.trim().toUpperCase();
   if (!CODE.test(c)) return fail("코드는 영문 대문자 · 숫자 6자리예요.");
@@ -41,8 +47,8 @@ export async function peekGym(code: string): Promise<Res<{ gym: PeekedGym | null
   const { data, error } = await supabase.rpc("peek_gym", { p_code: c });
   if (error) return fail("확인하지 못했어요. 다시 눌러 주세요.");
   if (!data || typeof data !== "object" || Array.isArray(data)) return { ok: true, gym: null };
-  const g = data as { id: string; name: string; region_si: string | null; region_gu: string | null; role: "member" | "coach"; already: string | null };
-  return { ok: true, gym: { id: g.id, name: g.name, region: [g.region_si, g.region_gu].filter(Boolean).join(" ") || null, role: g.role, already: g.already } };
+  const g = data as { id: string; name: string; network: string | null; region_si: string | null; region_gu: string | null; role: "member" | "coach"; already: string | null };
+  return { ok: true, gym: { id: g.id, name: g.name, network: g.network ?? null, region: [g.region_si, g.region_gu].filter(Boolean).join(" ") || null, role: g.role, already: g.already } };
 }
 
 export async function joinGym(code: string): Promise<Res<{ id: string }>> {
@@ -300,12 +306,16 @@ export async function deleteComment(id: string): Promise<Res> {
 }
 
 // ---------- 설정 (관장) ----------
-export async function updateGym(gymId: string, input: { name: string; si: string; gu: string }): Promise<Res> {
+export async function updateGym(gymId: string, input: { name: string; si: string; gu: string; network: string }): Promise<Res> {
   if (!UUID.test(gymId)) return fail("없는 체육관이에요.");
   const name = input.name.trim();
   if (name.length < 1 || name.length > 30) return fail("체육관 이름은 1~30자로 적어 주세요.");
+  if (input.network && !isGymNetwork(input.network)) return fail("목록에 있는 네트워크만 고를 수 있어요.");
   const supabase = await createSupabaseServer();
-  const { error } = await supabase.from("gyms").update({ name, region_si: input.si.trim().slice(0, 20) || null, region_gu: input.gu.trim().slice(0, 20) || null }).eq("id", gymId);
+  const { error } = await supabase
+    .from("gyms")
+    .update({ name, region_si: input.si.trim().slice(0, 20) || null, region_gu: input.gu.trim().slice(0, 20) || null, network: input.network || null })
+    .eq("id", gymId);
   if (error) return fail("저장하지 못했어요.");
   revalidatePath("/gym", "layout");
   revalidatePath("/app", "layout");

@@ -500,6 +500,7 @@ export type Database = {
           id: string
           join_code: string
           name: string
+          network: string | null
           region_gu: string | null
           region_si: string | null
         }
@@ -510,6 +511,7 @@ export type Database = {
           id?: string
           join_code: string
           name: string
+          network?: string | null
           region_gu?: string | null
           region_si?: string | null
         }
@@ -520,6 +522,7 @@ export type Database = {
           id?: string
           join_code?: string
           name?: string
+          network?: string | null
           region_gu?: string | null
           region_si?: string | null
         }
@@ -1164,6 +1167,7 @@ export type Database = {
           created_at: string | null
           id: string | null
           name: string | null
+          network: string | null
           region_gu: string | null
           region_si: string | null
         }
@@ -1171,6 +1175,7 @@ export type Database = {
           created_at?: string | null
           id?: string | null
           name?: string | null
+          network?: string | null
           region_gu?: string | null
           region_si?: string | null
         }
@@ -1178,6 +1183,7 @@ export type Database = {
           created_at?: string | null
           id?: string | null
           name?: string | null
+          network?: string | null
           region_gu?: string | null
           region_si?: string | null
         }
@@ -1209,7 +1215,7 @@ export type Database = {
         Returns: string
       }
       create_gym: {
-        Args: { p_gu: string; p_name: string; p_si: string }
+        Args: { p_gu: string; p_name: string; p_network?: string; p_si: string }
         Returns: string
       }
       custom_name_counts: {

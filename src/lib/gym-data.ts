@@ -9,7 +9,7 @@ export { GYM_COOKIE, WEEKDAY_KO, hhmm };
 
 // 관장님 버전 (D-127, FLOW 8 · DB 11) — 체육관 · 역할 · 스케줄 · 수업. 기록은 사람 것이라 여기서 안 읽는다(관원 기록은 함수로만).
 export type GymRole = "owner" | "coach" | "member";
-export type MyGym = { id: string; name: string; role: GymRole };
+export type MyGym = { id: string; name: string; network: string | null; role: GymRole };
 
 type Client = Awaited<ReturnType<typeof createSupabaseServer>>;
 
@@ -17,11 +17,11 @@ type Client = Awaited<ReturnType<typeof createSupabaseServer>>;
 export async function queryMyGyms(supabase: Client, userId: string): Promise<MyGym[]> {
   const { data, error } = await supabase
     .from("gym_members")
-    .select("role, gyms(id, name)")
+    .select("role, gyms(id, name, network)")
     .eq("user_id", userId)
     .order("joined_at");
   if (error) throw new Error(`gyms: ${error.code ?? ""} ${error.message.slice(0, 80)}`);
-  return (data ?? []).flatMap((m) => (m.gyms ? [{ id: m.gyms.id, name: m.gyms.name, role: m.role as GymRole }] : []));
+  return (data ?? []).flatMap((m) => (m.gyms ? [{ id: m.gyms.id, name: m.gyms.name, network: m.gyms.network ?? null, role: m.role as GymRole }] : []));
 }
 
 // 관장 화면이 지금 보는 체육관 — 쿠키에 적힌 것, 없으면 내가 관장 · 코치인 첫 체육관. 관장 · 코치가 아니면 null
@@ -271,6 +271,7 @@ export async function getNewClassInfo(heldOn: string, scheduleId: string | null)
 export type MemberGymCard = {
   id: string;
   name: string;
+  network: string | null;
   role: GymRole;
   today: { key: string; name: string; startsAt: string; classId: string | null; status: "waiting" | "posted" | "canceled"; techniques: string[]; myLogId: string | null }[];
 };
@@ -289,6 +290,7 @@ export async function queryMemberGymCards(supabase: Client, userId: string): Pro
       return {
         id: g.id,
         name: g.name,
+        network: g.network,
         role: g.role,
         today: slotsOn(today, schedules, classes).map((s) => ({
           key: s.key,
@@ -433,6 +435,7 @@ export type SettingsPage = {
   gym: MyGym;
   all: MyGym[];
   region: string;
+  network: string;
   codes: { join: string; coach: string } | null;
   staff: { userId: string; nick: string; role: GymRole }[];
   members: { userId: string; nick: string }[];
@@ -444,7 +447,7 @@ export async function getGymSettings(): Promise<SettingsPage | null> {
   const cur = await currentStaffGym(supabase);
   if (!cur) return null;
   const [g, codes, names] = await Promise.all([
-    supabase.from("gyms").select("region_si, region_gu").eq("id", cur.gym.id).maybeSingle(),
+    supabase.from("gyms").select("region_si, region_gu, network").eq("id", cur.gym.id).maybeSingle(),
     cur.gym.role === "owner" ? supabase.rpc("gym_codes", { p_gym: cur.gym.id }) : Promise.resolve({ data: null }),
     supabase.rpc("gym_member_names", { p_gym: cur.gym.id }),
   ]);
@@ -454,6 +457,7 @@ export async function getGymSettings(): Promise<SettingsPage | null> {
     gym: cur.gym,
     all: cur.all,
     region: [g.data?.region_si, g.data?.region_gu].filter(Boolean).join(" "),
+    network: g.data?.network ?? "",
     codes: c?.join_code && c.coach_code ? { join: c.join_code, coach: c.coach_code } : null,
     staff: people.filter((n) => n.role !== "member").map((n) => ({ userId: n.user_id, nick: n.nick, role: n.role as GymRole })),
     members: people.filter((n) => n.role === "member").map((n) => ({ userId: n.user_id, nick: n.nick })),

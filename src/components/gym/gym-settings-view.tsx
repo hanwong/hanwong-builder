@@ -12,6 +12,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { GymHeader } from "@/components/gym/gym-header";
 import { deleteGym, demoteCoach, leaveGym, regenCode, transferOwner, updateGym } from "@/app/gym/actions";
 import type { SettingsPage } from "@/lib/gym-data";
+import { NetworkSelect } from "@/components/gym/network-select";
 
 // 체육관 설정 (DESIGN '관장님 버전')
 export function GymSettingsView({ data }: { data: SettingsPage }) {
@@ -19,6 +20,7 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
   const owner = data.gym.role === "owner";
   const [name, setName] = useState(data.gym.name);
   const [region, setRegion] = useState(data.region);
+  const [network, setNetwork] = useState(data.network);
   const [codes, setCodes] = useState(data.codes);
   const [transferTo, setTransferTo] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -42,8 +44,9 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
 
       {owner && (
         <section className="flex flex-col gap-3 rounded-2xl bg-card p-4 ring-1 ring-border">
-          <h3 className="text-[15px] font-semibold">이름 · 지역</h3>
+          <h3 className="text-[15px] font-semibold">이름 · 네트워크 · 지역</h3>
           <Input value={name} onChange={(e) => setName(e.target.value.slice(0, 30))} aria-label="체육관 이름" className="h-11 rounded-xl text-base" />
+          <NetworkSelect value={network} onChange={setNetwork} id="gym-network-setting" />
           <Input value={region} onChange={(e) => setRegion(e.target.value.slice(0, 41))} placeholder="시 · 도  구 · 군" aria-label="지역" className="h-11 rounded-xl text-base" />
           <Button
             size="sm"
@@ -51,7 +54,7 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
             disabled={busy || !name.trim()}
             onClick={() => {
               const [si = "", ...rest] = region.trim().split(/\s+/);
-              run(() => updateGym(data.gym.id, { name, si, gu: rest.join(" ") }), "저장했어요");
+              run(() => updateGym(data.gym.id, { name, si, gu: rest.join(" "), network }), "저장했어요");
             }}
           >
             저장

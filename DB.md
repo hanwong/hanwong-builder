@@ -377,6 +377,7 @@ FLOW 8 의 3단계. 표 6개를 더한다. 기존 표는 `class_logs` 에 칸 �
 | id | uuid | ✓ | 자동 | |
 | name | text | ✓ | | 1~30자 |
 | region_si · region_gu | text | | | 지역(선택) |
+| network | text | | | 소속 네트워크(D-128) — 앱의 목록(GYM_NETWORKS)에서 고른 이름 그대로, 없으면 null. 1~30자 |
 | join_code | text | ✓ | 자동 | 관원 가입 코드 6자리(대문자 · 숫자, 헷갈리는 0 · O · 1 · I 제외). 유일. 다시 만들기 가능 |
 | coach_code | text | ✓ | 자동 | 코치 초대 코드 6자리. 유일. 관장만 본다 |
 | created_by | uuid → auth.users | ✓ | | 처음 등록한 사람(= 첫 관장). 계정을 지우면 체육관도 지움(관장 넘기기 전엔) |

@@ -39,7 +39,7 @@ export function GymCard({ gyms }: { gyms: MemberGymCard[] }) {
         <section key={g.id} className="flex flex-col gap-2 rounded-2xl bg-card p-4 ring-1 ring-border">
           <div className="flex items-center gap-2">
             <Building2 className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden />
-            <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-muted-foreground">{g.name}</span>
+            <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-muted-foreground">{g.network ? `${g.name} · ${g.network}` : g.name}</span>
             {g.role !== "member" && (
               <Link href="/gym" className="text-[13px] font-medium underline-offset-4 hover:underline">
                 관장 화면
@@ -184,7 +184,7 @@ export function JoinDialog({ onClose }: { onClose: () => void }) {
           <div className="flex flex-col gap-4">
             <div className="rounded-xl bg-muted/60 px-4 py-3">
               <p className="text-[17px] font-semibold">{gym.name}</p>
-              {gym.region && <p className="text-[13px] text-muted-foreground">{gym.region}</p>}
+              {(gym.network || gym.region) && <p className="text-[13px] text-muted-foreground">{[gym.network, gym.region].filter(Boolean).join(" · ")}</p>}
               {gym.role === "coach" && <Badge variant="secondary" className="mt-1">코치로 들어가요</Badge>}
             </div>
             {gym.already ? (

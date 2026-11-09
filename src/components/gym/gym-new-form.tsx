@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createGym } from "@/app/gym/actions";
+import { NetworkSelect } from "@/components/gym/network-select";
 
 // 체육관 등록 폼 (DESIGN '관장님 버전') — 이름(필수) · 지역 시/구(선택) → "등록" → 체육관 홈(가입 코드 카드)
 export function GymNewForm() {
@@ -16,12 +17,13 @@ export function GymNewForm() {
   const [name, setName] = useState("");
   const [si, setSi] = useState("");
   const [gu, setGu] = useState("");
+  const [network, setNetwork] = useState("");
   const [saving, start] = useTransition();
 
   function submit() {
     if (!name.trim()) return;
     start(async () => {
-      const res = await createGym({ name, si, gu }).catch(() => null);
+      const res = await createGym({ name, si, gu, network }).catch(() => null);
       if (!res || !res.ok) {
         toast.error(res?.message ?? "등록하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
         return;
@@ -57,6 +59,7 @@ export function GymNewForm() {
         </Label>
         <Input id="gym-name" value={name} onChange={(e) => setName(e.target.value.slice(0, 30))} placeholder="예: 리리롤 주짓수" className="h-12 rounded-xl text-base" required autoFocus />
       </div>
+      <NetworkSelect value={network} onChange={setNetwork} />
       <div className="flex flex-col gap-2">
         <span className="text-[15px] font-semibold">지역 (선택)</span>
         <div className="flex gap-2">
