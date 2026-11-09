@@ -362,3 +362,134 @@
 - `approve_technique_draft(p_draft, p_due)` — 운영자 버튼. `is_operator()` 확인 뒤 위 함수를 출처 "운영자 승인(앱 초안, D-47)"로 부른다.
 - 에이전트가 넣은 기술은 `techniques.source` 가 "에이전트 자동 추가(D-117)" 로 시작한다.
 
+
+## 11. 관장님 버전 (M3-G, D-127) — 표 · 접근 규칙 · 함수
+FLOW 8 의 3단계. 표 6개를 더한다. 기존 표는 `class_logs` 에 칸 하나(`gym_class_id`), `notices` 에 칸 하나(`class_log_id`)만 더한다. 마이그레이션은 5단계(만들기)에서 `npx supabase migration new gym_*` → `db push --remote`.
+
+### 한 줄 원칙
+- **기록은 사람 것**(FLOW 8-5). 체육관 표는 기록을 "가리키기만" 한다 — 체육관 · 수업 · 코멘트가 지워져도 `class_logs` 는 안 지워진다.
+- **관장 · 코치는 자기 체육관 관원의 기록을 본다**(D-127, 메모 · 스파링 포함) — 단 **관원이 그 체육관에 있는 동안만**. 모든 읽기는 `gym_members` 를 거쳐 판정한다.
+- 관원끼리는 아무것도 못 본다. 운영자(앱 안)도 체육관 데이터는 안 본다(지금 규칙 그대로).
+
+### `gyms` — 체육관
+| 칸 | 종류 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|
+| id | uuid | ✓ | 자동 | |
+| name | text | ✓ | | 1~30자 |
+| region_si · region_gu | text | | | 지역(선택) |
+| join_code | text | ✓ | 자동 | 관원 가입 코드 6자리(대문자 · 숫자, 헷갈리는 0 · O · 1 · I 제외). 유일. 다시 만들기 가능 |
+| coach_code | text | ✓ | 자동 | 코치 초대 코드 6자리. 유일. 관장만 본다 |
+| created_by | uuid → auth.users | ✓ | | 처음 등록한 사람(= 첫 관장). 계정을 지우면 체육관도 지움(관장 넘기기 전엔) |
+| created_at | timestamptz | ✓ | now() | |
+
+### `gym_members` — 체육관 × 사람 × 역할
+| 칸 | 종류 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|
+| id | uuid | ✓ | 자동 | |
+| gym_id | uuid → gyms | ✓ | | 체육관 지우면 같이 지움 |
+| user_id | uuid → auth.users | ✓ | | 계정 지우면 같이 지움 |
+| role | text | ✓ | `'member'` | `owner` · `coach` · `member` |
+| consented_at | timestamptz | ✓ | now() | **"관장님 · 코치가 내 기록(메모 포함)을 봅니다" 동의 시각**(D-127). 관장 · 코치 줄도 들어올 때 같은 값 |
+| joined_at | timestamptz | ✓ | now() | |
+- (gym_id, user_id) 유일. 체육관마다 owner 는 1명 이상(마지막 관장은 못 빠진다 — 함수에서 막음). 나가기 = 줄 삭제(기록은 그대로, 관장이 더 못 봄).
+
+### `gym_schedules` — 매주 반복 수업 규칙
+| 칸 | 종류 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|
+| id | uuid | ✓ | 자동 | |
+| gym_id | uuid → gyms | ✓ | | |
+| name | text | ✓ | | 기본반 · 노기 · 오픈매트 · 유소년 · 직접 입력(20자) |
+| weekday | smallint | ✓ | | 0 일 ~ 6 토 (요일 여러 개 = 줄 여러 개) |
+| starts_at | time | ✓ | | 시작 시각(서울) |
+| minutes | smallint | ✓ | 60 | 길이 |
+| coach_id | uuid → auth.users | | | 담당(선택, 코치가 빠지면 null) |
+| active_from · active_until | date | ✓ / | 오늘 / | 없애면 `active_until` 에 날짜 — 지난 수업은 남고 앞으로만 사라짐 |
+| created_at | timestamptz | ✓ | now() | |
+- 수업 칸은 저장하지 않고 **규칙 + 날짜로 계산**(FLOW 8-3). 휴강은 아래 `gym_classes.status = 'canceled'`.
+
+### `gym_classes` — 날짜가 붙은 수업 한 번 (내용 · 휴강)
+| 칸 | 종류 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|
+| id | uuid | ✓ | 자동 | |
+| gym_id | uuid → gyms | ✓ | | |
+| schedule_id | uuid → gym_schedules | | | 규칙에서 온 수업. 규칙 없이 "그 날짜만" 만든 수업은 비움(이름 · 시각은 아래 칸) |
+| held_on | date | ✓ | | 수업 날짜(서울) |
+| name · starts_at | text · time | ✓ | | 규칙에서 복사(규칙이 나중에 바뀌어도 그날 수업은 그대로) |
+| status | text | ✓ | `'posted'` | `posted` 내용 등록됨 · `canceled` 휴강 |
+| body | text | ✓ | `''` | 메모(0~2000자) |
+| posted_by | uuid → auth.users | ✓ | | 올린 관장 · 코치 |
+| created_at · updated_at | timestamptz | ✓ | now() | |
+- (gym_id, schedule_id, held_on) 유일(schedule_id 가 있을 때) — 같은 수업 하루 한 번. 지난 날짜는 7일 전까지만(정책에서 `held_on >= current_date - 7`).
+
+### `gym_class_techniques` — 그 수업에서 배운 기술
+| 칸 | 종류 | 필수 | 설명 |
+|---|---|---|---|
+| id | uuid | ✓ | |
+| gym_class_id | uuid → gym_classes | ✓ | 수업 지우면 같이 지움 |
+| technique_id | uuid → techniques | | 공용 기술만(owner_id 없음) |
+| custom_name | text | | 목록에 없는 이름. technique_id 가 비면 필수 |
+| sort_order | smallint | ✓ | 고른 순서 |
+- `class_log_techniques` 와 같은 모양 — 출석 때 그대로 복사한다.
+
+### `gym_attendance` — 출석 = "내 기록으로" 누른 것
+| 칸 | 종류 | 필수 | 설명 |
+|---|---|---|---|
+| id | uuid | ✓ | |
+| gym_class_id | uuid → gym_classes | ✓ | 수업 지우면 같이 지움 |
+| user_id | uuid → auth.users | ✓ | 관원. 계정 지우면 같이 지움 |
+| class_log_id | uuid → class_logs | | 만들어진 내 기록. 관원이 기록을 지우면 null(출석은 남음) |
+| created_at | timestamptz | ✓ | 출석 시각 |
+- (gym_class_id, user_id) 유일 — 한 수업 한 번.
+
+### `log_comments` — 기록 코멘트
+| 칸 | 종류 | 필수 | 설명 |
+|---|---|---|---|
+| id | uuid | ✓ | |
+| class_log_id | uuid → class_logs | ✓ | 기록 지우면 같이 지움 |
+| gym_id | uuid → gyms | ✓ | 어느 체육관 자격으로 썼나(체육관 지우면 코멘트도 지움) |
+| author_id | uuid → auth.users | ✓ | 쓴 관장 · 코치. 계정 지우면 같이 지움 |
+| body | text | ✓ | 1~500자 |
+| created_at · updated_at | timestamptz | ✓ | |
+
+### 기존 표에 더하는 칸
+| 표 | 칸 | 설명 |
+|---|---|---|
+| `class_logs` | `gym_class_id` uuid → gym_classes | 수업 출석으로 생긴 기록이면 그 수업. 수업 · 체육관이 지워지면 null(기록은 남음) |
+| `notices` | `class_log_id` uuid → class_logs | 코멘트 알림 — 누르면 `/app/log/[id]`. 기록 지우면 알림도 지움 |
+
+### 누가 읽고 쓰나 (RLS) — 도우미 `my_gym_role(gym_id)` (security definer, 내 역할을 돌려줌 · 없으면 null)
+| 표 | 로그인 안 함 | 관원(member) | 코치 | 관장 | 체육관 밖 사람 |
+|---|---|---|---|---|---|
+| gyms | ✗ | 자기 체육관 보기(코드 칸은 **관장만** — 뷰 `gyms_public` 로 이름 · 지역만) | 같음 | 보기 · 수정 · 삭제 · 코드 다시 만들기 | ✗ (가입은 함수 `join_gym(code)` 로 — 코드가 맞으면 이름을 돌려주고 동의 뒤 줄 추가) |
+| gym_members | ✗ | 자기 체육관 줄 보기(닉네임은 함수로, 이메일 ✗) · 자기 줄 삭제(나가기) | 같음 | 보기 · 코치 빼기(role 수정) · 관장 넘기기(함수) | ✗ |
+| gym_schedules | ✗ | 자기 체육관 보기 | 보기 · 추가 · 수정 | 같음 | ✗ |
+| gym_classes · gym_class_techniques | ✗ | 자기 체육관 보기 | 보기 · 추가 · 수정 · 삭제(7일 안) | 같음 | ✗ |
+| gym_attendance | ✗ | 자기 줄 보기 · 추가는 **함수 `attend_class(class_id)` 로만** | 자기 체육관 전부 보기 | 같음 | ✗ |
+| log_comments | ✗ | **내 기록에 달린 것 보기** | 자기 체육관 관원 기록에 보기 · 쓰기 · 내 것 수정 · 삭제 | 같음 | ✗ |
+| class_logs · class_log_techniques · technique_levels (기존) | ✗ | 자기 것(그대로) | **+ 자기 체육관 관원 것 보기**(select 만, D-127) | 같음 | ✗ |
+- 관장 · 코치의 "관원 것 보기" 정책: `exists (select 1 from gym_members me join gym_members them on me.gym_id = them.gym_id where me.user_id = auth.uid() and me.role in ('owner','coach') and them.user_id = class_logs.user_id)`. 관원이 나가면 그 순간부터 안 보인다. 수정 · 삭제는 절대 없음.
+- 이메일은 어디서도 안 나간다. 관원 이름은 `user_metadata.nick`(없으면 이메일 앞부분) — 함수 `gym_member_names(gym_id)` 가 security definer 로 닉네임만 돌려준다(D-122 · D-123 의 shared_log 와 같은 방식).
+
+### 함수 (security definer, 안에서 역할 확인 · 아니면 42501)
+| 함수 | 하는 일 |
+|---|---|
+| `create_gym(name, si, gu, first_class)` | 체육관 + 코드 2개 + 내 owner 줄(consented_at 지금) + 기본반 규칙 없이 이름만 돌려줌 |
+| `peek_gym(code)` | 코드로 체육관 이름 · 지역만(동의 화면용). 로그인한 사람만. 틀리면 null |
+| `join_gym(code)` | 관원 코드 → member 줄, 코치 코드 → coach 줄(동의 시각 기록). 이미 있으면 그대로 |
+| `attend_class(class_id)` | 내가 그 체육관 관원인지 · 수업이 posted 인지 확인 → `import_shared_log` 와 같은 복사(날짜 = held_on · 기술 · 메모 → `class_logs` + `class_log_techniques` + `technique_levels` 비기너, `gym_class_id` 채움) → `gym_attendance` 줄 → 기록 id. 두 번이면 전 기록 id |
+| `gym_member_names(gym_id)` | 관장 · 코치에게 관원 id → 닉네임 · 벨트 · 시작 연월(메타에서) |
+| `member_progress(gym_id, user_id)` | 관장 · 코치에게 그 관원의 벨트별 달성도(belt_techniques × 그 관원 기록 · 숙련도) · 포지션별 배운 수 — D-126 화면 재사용 |
+| `comment_log(log_id, gym_id, body)` | 내가 그 체육관 관장 · 코치이고 기록 주인이 그 체육관 관원인지 확인 → 코멘트 + 기록 주인에게 `notices`("○○ 관장님이 N월 N일 기록에 코멘트") |
+| `regen_gym_code(gym_id, which)` | 관장만. 관원 코드 · 코치 코드 다시 |
+| `transfer_gym_owner(gym_id, user_id)` | 관장만, 대상은 코치 → 역할 바꿈. 마지막 관장은 못 나감 |
+
+### 제약 · 인덱스
+- `gyms.join_code` · `coach_code` 유일 · 6자 · 허용 문자 체크. 코드 맞추기는 함수 안에서만(표를 훑어 코드를 알아내지 못하게 select 정책은 자기 체육관만).
+- `gym_members (gym_id, user_id)` 유일 · `gym_classes (gym_id, schedule_id, held_on)` 유일 · `gym_attendance (gym_class_id, user_id)` 유일.
+- `class_logs (gym_class_id)` 인덱스 · `log_comments (class_log_id)` 인덱스 · `gym_members (user_id)` 인덱스.
+- `gym_classes.held_on` 은 오늘(서울)보다 뒤일 수 없음 · 7일 전까지(정책).
+
+### 개인정보 (7 에 더함)
+- 관장 · 코치가 보는 것: 관원의 닉네임 · 벨트 · 수련 시작 연월 · 출석 · **기록 전부(기술 · 메모 · 스파링)** · 숙련도 · 달성도. 이메일 · 로그인 정보 ✗.
+- 동의: 체육관에 들어갈 때 한 장(`gym_members.consented_at`). 나가면 그 순간부터 안 보임. 개인정보처리방침 3(수집 · 이용) · 6(제3자 제공 — "같은 체육관의 관장 · 코치") 수정 필요(5단계).
+- 관원이 기록을 지우면 코멘트 · 알림도 지워지고 출석 줄의 기록 연결만 null.
