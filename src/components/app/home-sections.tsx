@@ -1,7 +1,8 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { getHomeData, type HomeData } from "@/lib/home-data";
 import { TrainingBelt } from "@/components/app/training-belt";
-import { JiujitsuMap } from "@/components/app/jiujitsu-map";
+import { SkillRadar } from "@/components/app/skill-radar";
+import { getSkills, type PositionGroup } from "@/lib/skills-data";
 import { BeltCard } from "@/components/app/belt-card";
 import { SparringTile } from "@/components/app/sparring-tile";
 import { HomeTiles } from "@/components/app/home-tiles";
@@ -14,8 +15,9 @@ export async function HomeSections() {
   // 오류로 잡아 버리면 홈이 "불러오지 못했어요" 로 굳는다
   await cookies();
   let data;
+  let skills: PositionGroup[];
   try {
-    data = await getHomeData();
+    [data, { groups: skills }] = await Promise.all([getHomeData(), getSkills()]);
   } catch (e) {
     console.error("home failed:", e instanceof Error ? e.message : "unknown");
     return (
@@ -28,11 +30,11 @@ export async function HomeSections() {
     );
   }
 
-  return <HomeView data={data} />;
+  return <HomeView data={data} skills={skills} />;
 }
 
-export function HomeView({ data }: { data: HomeData }) {
-  const { weeks, belt, stripes, startedOn, nick, defaultNick, thisMonth, map, sparring, beltProgress, gyms } = data;
+export function HomeView({ data, skills }: { data: HomeData; skills: PositionGroup[] }) {
+  const { weeks, belt, stripes, startedOn, nick, defaultNick, thisMonth, sparring, beltProgress, gyms } = data;
 
   return (
     <>
@@ -45,11 +47,12 @@ export function HomeView({ data }: { data: HomeData }) {
       {/* ②-1 스파링 (D-64 · D-116) */}
       <SparringTile month={sparring.month} total={sparring.total} />
 
+      {/* ②-1b 내 기술 분포 육각형(D-163 → D-165) — 스파링 밑. 내 주짓수 지도(D-60) 자리를 대신함 */}
+      <SkillRadar groups={skills} />
+
       {/* ②-2 내 벨트 필수 기술 (D-140) — 지도 위. 기본 드릴은 벨트별 기술의 화이트 벨트 위로 옮김 */}
       <BeltCard progress={beltProgress} title={`${beltProgress.label} 벨트 필수 기술`} />
 
-      {/* ②-2 내 주짓수 지도 (D-60) */}
-      <JiujitsuMap map={map} />
 
       {/* ②-3 오픈매트 타일 (D-88 · D-116) */}
       <HomeTiles />

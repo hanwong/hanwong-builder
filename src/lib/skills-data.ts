@@ -13,6 +13,7 @@ export type SkillRow = {
   kind: string | null; // 기술 종류(takedown · sweep …) — 레이더 그래프 축(D-163)
   draft: boolean;
   mine?: "pending" | "rejected";
+  count?: number; // 기록에 적은 횟수 — 관장 화면 관원 상세에서만(D-164)
 };
 export type PositionGroup = { slug: string; nameKo: string; skills: SkillRow[] };
 

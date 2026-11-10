@@ -25,7 +25,15 @@ const point = (i: number, r: number) => {
 };
 const poly = (rs: number[]) => rs.map((r, i) => point(i, r).join(",")).join(" ");
 
-export function SkillRadar({ groups }: { groups: PositionGroup[] }) {
+export function SkillRadar({
+  groups,
+  title = "내 기술 분포",
+  emptyText = "기록에서 숙련도를 매기면 어느 쪽 기술이 많은지 모양이 생겨요.",
+}: {
+  groups: PositionGroup[];
+  title?: string;
+  emptyText?: string;
+}) {
   const stats = AXES.map(() => ({ count: 0, score: 0 }));
   for (const g of groups)
     for (const s of g.skills) {
@@ -44,7 +52,7 @@ export function SkillRadar({ groups }: { groups: PositionGroup[] }) {
     <section className="flex flex-col gap-1 rounded-2xl bg-card p-4 ring-1 ring-border" aria-labelledby="radar-title">
       <div className="flex items-baseline justify-between gap-2">
         <h2 id="radar-title" className="text-[15px] font-semibold">
-          내 기술 분포
+          {title}
         </h2>
         <span className="text-[12px] font-medium text-muted-foreground tabular-nums">숙련도 매긴 기술 {total}개</span>
       </div>
@@ -81,7 +89,7 @@ export function SkillRadar({ groups }: { groups: PositionGroup[] }) {
       </svg>
       <p className="text-center text-[12px] leading-relaxed text-muted-foreground">
         {total === 0
-          ? "기록에서 숙련도를 매기면 어느 쪽 기술이 많은지 모양이 생겨요."
+          ? emptyText
           : "숙련도를 매긴 기술이 많고 높을수록 그쪽으로 커져요."}
       </p>
     </section>
