@@ -203,12 +203,32 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
   );
 }
 
+// 복사 — 보통은 clipboard API, 막혀 있으면(앱 안 브라우저 등) 숨긴 글상자를 골라 복사하는 옛 방식으로 한 번 더
+async function writeClipboard(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return;
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand("copy");
+    ta.remove();
+    if (!ok) throw new Error("copy failed");
+  }
+}
+
 // 코드 복사(D-161) — 누르면 복사하고 잠깐 체크 표시
 function CopyButton({ text, label }: { text: string; label: string }) {
   const [done, setDone] = useState(false);
   async function copy() {
     try {
-      await navigator.clipboard.writeText(text);
+      await writeClipboard(text);
       setDone(true);
       toast.success("복사했어요");
       setTimeout(() => setDone(false), 1500);
