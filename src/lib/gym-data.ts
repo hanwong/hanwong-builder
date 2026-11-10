@@ -493,7 +493,7 @@ export type SettingsPage = {
   all: MyGym[];
   region: string;
   network: string;
-  codes: { join: string; coach: string } | null;
+  codes: { join: string; coach: string | null } | null; // 관장: 둘 다, 코치: 관원 코드만(D-161)
   staff: { userId: string; nick: string; role: GymRole }[];
   members: { userId: string; nick: string }[];
 };
@@ -505,7 +505,7 @@ export async function getGymSettings(): Promise<SettingsPage | null> {
   if (!cur) return null;
   const [g, codes, names] = await Promise.all([
     supabase.from("gyms").select("region_si, region_gu, network").eq("id", cur.gym.id).maybeSingle(),
-    cur.gym.role === "owner" ? supabase.rpc("gym_codes", { p_gym: cur.gym.id }) : Promise.resolve({ data: null }),
+    supabase.rpc("gym_codes", { p_gym: cur.gym.id }), // 관장 · 코치(코치는 관원 코드만, D-161)
     supabase.rpc("gym_member_names", { p_gym: cur.gym.id }),
   ]);
   const c = codes.data as { join_code?: string; coach_code?: string } | null;
@@ -515,7 +515,7 @@ export async function getGymSettings(): Promise<SettingsPage | null> {
     all: cur.all,
     region: [g.data?.region_si, g.data?.region_gu].filter(Boolean).join(" "),
     network: g.data?.network ?? "",
-    codes: c?.join_code && c.coach_code ? { join: c.join_code, coach: c.coach_code } : null,
+    codes: c?.join_code ? { join: c.join_code, coach: c.coach_code ?? null } : null,
     staff: people.filter((n) => n.role !== "member").map((n) => ({ userId: n.user_id, nick: shownName(n), role: n.role as GymRole })),
     members: people.filter((n) => n.role === "member").map((n) => ({ userId: n.user_id, nick: shownName(n) })),
   };

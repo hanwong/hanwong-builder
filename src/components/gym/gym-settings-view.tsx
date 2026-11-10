@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Loader2, X } from "lucide-react";
+import { Check, ChevronRight, Copy, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
   const [codes, setCodes] = useState(data.codes);
   const [transferTo, setTransferTo] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [leaveOpen, setLeaveOpen] = useState(false);
   const [regenWhich, setRegenWhich] = useState<"join" | "coach" | null>(null);
   const [busy, start] = useTransition();
 
@@ -64,26 +65,28 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
         </section>
       )}
 
-      {owner && codes && (
+      {codes && (
         <section className="flex flex-col gap-3 rounded-2xl bg-card p-4 ring-1 ring-border">
           <h3 className="text-[15px] font-semibold">가입 코드</h3>
-          {(["join", "coach"] as const).map((which) => (
-            <div key={which} className="flex items-center gap-3">
-              <span className="flex min-w-0 flex-1 flex-col">
-                <span className="text-[13px] text-muted-foreground">{which === "join" ? "관원" : "코치"}</span>
-                <span className="text-[20px] font-bold tracking-[0.3em] tabular-nums">{codes[which]}</span>
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded-full"
-                disabled={busy}
-                onClick={() => setRegenWhich(which)}
-              >
-                다시 만들기
-              </Button>
-            </div>
-          ))}
+          {(["join", "coach"] as const).map((which) => {
+            const code = codes[which];
+            if (!code) return null; // 코치에게는 관원 코드만(D-161)
+            return (
+              <div key={which} className="flex items-center gap-2">
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="text-[13px] text-muted-foreground">{which === "join" ? "관원" : "코치"}</span>
+                  <span className="text-[20px] font-bold tracking-[0.3em] tabular-nums">{code}</span>
+                </span>
+                <CopyButton text={code} label={`${which === "join" ? "관원" : "코치"} 코드 복사`} />
+                {owner && (
+                  <Button variant="outline" size="sm" className="rounded-full" disabled={busy} onClick={() => setRegenWhich(which)}>
+                    다시 만들기
+                  </Button>
+                )}
+              </div>
+            );
+          })}
+          {!owner && <p className="text-[13px] text-muted-foreground">관원 코드를 알려 주면 관원이 이 체육관에 들어올 수 있어요.</p>}
         </section>
       )}
 
@@ -146,12 +149,44 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
           수련자 화면으로
           <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
         </Link>
-        {!owner && (
-          <Button variant="ghost" size="sm" className="self-start rounded-full text-destructive" disabled={busy} onClick={() => run(() => leaveGym(data.gym.id).then((r) => (r.ok ? (router.replace("/app"), r) : r)), "체육관에서 나왔어요")}>
-            이 체육관 나가기
-          </Button>
-        )}
       </section>
+
+      {/* 체육관 나가기(코치, D-162) — 맨 아래 따로, 확인 창에서 한 번 더 */}
+      {!owner && (
+        <section className="flex flex-col gap-2 rounded-2xl p-4 ring-1 ring-destructive/30">
+          <h3 className="text-[15px] font-semibold text-destructive">체육관 나가기</h3>
+          <p className="text-[13px] leading-relaxed text-muted-foreground">나가면 이 체육관 관장 화면을 더 볼 수 없어요. 내 기록은 그대로 남아요.</p>
+          <Button variant="outline" size="sm" className="self-start rounded-full border-destructive/40 text-destructive" onClick={() => setLeaveOpen(true)}>
+            체육관 나가기
+          </Button>
+        </section>
+      )}
+      {!owner && leaveOpen && (
+        <Dialog open onOpenChange={(o) => !o && !busy && setLeaveOpen(false)}>
+          <ModalContent>
+            <DialogTitle className="text-[17px] font-semibold">이 체육관에서 나갈까요?</DialogTitle>
+            <ModalBody>
+              <DialogDescription className="text-[15px] leading-relaxed text-muted-foreground">
+                나가면 이 체육관의 시간표 · 관원 · 수업 화면을 더 볼 수 없어요. 내 기록은 그대로 남고, 다시 들어오려면 코치 코드가 필요해요.
+              </DialogDescription>
+            </ModalBody>
+            <ModalFooter>
+              <Button variant="outline" className="h-11 flex-1 rounded-full text-[15px] shadow-none" disabled={busy} onClick={() => setLeaveOpen(false)}>
+                취소
+              </Button>
+              <Button
+                variant="destructive"
+                className="h-11 flex-1 rounded-full text-[15px]"
+                disabled={busy}
+                onClick={() => run(() => leaveGym(data.gym.id).then((r) => (r.ok ? (router.replace("/app"), r) : r)), "체육관에서 나왔어요")}
+              >
+                {busy && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
+                나가기
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Dialog>
+      )}
 
       {/* 체육관 지우기(D-137) — 맨 아래 따로. 팝업에서 이름을 똑같이 적어야 삭제 → 경고 · 아니요 / 삭제 */}
       {owner && (
@@ -165,6 +200,27 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
       )}
       {owner && deleteOpen && <DeleteGymDialog gymId={data.gym.id} gymName={data.gym.name} onClose={() => setDeleteOpen(false)} />}
     </div>
+  );
+}
+
+// 코드 복사(D-161) — 누르면 복사하고 잠깐 체크 표시
+function CopyButton({ text, label }: { text: string; label: string }) {
+  const [done, setDone] = useState(false);
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setDone(true);
+      toast.success("복사했어요");
+      setTimeout(() => setDone(false), 1500);
+    } catch {
+      toast.error("복사하지 못했어요. 코드를 길게 눌러 복사해 주세요.");
+    }
+  }
+  return (
+    <Button variant="outline" size="sm" className="rounded-full" aria-label={label} onClick={copy}>
+      {done ? <Check data-icon="inline-start" aria-hidden /> : <Copy data-icon="inline-start" aria-hidden />}
+      복사
+    </Button>
   );
 }
 
