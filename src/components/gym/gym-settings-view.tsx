@@ -25,6 +25,7 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
   const [codes, setCodes] = useState(data.codes);
   const [transferTo, setTransferTo] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [regenWhich, setRegenWhich] = useState<"join" | "coach" | null>(null);
   const [busy, start] = useTransition();
 
   const run = (fn: () => Promise<{ ok: boolean; message?: string } | null>, done: string) =>
@@ -77,23 +78,34 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
                 size="sm"
                 className="rounded-full"
                 disabled={busy}
-                onClick={() =>
-                  start(async () => {
-                    const res = await regenCode(data.gym.id, which).catch(() => null);
-                    if (!res || !res.ok) {
-                      toast.error("다시 만들지 못했어요.");
-                      return;
-                    }
-                    setCodes((c) => (c ? { ...c, [which]: res.code } : c));
-                    toast.success("새 코드를 만들었어요. 옛 코드는 바로 안 돼요.");
-                  })
-                }
+                onClick={() => setRegenWhich(which)}
               >
                 다시 만들기
               </Button>
             </div>
           ))}
         </section>
+      )}
+
+      {regenWhich && (
+        <RegenCodeDialog
+          which={regenWhich}
+          busy={busy}
+          onClose={() => setRegenWhich(null)}
+          onConfirm={() => {
+            const which = regenWhich;
+            start(async () => {
+              const res = await regenCode(data.gym.id, which).catch(() => null);
+              if (!res || !res.ok) {
+                toast.error("다시 만들지 못했어요.");
+                return;
+              }
+              setCodes((c) => (c ? { ...c, [which]: res.code } : c));
+              setRegenWhich(null);
+              toast.success("새 코드를 만들었어요. 옛 코드는 바로 안 돼요.");
+            });
+          }}
+        />
       )}
 
       <section className="flex flex-col gap-3 rounded-2xl bg-card p-4 ring-1 ring-border">
@@ -153,6 +165,42 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
       )}
       {owner && deleteOpen && <DeleteGymDialog gymId={data.gym.id} gymName={data.gym.name} onClose={() => setDeleteOpen(false)} />}
     </div>
+  );
+}
+
+// 가입 코드 다시 만들기 확인 (D-155) — 옛 코드가 바로 막히므로 한 번 묻는다
+function RegenCodeDialog({
+  which,
+  busy,
+  onClose,
+  onConfirm,
+}: {
+  which: "join" | "coach";
+  busy: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const who = which === "join" ? "관원" : "코치";
+  return (
+    <Dialog open onOpenChange={(o) => !o && !busy && onClose()}>
+      <ModalContent>
+        <DialogTitle className="text-[17px] font-semibold">{who} 코드를 다시 만들까요?</DialogTitle>
+        <ModalBody>
+          <DialogDescription className="text-[15px] leading-relaxed text-muted-foreground">
+            새 코드를 만들면 지금 코드로는 바로 가입할 수 없어요. 이미 가입한 {which === "join" ? "관원은" : "코치는"} 그대로예요.
+          </DialogDescription>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" className="h-11 flex-1 rounded-full text-[15px] shadow-none" disabled={busy} onClick={onClose}>
+            취소
+          </Button>
+          <Button className="h-11 flex-1 rounded-full text-[15px]" disabled={busy} onClick={onConfirm}>
+            {busy && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
+            다시 만들기
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Dialog>
   );
 }
 
