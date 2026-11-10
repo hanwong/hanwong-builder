@@ -147,6 +147,19 @@
   body {
     @apply bg-background text-foreground;
     word-break: keep-all;
+    /* 띄어쓰기 없는 긴 글(긴 체육관 이름 · 이메일 · 주소)은 칸을 넘기 전에 줄을 바꾼다(D-157) — 들어가면 그대로 */
+    overflow-wrap: anywhere;
+  }
+  /* 아이폰 날짜 · 시각 칸은 기본 너비가 있어 좁은 팝업 밖으로 나간다 — 칸 너비에 맞춤(D-157) */
+  input[type="date"],
+  input[type="time"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+    max-width: 100%;
+  }
+  input::-webkit-date-and-time-value {
+    text-align: left;
   }
   html {
     @apply font-sans;
