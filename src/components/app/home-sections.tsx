@@ -3,7 +3,6 @@ import { getHomeData, type HomeData } from "@/lib/home-data";
 import { TrainingBelt } from "@/components/app/training-belt";
 import { SkillRadar } from "@/components/app/skill-radar";
 import { getSkills, type PositionGroup } from "@/lib/skills-data";
-import { BeltCard } from "@/components/app/belt-card";
 import { SparringTile } from "@/components/app/sparring-tile";
 import { HomeTiles } from "@/components/app/home-tiles";
 import { GymCard } from "@/components/app/gym-card";
@@ -34,7 +33,7 @@ export async function HomeSections() {
 }
 
 export function HomeView({ data, skills }: { data: HomeData; skills: PositionGroup[] }) {
-  const { weeks, belt, stripes, startedOn, nick, defaultNick, thisMonth, sparring, beltProgress, gyms } = data;
+  const { weeks, belt, stripes, startedOn, nick, defaultNick, thisMonth, sparring, gyms } = data;
 
   return (
     <>
@@ -50,8 +49,6 @@ export function HomeView({ data, skills }: { data: HomeData; skills: PositionGro
       {/* ②-1b 내 기술 분포 육각형(D-163 → D-165) — 스파링 밑. 내 주짓수 지도(D-60) 자리를 대신함 */}
       <SkillRadar groups={skills} />
 
-      {/* ②-2 내 벨트 필수 기술 (D-140) — 지도 위. 기본 드릴은 벨트별 기술의 화이트 벨트 위로 옮김 */}
-      <BeltCard progress={beltProgress} title={`${beltProgress.label} 벨트 필수 기술`} />
 
 
       {/* ②-3 오픈매트 타일 (D-88 · D-116) */}
