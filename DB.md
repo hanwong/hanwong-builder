@@ -479,7 +479,7 @@ FLOW 8 의 3단계. 표 6개를 더한다. 기존 표는 `class_logs` 에 칸 �
 | log_comments | ✗ | **내 기록에 달린 것 보기** | 자기 체육관 관원 기록에 보기 · 쓰기 · 내 것 수정 · 삭제 | 같음 | ✗ |
 | class_logs · class_log_techniques · technique_levels (기존) | ✗ | 자기 것(그대로) | **표는 그대로(안 넓힘)** — 관원 기록은 함수 `gym_member_overview` · `gym_member_log` 로만(D-127, 2026-11-09 만들며 바꿈: 표를 넓히면 관장 본인의 홈 · 기록 화면에 관원 기록이 섞여서) | 같음 | ✗ |
 - 관장 · 코치의 "관원 것 보기"는 기존 표 정책을 넓히지 않고 함수 안에서 `gym_members` 를 확인한다(관원이 나가면 그 순간부터 안 보임, 수정 · 삭제 없음). 2026-11-09 확인: 관장이 `class_logs` 를 직접 읽으면 빈 결과, 함수로만 보임.
-- `gyms` 표의 코드 칸(join_code · coach_code)은 칸 권한으로 막고(`revoke select` 뒤 칸별 `grant`), 관장은 함수 `gym_codes(gym_id)` 로 본다. 2026-11-09 확인: 관원이 코드 칸을 고르면 42501.
+- `gyms` 표의 코드 칸(join_code · coach_code)은 칸 권한으로 막고(`revoke select` 뒤 칸별 `grant`), 관장은 함수 `gym_codes(gym_id)` 로 본다(코치는 관원 코드만, D-161). 2026-11-09 확인: 관원이 코드 칸을 고르면 42501.
 - 이메일은 어디서도 안 나간다. 관원 이름은 `user_metadata.nick`(없으면 이메일 앞부분) — 함수 `gym_member_names(gym_id)` 가 security definer 로 닉네임만 돌려준다(D-122 · D-123 의 shared_log 와 같은 방식).
 
 ### 함수 (security definer, 안에서 역할 확인 · 아니면 42501)
@@ -493,7 +493,7 @@ FLOW 8 의 3단계. 표 6개를 더한다. 기존 표는 `class_logs` 에 칸 �
 | `gym_member_overview(gym_id, user_id, before?)` | 관장 · 코치에게 그 관원의 숙련도 · 기술별 기록 횟수 · 최근 기록 20개(메모 포함) · 이번 달 숫자 — 앱이 belt_techniques 와 합쳐 D-126 화면을 그린다 |
 | `gym_member_log(gym_id, log_id)` | 관장 · 코치에게 관원 기록 하나(기술 · 메모 · 스파링 · 코멘트). 관원이 아니면 null |
 | `my_log_comments(log_id)` | 관원이 내 기록에 달린 코멘트(쓴 사람 닉네임 · 역할 · 체육관) |
-| `gym_codes(gym_id)` | 관장만 — 관원 · 코치 코드 |
+| `gym_codes(gym_id)` | 관장 — 관원 · 코치 코드 / 코치 — 관원 코드만(D-161) / 관원 — 없음 |
 | `comment_log(log_id, gym_id, body)` | 내가 그 체육관 관장 · 코치이고 기록 주인이 그 체육관 관원인지 확인 → 코멘트 + 기록 주인에게 `notices`("○○ 관장님이 N월 N일 기록에 코멘트") |
 | `regen_gym_code(gym_id, which)` | 관장만. 관원 코드 · 코치 코드 다시 |
 | `transfer_gym_owner(gym_id, user_id)` | 관장만, 대상은 코치 → 역할 바꿈. 마지막 관장은 못 나감 |
