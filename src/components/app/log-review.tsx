@@ -1,15 +1,13 @@
 "use client";
 
-import { useState, useTransition, type Dispatch, type ReactNode, type SetStateAction } from "react";
-import { ArrowLeft, ChevronDown, Loader2, Mic, MicOff, Minus, Plus, Trash2, X } from "lucide-react";
+import { useState, useTransition, type ReactNode } from "react";
+import { ArrowLeft, ChevronDown, Loader2, Minus, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BottomAction } from "@/components/app/bottom-action";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { MAX_BODY } from "@/lib/log-limits";
-import { useSpeechInput } from "@/lib/use-speech-input";
+import { MemoField } from "@/components/app/memo-field";
 import { LevelPicker } from "@/components/app/level-picker";
 import { TechniquePicker } from "@/components/app/technique-picker";
 import { YoutubeLink } from "@/components/app/youtube-link";
@@ -147,7 +145,18 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
       </section>
 
       {/* 오늘 메모 — 선택 */}
-      <MemoField value={body} onChange={setBody} disabled={saving || deleting} />
+      <MemoField
+        value={body}
+        onChange={setBody}
+        disabled={saving || deleting}
+        title={
+          <>
+            오늘 메모 <span className="text-[13px] font-medium text-muted-foreground">선택</span>
+          </>
+        }
+        placeholder="느낀 점, 헷갈린 점, 스파링에서 써 본 것 등"
+        ariaLabel="오늘 메모"
+      />
 
       {/* 용어 — 예전 정리하기(AI)로 저장한 기록에만 있다 */}
       {initial.terms.length > 0 && (
@@ -232,90 +241,6 @@ export function LogReview({ initial, date, youtube = true, onBack, saveLabel = "
         </Button>
       </BottomAction>
     </div>
-  );
-}
-
-// 오늘 메모 — 글상자 + 마이크(브라우저 내장 음성 인식, 녹음 저장 없음, D-12)
-function MemoField({
-  value,
-  onChange,
-  disabled,
-}: {
-  value: string;
-  onChange: Dispatch<SetStateAction<string>>;
-  disabled: boolean;
-}) {
-  const { supported, listening, interim, problem, start, stop, debugLines } = useSpeechInput({
-    onText: (text) =>
-      onChange((prev) => {
-        const sep = prev && !/\s$/.test(prev) ? " " : "";
-        return (prev + sep + text).slice(0, MAX_BODY);
-      }),
-  });
-  const shown = interim ? `${value}${value && !/\s$/.test(value) ? " " : ""}${interim}` : value;
-
-  return (
-    <section className="flex flex-col gap-2">
-      <h2 className="text-[17px] font-semibold">
-        오늘 메모 <span className="text-[13px] font-medium text-muted-foreground">선택</span>
-      </h2>
-      <div className="relative">
-        <Textarea
-          value={shown}
-          onChange={(e) => {
-            if (listening) stop(); // 직접 고치기 시작하면 음성 입력은 멈춘다
-            onChange(e.target.value.slice(0, MAX_BODY));
-          }}
-          maxLength={MAX_BODY}
-          readOnly={disabled}
-          placeholder="느낀 점, 헷갈린 점, 스파링에서 써 본 것 등"
-          aria-label="오늘 메모"
-          className="min-h-[25dvh] resize-none rounded-2xl bg-card px-4 py-3 pb-16 text-base leading-relaxed"
-        />
-        {supported && !disabled && (
-          <div className="absolute right-3 bottom-3 flex items-center gap-2">
-            {listening && (
-              <span role="status" className="text-[13px] font-medium">
-                듣는 중…
-              </span>
-            )}
-            <Button
-              type="button"
-              size="icon-lg"
-              onClick={listening ? stop : start}
-              aria-label={listening ? "음성 입력 멈추기" : "음성으로 입력하기"}
-              aria-pressed={listening}
-              className={cn(
-                "size-12 rounded-full",
-                listening
-                  ? "bg-accent text-accent-foreground hover:bg-accent/80"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-              )}
-            >
-              {listening ? <MicOff className="size-5" strokeWidth={1.75} /> : <Mic className="size-5" strokeWidth={1.75} />}
-            </Button>
-          </div>
-        )}
-      </div>
-      <p className="text-[13px] font-medium text-muted-foreground">
-        {supported ? "마이크 버튼을 누르고 말해도 돼요." : "키보드의 마이크로 말해도 돼요."}
-        {value.length > MAX_BODY * 0.8 && (
-          <span className="ml-2 tabular-nums">
-            {value.length} / {MAX_BODY}
-          </span>
-        )}
-      </p>
-      {problem && (
-        <p role="alert" className="text-[13px] leading-relaxed font-medium text-destructive">
-          {problem}
-        </p>
-      )}
-      {debugLines.length > 0 && (
-        <pre className="overflow-x-auto rounded-xl bg-secondary p-3 text-[12px] leading-relaxed whitespace-pre-wrap">
-          {debugLines.join("\n")}
-        </pre>
-      )}
-    </section>
   );
 }
 

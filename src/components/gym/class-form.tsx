@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { MemoField } from "@/components/app/memo-field";
 import { BottomAction } from "@/components/app/bottom-action";
 import { PositionPicture } from "@/components/app/position-picture";
 import { TechniquePicker } from "@/components/app/technique-picker";
@@ -135,16 +135,16 @@ export function ClassForm({ gym, initial, today = "", onCancel }: { gym: MyGym; 
         <TechniquePicker selected={techniques.map((t) => t.slug)} onToggle={toggle} onCustom={addCustom} />
       </section>
 
-      <section className="flex flex-col gap-2">
-        <h2 className="text-[17px] font-semibold">메모</h2>
-        <Textarea
-          value={body}
-          onChange={(e) => setBody(e.target.value.slice(0, 2000))}
-          placeholder="오늘 포인트, 관원들에게 전할 말"
-          className="min-h-28 rounded-xl text-base"
-        />
-        <p className="text-[12px] text-muted-foreground">관원이 출석하면 기술과 메모가 그 사람 기록으로 복사돼요.</p>
-      </section>
+      <MemoField
+        value={body}
+        onChange={setBody}
+        disabled={saving}
+        title="메모"
+        placeholder="오늘 포인트, 관원들에게 전할 말"
+        ariaLabel="수업 메모"
+        max={2000}
+        footnote={<p className="text-[12px] text-muted-foreground">관원이 출석하면 기술과 메모가 그 사람 기록으로 복사돼요.</p>}
+      />
 
       <BottomAction>
         <Button className="h-12 w-full rounded-full text-base" disabled={!canSave || saving} onClick={save}>
