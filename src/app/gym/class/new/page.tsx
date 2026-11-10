@@ -26,5 +26,6 @@ async function Loader({ searchParams }: { searchParams: Promise<{ d?: string; s?
   await cookies();
   const info = await getNewClassInfo(d, s ?? null);
   if (!info) return <GymEmpty />;
-  return <ClassForm gym={info.gym} today={info.today} initial={{ id: null, scheduleId: info.scheduleId, heldOn: info.heldOn, name: info.name, startsAt: info.startsAt, body: "", techniques: [], customNames: [] }} />;
+  // 날짜 · 수업마다 새 칸(D-160) — 같은 화면을 다른 수업으로 다시 열면 앞 수업에 적던 기술 · 메모가 남아 있었다
+  return <ClassForm key={`${info.heldOn}-${info.scheduleId ?? "new"}`} gym={info.gym} today={info.today} initial={{ id: null, scheduleId: info.scheduleId, heldOn: info.heldOn, name: info.name, startsAt: info.startsAt, body: "", techniques: [], customNames: [] }} />;
 }

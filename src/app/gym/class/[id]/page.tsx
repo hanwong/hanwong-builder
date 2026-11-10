@@ -36,5 +36,5 @@ async function Loader({ params }: { params: Promise<{ id: string }> }) {
     );
   }
   if (!data) notFound();
-  return <ClassView data={data} />;
+  return <ClassView key={data.cls.id} data={data} />; // 수업마다 새로(D-160)
 }
