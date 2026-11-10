@@ -37,7 +37,7 @@ export function HomeView({ data }: { data: HomeData }) {
   return (
     <>
       {/* ② 수련 벨트 (D-33) */}
-      <TrainingBelt weeks={weeks} belt={belt} stripes={stripes} startedOn={startedOn} nick={nick} defaultNick={defaultNick} thisMonth={thisMonth} />
+      <TrainingBelt weeks={weeks} belt={belt} stripes={stripes} startedOn={startedOn} nick={nick} defaultNick={defaultNick} thisMonth={thisMonth} gyms={gyms.map((g) => ({ id: g.id, name: g.name, network: g.network, role: g.role }))} />
 
       {/* ②-0 내 체육관 (D-127) — 없으면 들어가기, 있으면 오늘 수업 · 출석 */}
       <GymCard gyms={gyms} />

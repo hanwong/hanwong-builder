@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useTransition, type CSSProperties } from "react";
 import Link from "next/link";
-import { Minus, Plus, Settings, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Loader2, Minus, Plus, Settings, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,9 @@ import { BeltChoice } from "@/components/app/belt-choice";
 import { useFloatingDialog } from "@/lib/use-floating-dialog";
 import { setBelt, setNick, setStartedOn, setStripes } from "@/app/app/actions";
 import { StartMonthPicker } from "@/components/app/start-month-picker";
+import { GymName } from "@/components/gym/network-mark";
+import { leaveGym } from "@/app/gym/actions";
+import type { GymRole } from "@/lib/gym-data";
 import {
   BELTS,
   BELT_BG,
@@ -45,6 +49,7 @@ export function TrainingBelt({
   nick: initialNick,
   defaultNick,
   thisMonth,
+  gyms = [],
 }: {
   weeks: { start: string; count: number }[];
   belt: Belt;
@@ -53,6 +58,7 @@ export function TrainingBelt({
   nick: string;
   defaultNick: string;
   thisMonth: string;
+  gyms?: { id: string; name: string; network: string | null; role: GymRole }[];
 }) {
   const [belt, setBeltState] = useState<Belt>(initialBelt);
   const [stripes, setStripesState] = useState(initialStripes);
@@ -328,6 +334,7 @@ export function TrainingBelt({
               {startedOn ? `${trainingSpan(startedOn, thisMonth)}로 보여요.` : "연도와 달을 고르면 바로 저장돼요."}
             </p>
           </div>
+          {gyms.length > 0 && <MyGyms gyms={gyms} />}
           </div>
           <Button className="h-12 w-full shrink-0 rounded-full text-base shadow-none" onClick={() => toggleSettings(false)}>
             완료
@@ -335,5 +342,75 @@ export function TrainingBelt({
         </DialogContent>
       </Dialog>
     </section>
+  );
+}
+
+// 내 설정 · 내 체육관 (D-156, FLOW 8) — 들어가 있는 체육관 목록과 "나가기". 누르면 그 줄에서 한 번 더 묻는다.
+// 나가면 관장 · 코치가 그때부터 내 기록을 못 본다. 내 기록은 그대로. 관장은 여기서 못 나감(체육관 설정에서 관장 넘기기 · 지우기)
+function MyGyms({ gyms }: { gyms: { id: string; name: string; network: string | null; role: GymRole }[] }) {
+  const router = useRouter();
+  const [asking, setAsking] = useState<string | null>(null);
+  const [busy, start] = useTransition();
+
+  function leave(id: string) {
+    start(async () => {
+      const res = await leaveGym(id).catch(() => null);
+      if (!res || !res.ok) {
+        toast.error(res?.message ?? "나가지 못했어요. 다시 눌러 주세요.");
+        return;
+      }
+      setAsking(null);
+      toast.success("체육관에서 나왔어요");
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-[15px] font-semibold">내 체육관</span>
+      <ul className="flex flex-col gap-2">
+        {gyms.map((g) => (
+          <li key={g.id} className="flex flex-col gap-2 rounded-xl bg-muted/50 p-3">
+            <div className="flex items-center gap-2">
+              <GymName name={g.name} network={g.network} className="flex-1 text-[15px] font-medium" />
+              {g.role === "owner" ? (
+                <span className="shrink-0 text-[13px] font-medium text-muted-foreground">관장</span>
+              ) : (
+                asking !== g.id && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="shrink-0 rounded-full text-destructive"
+                    disabled={busy}
+                    onClick={() => setAsking(g.id)}
+                  >
+                    나가기
+                  </Button>
+                )
+              )}
+            </div>
+            {asking === g.id && (
+              <>
+                <p className="text-[14px] leading-relaxed">
+                  나가면 그때부터 관장님 · 코치가 내 기록을 볼 수 없어요. 내 기록은 그대로 남아요. 다시 들어가려면 가입 코드가 필요해요.
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="h-10 flex-1 rounded-full shadow-none" disabled={busy} onClick={() => setAsking(null)}>
+                    아니요
+                  </Button>
+                  <Button variant="destructive" className="h-10 flex-1 rounded-full" disabled={busy} onClick={() => leave(g.id)}>
+                    {busy && <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden />}
+                    나가기
+                  </Button>
+                </div>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+      {gyms.some((g) => g.role === "owner") && (
+        <p className="text-[13px] font-medium text-muted-foreground">관장인 체육관은 체육관 설정에서 관장을 넘기거나 지울 수 있어요.</p>
+      )}
+    </div>
   );
 }
