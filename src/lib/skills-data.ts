@@ -10,6 +10,7 @@ export type SkillRow = {
   nameEn: string; // 검색용(D-91)
   aliases: string[]; // 검색용(D-91)
   level: Level | null;
+  kind: string | null; // 기술 종류(takedown · sweep …) — 레이더 그래프 축(D-163)
   draft: boolean;
   mine?: "pending" | "rejected";
 };
@@ -27,7 +28,7 @@ export async function getSkills(): Promise<{ groups: PositionGroup[] }> {
     supabase.from("positions").select("id, slug, name_ko").order("sort_order"),
     supabase
       .from("techniques")
-      .select("id, slug, name_ko, name_en, aliases, position_id, is_reviewed, owner_id, owner_status")
+      .select("id, slug, name_ko, name_en, aliases, position_id, kind, is_reviewed, owner_id, owner_status")
       // 공용 + 내가 만든 것만(D-57). 운영자는 접근 규칙상 남의 것도 읽혀서 여기서 거른다
       .or(`owner_id.is.null,owner_id.eq.${user?.id ?? "00000000-0000-0000-0000-000000000000"}`)
       .order("sort_order")
@@ -47,6 +48,7 @@ export async function getSkills(): Promise<{ groups: PositionGroup[] }> {
       nameEn: t.name_en,
       aliases: t.aliases ?? [],
       level: levelOf.get(t.id) ?? null,
+      kind: t.kind,
       draft: !t.is_reviewed,
       mine: mineOf(t.owner_id, t.owner_status),
     });

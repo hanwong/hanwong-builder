@@ -12,6 +12,7 @@ import { HoverPrefetchLink } from "@/components/app/hover-prefetch-link";
 import type { PositionGroup, SkillRow } from "@/lib/skills-data";
 import { cn } from "@/lib/utils";
 import { PositionPicture } from "@/components/app/position-picture";
+import { SkillRadar } from "@/components/app/skill-radar";
 
 const LEVEL_LABEL = new Map(LEVELS.map((l) => [l.value, l.label]));
 
@@ -66,6 +67,9 @@ export function SkillsList({
           배운 것만 보기
         </button>
       </header>
+
+      {/* 내 기술 분포 레이더(D-163) */}
+      <SkillRadar groups={groups} />
 
       {/* 검색 (D-91) */}
       <div className="relative">
