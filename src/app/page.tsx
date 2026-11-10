@@ -127,7 +127,6 @@ export default function Home() {
           <div className="flex flex-wrap items-center gap-3">
             <Image src="/logo.png" alt="" width={32} height={32} className="rounded-lg" priority />
             <span className="text-lg font-bold tracking-tight">Re:Re:롤</span>
-            <Badge variant="outline">지금 검증 중인 아이디어예요</Badge>
           </div>
           <h1 className="text-4xl leading-tight font-extrabold tracking-tight md:text-6xl">
             오늘 배운 주짓수, 잊지 않게 해줄게요
@@ -296,7 +295,6 @@ export default function Home() {
           <p>
             <span className="font-semibold text-foreground">Re:Re:롤</span> © 2026
           </p>
-          <p>Built with Claude Code · AI 프로덕트 빌더 클럽 3기</p>
           <p>
             <Link href="/privacy" className="underline-offset-4 hover:underline">
               개인정보처리방침
