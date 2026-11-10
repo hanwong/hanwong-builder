@@ -1,17 +1,41 @@
 import { LEVELS, type Level } from "@/lib/mock/log-seed";
 import type { PositionGroup } from "@/lib/skills-data";
 
-// 내 기술 분포 레이더(D-163) — 기술 종류 10가지를 주짓수 한 판의 흐름 6갈래로 묶은 육각형.
+// 내 기술 분포 레이더(D-163 · D-167) — 기술 종류 10가지를 주짓수 한 판의 흐름 6갈래로 묶은 육각형.
 // 축 값 = 그 갈래에서 내가 숙련도를 매긴 기술들의 숙련도 합(비기너 1 … 프로 5).
 // 가장 큰 축이 바깥 끝에 닿게 맞춘다 — "얼마나 잘하나"가 아니라 "어디에 몰려 있나"(분포)를 보여 준다.
-const AXES: { label: string; kinds: string[] }[] = [
-  { label: "스탠딩", kinds: ["takedown", "guard_pull"] },
-  { label: "가드(스윕)", kinds: ["sweep"] },
-  { label: "패스", kinds: ["pass"] },
-  { label: "포지션 · 백", kinds: ["control", "back_take", "transition"] },
-  { label: "서브미션", kinds: ["submission"] },
-  { label: "탈출 · 방어", kinds: ["escape", "defense"] },
-];
+const AXES = ["스탠딩", "가드", "패스", "포지션 · 백", "서브미션", "탈출 · 방어"] as const;
+
+// 패스를 시도하는 자리 — 여기서 위에 있는 사람의 유지 · 연결 기술은 아직 "패스" 쪽
+const PASSING_SPOTS = new Set(["passing", "half-guard", "closed-guard", "deep-half"]);
+
+// 어느 축에 넣나(D-167). 유지(control) · 연결(transition) 기술은 누가 어디서 하느냐로 나눈다:
+// 아래(가드)에서 자리를 잡고 지키는 기술 → 가드, 패스한 뒤 위에서 자리를 지키는 기술 → 포지션 · 백
+function axisOf(kind: string, role: string | null | undefined, position: string): number {
+  switch (kind) {
+    case "takedown":
+      return 0;
+    case "guard_pull": // 가드를 잡는 것 자체
+    case "sweep":
+      return 1;
+    case "pass":
+      return 2;
+    case "back_take":
+      return 3;
+    case "submission":
+      return 4;
+    case "escape":
+    case "defense":
+      return 5;
+    case "control":
+    case "transition":
+      if (role === "standing") return 0;
+      if (role === "bottom") return 1;
+      return PASSING_SPOTS.has(position) ? 2 : 3;
+    default:
+      return -1;
+  }
+}
 const WEIGHT = new Map<Level, number>(LEVELS.map((l, i) => [l.value, i + 1]));
 
 const W = 320;
@@ -38,7 +62,7 @@ export function SkillRadar({
   for (const g of groups)
     for (const s of g.skills) {
       if (!s.level || !s.kind) continue;
-      const i = AXES.findIndex((a) => a.kinds.includes(s.kind!));
+      const i = axisOf(s.kind, s.role, g.slug);
       if (i < 0) continue;
       stats[i].count += 1;
       stats[i].score += WEIGHT.get(s.level) ?? 1;
@@ -56,7 +80,7 @@ export function SkillRadar({
         </h2>
         <span className="text-[12px] font-medium text-muted-foreground tabular-nums">숙련도 매긴 기술 {total}개</span>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto w-full max-w-sm" role="img" aria-label={AXES.map((a, i) => `${a.label} ${stats[i].count}개`).join(", ")}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto w-full max-w-sm" role="img" aria-label={AXES.map((a, i) => `${a} ${stats[i].count}개`).join(", ")}>
         {[1 / 3, 2 / 3, 1].map((k) => (
           <polygon key={k} points={poly(AXES.map(() => R * k))} className="fill-none stroke-border" strokeWidth={1} />
         ))}
@@ -78,8 +102,8 @@ export function SkillRadar({
           const anchor = Math.abs(x - CX) < 4 ? "middle" : x > CX ? "start" : "end";
           const dx = anchor === "start" ? -6 : anchor === "end" ? 6 : 0;
           return (
-            <text key={a.label} x={x + dx} y={y} textAnchor={anchor} dominantBaseline="middle" className="text-[12px]">
-              <tspan className={total > 0 && i === top ? "fill-foreground font-bold" : "fill-foreground font-semibold"}>{a.label}</tspan>
+            <text key={a} x={x + dx} y={y} textAnchor={anchor} dominantBaseline="middle" className="text-[12px]">
+              <tspan className={total > 0 && i === top ? "fill-foreground font-bold" : "fill-foreground font-semibold"}>{a}</tspan>
               <tspan x={x + dx} dy={15} className="fill-muted-foreground text-[11px] tabular-nums">
                 {stats[i].count}개
               </tspan>

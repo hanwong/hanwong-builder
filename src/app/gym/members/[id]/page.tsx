@@ -51,14 +51,14 @@ async function learnedGroups(levels: Map<string, Level>, counts: Map<string, num
   const supabase = await createSupabaseServer();
   const [positions, techniques] = await Promise.all([
     supabase.from("positions").select("id, slug, name_ko").order("sort_order"),
-    supabase.from("techniques").select("id, slug, name_ko, name_en, aliases, position_id, kind, is_reviewed, sort_order").in("id", ids).order("sort_order"),
+    supabase.from("techniques").select("id, slug, name_ko, name_en, aliases, position_id, kind, role, is_reviewed, sort_order").in("id", ids).order("sort_order"),
   ]);
   const error = positions.error ?? techniques.error;
   if (error) throw new Error(`member skills: ${error.code ?? ""} ${error.message.slice(0, 80)}`);
   const byPosition = new Map<string, PositionGroup["skills"]>();
   for (const t of techniques.data ?? []) {
     const list = byPosition.get(t.position_id) ?? [];
-    list.push({ slug: t.slug, nameKo: t.name_ko, nameEn: t.name_en, aliases: t.aliases ?? [], level: levels.get(t.id) ?? null, kind: t.kind, draft: !t.is_reviewed, count: counts.get(t.id) ?? 0 });
+    list.push({ slug: t.slug, nameKo: t.name_ko, nameEn: t.name_en, aliases: t.aliases ?? [], level: levels.get(t.id) ?? null, kind: t.kind, role: t.role, draft: !t.is_reviewed, count: counts.get(t.id) ?? 0 });
     byPosition.set(t.position_id, list);
   }
   return (positions.data ?? []).map((p) => ({ slug: p.slug, nameKo: p.name_ko, skills: byPosition.get(p.id) ?? [] })).filter((g) => g.skills.length > 0);
