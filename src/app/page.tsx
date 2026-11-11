@@ -164,14 +164,6 @@ export default function Home() {
         {/* 로고 배지(D-170) — 장식 */}
         <div aria-hidden className="relative mx-auto w-56 md:order-last md:w-full md:max-w-sm">
           <Image src="/landing/badge-seal.png" alt="" width={750} height={735} sizes="(min-width: 768px) 384px, 224px" className="h-auto w-full" priority />
-          <Image
-            src="/landing/badge-tap.png"
-            alt=""
-            width={750}
-            height={735}
-            sizes="(min-width: 768px) 190px, 110px"
-            className="absolute -right-6 -bottom-5 h-auto w-1/2 rotate-6 md:-right-4"
-          />
         </div>
         <div className="reveal space-y-6">
           <h1 className="text-4xl leading-tight font-extrabold tracking-tight md:text-6xl">
@@ -191,7 +183,18 @@ export default function Home() {
       {/* 2. 문제 */}
       <section className="mx-auto max-w-5xl px-6 py-16 md:py-28">
         <div className="reveal mx-auto max-w-3xl space-y-6">
-          <SectionTitle eyebrow="After class">수업 끝나고 집에 오면</SectionTitle>
+          <div className="flex items-end justify-between gap-6">
+            <SectionTitle eyebrow="After class">수업 끝나고 집에 오면</SectionTitle>
+            <Image
+              src="/landing/badge-tap.png"
+              alt=""
+              aria-hidden
+              width={750}
+              height={735}
+              sizes="(min-width: 768px) 176px, 112px"
+              className="h-auto w-28 shrink-0 rotate-6 md:w-44"
+            />
+          </div>
           <p className="text-base leading-relaxed text-muted-foreground md:text-lg">
             수업에서 데라히바 가드를 배웠다. 집에 오니 이름은 기억나는데 발을 어디에 거는지부터
             가물가물하다. 일지에 적으려니 기술 이름을 모르고, 스토리에 적어 둔 건 하루 지나면
