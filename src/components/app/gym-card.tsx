@@ -444,7 +444,7 @@ function RealNameRow({ gymId }: { gymId: string }) {
         <Input
           value={name}
           onChange={(e) => setName(e.target.value.slice(0, 20))}
-          placeholder="본명"
+          placeholder="예: 홍길동"
           aria-label="본명"
           autoComplete="name"
           className="h-10 flex-1 rounded-xl text-base"
@@ -636,7 +636,7 @@ export function JoinDialog({ onClose }: { onClose: () => void }) {
                   id="gym-real-name"
                   value={realName}
                   onChange={(e) => setRealName(e.target.value.slice(0, 20))}
-                  placeholder="예: 김한웅"
+                  placeholder="예: 홍길동"
                   autoComplete="name"
                   className="h-12 rounded-xl text-base"
                 />
