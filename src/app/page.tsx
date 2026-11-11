@@ -257,7 +257,7 @@ export default function Home() {
             <CardHeader>
               <CardDescription className="font-semibold text-vt-navy">처음 써 보면</CardDescription>
               <CardTitle className="text-lg font-semibold md:text-xl">
-                오픈 가드 그림을 눌러 &quot;데라히바 가드&quot;를 골랐더니 발을 어디에 거는지부터 세팅
+                오픈 가드 그림을 눌러 &quot;케이 가드&quot;를 골랐더니 발을 어디에 거는지부터 세팅
                 과정 4줄이 따라와요
               </CardTitle>
             </CardHeader>
