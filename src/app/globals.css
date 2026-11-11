@@ -62,25 +62,25 @@
 }
 
 :root {
-  /* 색은 빈티지 로고 톤(D-173): 종이 바탕 · 크림 카드 · 먹색 글자 · 남색 주 버튼 · 겨자 강조 */
+  /* 색은 빈티지 로고 톤(D-173), 바탕 · 카드는 예전(#FAF9F4 · 흰색)에 가깝게 밝힘(D-174): 종이 바탕 · 크림 카드 · 먹색 글자 · 남색 주 버튼 · 겨자 강조 */
   --tabbar-h: 4rem; /* 하단 탭 높이(아이폰 홈 막대 자리는 따로 더함) — tab-bar · bottom-action 이 함께 쓴다 */
-  --background: #EADFC4;
+  --background: #F5F0E3;
   --foreground: #221D1A;
-  --card: #F6EEDA;
+  --card: #FCF9F2;
   --card-foreground: #221D1A;
-  --popover: #F6EEDA;
+  --popover: #FCF9F2;
   --popover-foreground: #221D1A;
   --primary: #1F3A5F;
-  --primary-foreground: #F6EEDA;
-  --secondary: #DDD0AF;
+  --primary-foreground: #FCF9F2;
+  --secondary: #ECE4D0;
   --secondary-foreground: #221D1A;
-  --muted: #DDD0AF;
+  --muted: #ECE4D0;
   --muted-foreground: #5B5142;
   --accent: #E2AC3B;
   --accent-foreground: #221D1A;
   --destructive: #A8381F;
-  --border: #CDBF9C;
-  --input: #B9AA86;
+  --border: #E0D6BE;
+  --input: #CFC3A6;
   --ring: #1F3A5F;
   /* 시간표 칸 색(D-135 · D-137) — 수업 이름마다 고르는 색 */
   --class-yellow: #FBEFC2;
@@ -103,13 +103,13 @@
   --vt-red: #C2452D;
   --vt-mustard: #E2AC3B;
   --radius: 1rem;
-  --sidebar: #F6EEDA;
+  --sidebar: #FCF9F2;
   --sidebar-foreground: #221D1A;
   --sidebar-primary: #1F3A5F;
-  --sidebar-primary-foreground: #F6EEDA;
-  --sidebar-accent: #DDD0AF;
+  --sidebar-primary-foreground: #FCF9F2;
+  --sidebar-accent: #ECE4D0;
   --sidebar-accent-foreground: #221D1A;
-  --sidebar-border: #CDBF9C;
+  --sidebar-border: #E0D6BE;
   --sidebar-ring: #1F3A5F;
 }
 

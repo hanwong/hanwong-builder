@@ -13,7 +13,7 @@ const MAX_TECHNIQUES = 4;
 const MAX_BODY_LINES = 14;
 const SPARRING_H = 80;
 // 빈티지 로고 톤(D-173) — 이름 lime 은 강조색 자리(지금은 겨자)
-const C = { bg: "#EADFC4", ink: "#221D1A", muted: "#5B5142", lime: "#E2AC3B", line: "#CDBF9C", card: "#F6EEDA" };
+const C = { bg: "#F5F0E3", ink: "#221D1A", muted: "#5B5142", lime: "#E2AC3B", line: "#E0D6BE", card: "#FCF9F2" };
 
 const fontDir = join(process.cwd(), "node_modules/pretendard/dist/public/static");
 const fonts = Promise.all([
