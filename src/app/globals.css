@@ -46,6 +46,12 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-vt-paper: var(--vt-paper);
+  --color-vt-cream: var(--vt-cream);
+  --color-vt-ink: var(--vt-ink);
+  --color-vt-navy: var(--vt-navy);
+  --color-vt-red: var(--vt-red);
+  --color-vt-mustard: var(--vt-mustard);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -88,6 +94,13 @@
   --chart-3: #8A9C1A;
   --chart-4: #4F5A14;
   --chart-5: #16160F;
+  /* 빈티지 로고 톤(D-170) — 랜딩에서만 쓴다(D-171) */
+  --vt-paper: #EADFC4;
+  --vt-cream: #F6EEDA;
+  --vt-ink: #221D1A;
+  --vt-navy: #1F3A5F;
+  --vt-red: #C2452D;
+  --vt-mustard: #E2AC3B;
   --radius: 1rem;
   --sidebar: #FFFFFF;
   --sidebar-foreground: #16160F;
@@ -206,4 +219,55 @@
 [data-slot="dialog-overlay"] {
   touch-action: none;
   overscroll-behavior: contain;
+}
+
+/* 랜딩 빈티지 톤(D-171) — 로고 톤(D-170)을 랜딩(/)에만 입힌다. 제품 화면(/app)은 그대로.
+   같은 토큰 이름에 색만 바꿔 끼워서 shadcn 컴포넌트를 그대로 쓴다 */
+.vintage {
+  --background: var(--vt-paper);
+  --foreground: var(--vt-ink);
+  --card: var(--vt-cream);
+  --card-foreground: var(--vt-ink);
+  --primary: var(--vt-navy);
+  --primary-foreground: var(--vt-cream);
+  --secondary: #DDD0AF;
+  --secondary-foreground: var(--vt-ink);
+  --muted: #DDD0AF;
+  --muted-foreground: #5B5142;
+  --accent: var(--vt-mustard);
+  --accent-foreground: var(--vt-ink);
+  --border: var(--vt-ink);
+  --input: var(--vt-ink);
+  --ring: var(--vt-navy);
+  --radius: 0.5rem;
+  position: relative;
+  isolation: isolate;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+/* 화면을 끝까지 당겼을 때 보이는 바깥 바탕도 종이색으로 */
+body:has(.vintage) {
+  --background: var(--vt-paper);
+}
+/* 종이 결 — 로고 시트와 같은 잡티를 옅게 깐다 */
+.vintage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .32 0 0 0 0 .2 0 0 0 .5 -.12'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+/* 영어 장식 글자(로고의 굵고 좁은 글씨) */
+.vt-display {
+  font-family: var(--font-display), "Impact", sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+/* 포지션 그림의 라임을 머스터드 쪽으로, 흰 바탕은 카드 색에 스며들게 */
+.vintage .pos-pic {
+  filter: hue-rotate(-26deg) saturate(0.9);
+  mix-blend-mode: multiply;
 }

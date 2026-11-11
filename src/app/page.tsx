@@ -1,3 +1,4 @@
+import { Anton } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
 import { StartButton } from "@/components/start-button";
@@ -11,6 +12,10 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ListChecks, Map, Shapes } from "lucide-react";
+
+// 빈티지 로고 톤(D-170 · D-171): 색 · 종이 결 · 배지 그림은 이 화면에만. 색은 globals.css 의 .vintage 가 토큰을 바꿔 끼운다
+// 영어 장식 글자용 굵고 좁은 글꼴 — 로고의 Futura Condensed 자리
+const display = Anton({ weight: "400", subsets: ["latin"], variable: "--font-display", display: "swap" });
 
 // 랜딩 문구 — PLAN.md 와 같게(D-56 기술 먼저 고르기, D-58 복습 뺌). 서비스명 표기: 로고 Re:Re:롤, 본문 리리롤 (D-16)
 
@@ -44,14 +49,45 @@ const differences = [
   "기록은 무제한 무료예요. 돈은 기록이 쌓인 뒤의 정리 · 리포트에서만 받아요",
 ];
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-2xl font-bold tracking-tight md:text-4xl">{children}</h2>;
+// 제목 위 영어 한 줄(장식) + 제목
+function SectionTitle({ eyebrow, children }: { eyebrow?: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-2">
+      {eyebrow && (
+        <p aria-hidden className="vt-display text-sm text-vt-red md:text-base">
+          ★ {eyebrow}
+        </p>
+      )}
+      <h2 className="text-2xl font-extrabold tracking-tight md:text-4xl">{children}</h2>
+    </div>
+  );
 }
 
+// 구분선 — 줄 · 별 · 줄
 function Divider() {
   return (
-    <div className="mx-auto max-w-5xl px-6">
-      <Separator />
+    <div aria-hidden className="mx-auto flex max-w-5xl items-center gap-3 px-6">
+      <Separator className="flex-1" />
+      <span className="text-sm text-vt-red">★</span>
+      <Separator className="flex-1" />
+    </div>
+  );
+}
+
+// 띠 — 로고의 "ROLL · SWEAT · REPEAT"
+function Band() {
+  return (
+    <div aria-hidden className="overflow-hidden bg-vt-ink text-vt-cream">
+      <p className="vt-display flex justify-center gap-4 py-2.5 text-base whitespace-nowrap md:text-lg">
+        {Array.from({ length: 4 }).flatMap((_, i) => [
+          <span key={`r${i}`}>Roll</span>,
+          <span key={`a${i}`} className="text-vt-mustard">★</span>,
+          <span key={`s${i}`}>Sweat</span>,
+          <span key={`b${i}`} className="text-vt-mustard">★</span>,
+          <span key={`p${i}`}>Repeat</span>,
+          <span key={`c${i}`} className="text-vt-mustard">★</span>,
+        ])}
+      </p>
     </div>
   );
 }
@@ -70,7 +106,7 @@ function ExampleScreen() {
               alt=""
               width={56}
               height={56}
-              className="shrink-0 rounded-xl bg-[#FAF9F4] ring-1 ring-border"
+              className="pos-pic shrink-0 rounded-xl"
             />
             <div className="min-w-0">
               <span className="block text-[17px] font-semibold">
@@ -99,7 +135,7 @@ function ExampleScreen() {
             alt=""
             width={40}
             height={40}
-            className="shrink-0 rounded-lg bg-[#FAF9F4] ring-1 ring-border"
+            className="pos-pic shrink-0 rounded-lg"
           />
           <span className="min-w-0 flex-1 text-[15px]">
             <span className="mark-lime">니슬라이스 패스</span>
@@ -120,14 +156,30 @@ function ExampleScreen() {
 
 export default function Home() {
   return (
-    <main className="flex-1">
+    <main className={`vintage flex-1 ${display.variable}`}>
+      {/* 맨 위 줄 — 서비스명 */}
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-6 pt-6">
+        <span className="text-lg font-extrabold tracking-tight">Re:Re:롤</span>
+        <span aria-hidden className="vt-display text-xs text-vt-navy md:text-sm">
+          Jiu-Jitsu · Mat Club
+        </span>
+      </div>
+
       {/* 1. 히어로 */}
-      <section className="mx-auto max-w-5xl px-6 py-20 md:py-32">
+      <section className="mx-auto grid max-w-5xl items-center gap-8 px-6 pt-8 pb-16 md:grid-cols-[1.25fr_1fr] md:gap-12 md:py-24">
+        {/* 로고 배지(D-170) — 장식 */}
+        <div aria-hidden className="relative mx-auto w-56 md:order-last md:w-full md:max-w-sm">
+          <Image src="/landing/circle.png" alt="" width={750} height={735} sizes="(min-width: 768px) 384px, 224px" className="h-auto w-full" priority />
+          <Image
+            src="/landing/star.png"
+            alt=""
+            width={750}
+            height={735}
+            sizes="(min-width: 768px) 190px, 110px"
+            className="absolute -right-6 -bottom-5 h-auto w-1/2 rotate-6 md:-right-4"
+          />
+        </div>
         <div className="reveal space-y-6">
-          <div className="flex flex-wrap items-center gap-3">
-            <Image src="/logo.png" alt="" width={32} height={32} className="rounded-lg" priority />
-            <span className="text-lg font-bold tracking-tight">Re:Re:롤</span>
-          </div>
           <h1 className="text-4xl leading-tight font-extrabold tracking-tight md:text-6xl">
             오늘 배운 주짓수, 잊지 않게 해줄게요
           </h1>
@@ -140,12 +192,12 @@ export default function Home() {
         </div>
       </section>
 
-      <Divider />
+      <Band />
 
       {/* 2. 문제 */}
       <section className="mx-auto max-w-5xl px-6 py-16 md:py-28">
         <div className="reveal mx-auto max-w-3xl space-y-6">
-          <SectionTitle>수업 끝나고 집에 오면</SectionTitle>
+          <SectionTitle eyebrow="After class">수업 끝나고 집에 오면</SectionTitle>
           <p className="text-base leading-relaxed text-muted-foreground md:text-lg">
             수업에서 데라히바 가드를 배웠다. 집에 오니 이름은 기억나는데 발을 어디에 거는지부터
             가물가물하다. 일지에 적으려니 기술 이름을 모르고, 스토리에 적어 둔 건 하루 지나면
@@ -156,7 +208,7 @@ export default function Home() {
           {pains.map((pain, i) => (
             <Card key={pain} className="reveal rounded-2xl ring-border">
               <CardHeader>
-                <CardDescription>불편 0{i + 1}</CardDescription>
+                <CardDescription className="font-semibold text-vt-navy">불편 0{i + 1}</CardDescription>
                 <CardTitle className="text-base font-semibold md:text-lg">{pain}</CardTitle>
               </CardHeader>
             </Card>
@@ -169,7 +221,7 @@ export default function Home() {
       {/* 3. 작동 방식 */}
       <section className="mx-auto max-w-5xl px-6 py-16 md:py-28">
         <div className="reveal mx-auto max-w-3xl">
-          <SectionTitle>이렇게 작동해요</SectionTitle>
+          <SectionTitle eyebrow="How it works">이렇게 작동해요</SectionTitle>
         </div>
         <div className="mt-10 grid items-start gap-8 md:grid-cols-2">
           <div className="space-y-4">
@@ -195,12 +247,12 @@ export default function Home() {
       {/* 4. 이래서 쓰게 돼요 */}
       <section className="mx-auto max-w-5xl px-6 py-16 md:py-28">
         <div className="reveal mx-auto max-w-3xl">
-          <SectionTitle>이래서 쓰게 돼요</SectionTitle>
+          <SectionTitle eyebrow="Keep rolling">이래서 쓰게 돼요</SectionTitle>
         </div>
         <div className="mt-10 grid gap-4 md:grid-cols-2">
           <Card className="reveal rounded-2xl ring-border">
             <CardHeader>
-              <CardDescription>처음 써 보면</CardDescription>
+              <CardDescription className="font-semibold text-vt-navy">처음 써 보면</CardDescription>
               <CardTitle className="text-lg font-semibold md:text-xl">
                 오픈 가드 그림을 눌러 &quot;데라히바 가드&quot;를 골랐더니 발을 어디에 거는지부터 세팅
                 과정 4줄이 따라와요
@@ -209,7 +261,7 @@ export default function Home() {
           </Card>
           <Card className="reveal rounded-2xl ring-border">
             <CardHeader>
-              <CardDescription>계속 쓰게 되는 이유</CardDescription>
+              <CardDescription className="font-semibold text-vt-navy">계속 쓰게 되는 이유</CardDescription>
               <CardTitle className="text-lg font-semibold md:text-xl">
                 수업마다 배운 기술을 고르면 내 기술 목록에 숙련도가 쌓이고, 수련 벨트에 한 주가
                 채워져요
@@ -222,18 +274,27 @@ export default function Home() {
       <Divider />
 
       {/* 5. 다른 점 */}
-      <section className="mx-auto max-w-3xl px-6 py-16 md:py-28">
-        <div className="reveal space-y-8">
-          <SectionTitle>뭐가 다르냐면</SectionTitle>
+      <section className="mx-auto grid max-w-5xl items-center gap-10 px-6 py-16 md:grid-cols-[1fr_auto] md:py-28">
+        <div className="reveal max-w-3xl space-y-8">
+          <SectionTitle eyebrow="What's different">뭐가 다르냐면</SectionTitle>
           <ul className="space-y-4">
             {differences.map((d) => (
               <li key={d} className="flex gap-3 text-base leading-relaxed md:text-lg">
-                <ListChecks className="mt-1 size-5 shrink-0" strokeWidth={1.75} aria-hidden />
+                <ListChecks className="mt-1 size-5 shrink-0 text-vt-red" strokeWidth={2} aria-hidden />
                 <span>{d}</span>
               </li>
             ))}
           </ul>
         </div>
+        <Image
+          src="/landing/repeat.png"
+          alt=""
+          aria-hidden
+          width={750}
+          height={735}
+          sizes="240px"
+          className="mx-auto h-auto w-44 -rotate-3 md:w-60"
+        />
       </section>
 
       <Divider />
@@ -241,7 +302,7 @@ export default function Home() {
       {/* 6. 가격 */}
       <section className="mx-auto max-w-3xl px-6 py-16 md:py-28">
         <div className="reveal space-y-6">
-          <SectionTitle>가격</SectionTitle>
+          <SectionTitle eyebrow="Price">가격</SectionTitle>
           <Card className="rounded-2xl ring-border">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">기록은 무제한 무료</CardTitle>
@@ -254,44 +315,40 @@ export default function Home() {
         </div>
       </section>
 
-      <Divider />
-
-      {/* 7. 시작하기 */}
-      <section className="mx-auto max-w-3xl px-6 py-16 md:py-28">
-        <div className="reveal space-y-6 text-center">
-          <SectionTitle>다음 수업부터, 배운 게 남게</SectionTitle>
-          <p className="text-base text-muted-foreground md:text-lg">
+      {/* 7. 시작하기 — 남색 띠 */}
+      <section className="bg-vt-navy text-vt-cream">
+        <div className="reveal mx-auto max-w-3xl space-y-6 px-6 py-16 text-center md:py-24">
+          <Image
+            src="/landing/pill.png"
+            alt=""
+            aria-hidden
+            width={750}
+            height={735}
+            sizes="220px"
+            className="mx-auto -my-6 h-auto w-52"
+          />
+          <h2 className="text-2xl font-extrabold tracking-tight md:text-4xl">다음 수업부터, 배운 게 남게</h2>
+          <p className="text-base text-vt-cream/80 md:text-lg">
             배운 기술 이름이 다음 주면 사라졌던 적이 있다면, 오늘 배운 것부터 적어 보세요.
           </p>
           <div className="flex justify-center">
-            <StartButton />
+            <StartButton className="bg-accent text-accent-foreground hover:bg-accent/90" />
           </div>
-        </div>
-      </section>
-
-      <Divider />
-
-      {/* 8. 만든 사람 */}
-      <section className="mx-auto max-w-3xl px-6 py-16 md:py-28">
-        <div className="reveal space-y-6">
-          <SectionTitle>만든 사람</SectionTitle>
-          <Card className="rounded-2xl ring-border">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">김한웅</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-base leading-relaxed">
-              <p>쉬는 날 없이 매주 매트에 오르는 주짓수 수련자예요. 러닝도 2년째예요.</p>
-              <p className="text-muted-foreground">
-                사진 보정 앱과 웹서비스 몇 가지를 직접 만들어 봤어요.
-              </p>
-            </CardContent>
-          </Card>
         </div>
       </section>
 
       {/* 9. 푸터 */}
       <footer className="border-t">
         <div className="mx-auto max-w-5xl space-y-1 px-6 py-10 text-sm text-muted-foreground">
+          <Image
+            src="/landing/script.png"
+            alt=""
+            aria-hidden
+            width={900}
+            height={510}
+            sizes="150px"
+            className="-ml-1 mb-3 h-auto w-36"
+          />
           <p>
             <span className="font-semibold text-foreground">Re:Re:롤</span> © 2026
           </p>
