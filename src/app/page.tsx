@@ -179,8 +179,8 @@ export default function Home() {
           </h1>
           <p className="max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
             기술 이름을 몰라도 돼요. 포지션 그림을 눌러 오늘 배운 기술을 고르면 Re:Re:Roll(리리롤)이
-            이름과 세팅 과정을 붙여 주고, 내 기술 목록에 숙련도와 함께 쌓아 둬요. 화이트 벨트부터
-            블루 초반까지, 수업 끝나고 1분이면 돼요.
+            이름과 세팅 과정을 붙여 주고, 내 기술 목록에 숙련도와 함께 쌓아 둬요. 수업 끝나고
+            1분이면 돼요.
           </p>
           <StartButton />
         </div>
