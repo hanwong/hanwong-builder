@@ -380,14 +380,14 @@ isOneToOne: false
                   ]
                 },"operators": {
                   Row: {
-                    "created_at": string,"user_id": string
+                    "created_at": string,"owner_view": boolean,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"user_id": string
+                    "created_at"?: string,"owner_view"?: boolean,"user_id": string
                   }
                   Update: {
-                    "created_at"?: string,"user_id"?: string
+                    "created_at"?: string,"owner_view"?: boolean,"user_id"?: string
                   }
                   Relationships: [
                     
@@ -642,6 +642,9 @@ isOneToOne: false
 { Args: { "p_id": string }; Returns: string
                            },
 "is_operator":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"operator_owner_view":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "join_gym":

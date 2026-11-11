@@ -10,7 +10,8 @@ export { GYM_COOKIE, WEEKDAY_KO, hhmm };
 
 // 관장님 버전 (D-127, FLOW 8 · DB 11) — 체육관 · 역할 · 스케줄 · 수업. 기록은 사람 것이라 여기서 안 읽는다(관원 기록은 함수로만).
 export type GymRole = "owner" | "coach" | "member";
-export type MyGym = { id: string; name: string; network: string | null; role: GymRole };
+// viewOnly — 운영자 임시 "관장 화면 보기만"(D-180): 실제로는 코치라 바꾸기는 DB 에서 막힌다
+export type MyGym = { id: string; name: string; network: string | null; role: GymRole; viewOnly?: boolean };
 
 type Client = Awaited<ReturnType<typeof createSupabaseServer>>;
 
@@ -31,7 +32,10 @@ export async function currentStaffGym(supabase: Client): Promise<{ gym: MyGym; a
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
-  const all = (await queryMyGyms(supabase, user.id)).filter((g) => g.role !== "member");
+  const [mine, ov] = await Promise.all([queryMyGyms(supabase, user.id), supabase.rpc("operator_owner_view")]);
+  const all = mine
+    .filter((g) => g.role !== "member")
+    .map((g) => (ov.data === true && g.role === "coach" ? { ...g, role: "owner" as const, viewOnly: true } : g));
   if (all.length === 0) return null;
   const picked = (await cookies()).get(GYM_COOKIE)?.value;
   return { gym: all.find((g) => g.id === picked) ?? all[0], all };

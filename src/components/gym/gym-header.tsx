@@ -29,7 +29,7 @@ export function GymHeader({ gym, all }: { gym: MyGym; all: MyGym[] }) {
           <GymName name={gym.name} network={gym.network} size={20} />
         </h1>
       )}
-      <Badge variant="secondary">{ROLE_LABEL[gym.role]}</Badge>
+      <Badge variant="secondary">{gym.viewOnly ? "관장 보기" : ROLE_LABEL[gym.role]}</Badge>
     </header>
   );
 }

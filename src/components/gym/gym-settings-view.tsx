@@ -19,6 +19,7 @@ import { NetworkSelect } from "@/components/gym/network-select";
 export function GymSettingsView({ data }: { data: SettingsPage }) {
   const router = useRouter();
   const owner = data.gym.role === "owner";
+  const viewOnly = data.gym.viewOnly === true; // 운영자 보기만(D-180) — 관장 칸은 보이되 바꾸는 버튼은 꺼 둔다
   const [name, setName] = useState(data.gym.name);
   const [region, setRegion] = useState(data.region);
   const [network, setNetwork] = useState(data.network);
@@ -44,6 +45,11 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
     <div className="flex flex-col gap-5">
       <GymHeader gym={data.gym} all={data.all} />
       <h2 className="text-[22px] font-bold tracking-tight">체육관 설정</h2>
+      {viewOnly && (
+        <p className="rounded-xl bg-muted/60 p-3 text-[13px] leading-relaxed text-muted-foreground">
+          운영자 보기 전용이에요. 관장 화면을 그대로 보여 주지만 저장 · 코드 다시 만들기 · 코치 빼기 · 관장 넘기기 · 지우기는 막혀 있어요.
+        </p>
+      )}
 
       {owner && (
         <section className="flex flex-col gap-3 rounded-2xl bg-card p-4 ring-1 ring-border">
@@ -54,7 +60,7 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
           <Button
             size="sm"
             className="self-end rounded-full"
-            disabled={busy || !name.trim()}
+            disabled={busy || viewOnly || !name.trim()}
             onClick={() => {
               const [si = "", ...rest] = region.trim().split(/\s+/);
               run(() => updateGym(data.gym.id, { name, si, gu: rest.join(" "), network }), "저장했어요");
@@ -79,7 +85,7 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
                 </span>
                 <CopyButton text={code} label={`${which === "join" ? "관원" : "코치"} 코드 복사`} />
                 {owner && (
-                  <Button variant="outline" size="sm" className="rounded-full" disabled={busy} onClick={() => setRegenWhich(which)}>
+                  <Button variant="outline" size="sm" className="rounded-full" disabled={busy || viewOnly} onClick={() => setRegenWhich(which)}>
                     다시 만들기
                   </Button>
                 )}
@@ -119,7 +125,7 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
               <span className="min-w-0 flex-1 truncate">{s.nick}</span>
               <Badge variant="secondary">{s.role === "owner" ? "관장" : "코치"}</Badge>
               {owner && s.role === "coach" && (
-                <Button variant="ghost" size="sm" className="rounded-full text-muted-foreground" disabled={busy} onClick={() => run(() => demoteCoach(data.gym.id, s.userId), "관원으로 바꿨어요")}>
+                <Button variant="ghost" size="sm" className="rounded-full text-muted-foreground" disabled={busy || viewOnly} onClick={() => run(() => demoteCoach(data.gym.id, s.userId), "관원으로 바꿨어요")}>
                   코치 빼기
                 </Button>
               )}
@@ -137,7 +143,7 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
               triggerClassName="h-10 text-[15px]"
               options={[...data.staff.filter((s) => s.role === "coach"), ...data.members].map((p) => ({ value: p.userId, label: p.nick }))}
             />
-            <Button variant="outline" size="sm" className="rounded-full" disabled={busy || !transferTo} onClick={() => run(() => transferOwner(data.gym.id, transferTo), "관장을 넘겼어요. 이제 코치예요.")}>
+            <Button variant="outline" size="sm" className="rounded-full" disabled={busy || viewOnly || !transferTo} onClick={() => run(() => transferOwner(data.gym.id, transferTo), "관장을 넘겼어요. 이제 코치예요.")}>
               넘기기
             </Button>
           </div>
@@ -151,8 +157,8 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
         </Link>
       </section>
 
-      {/* 체육관 나가기(코치, D-162) — 맨 아래 따로, 확인 창에서 한 번 더 */}
-      {!owner && (
+      {/* 체육관 나가기(코치, D-162) — 맨 아래 따로, 확인 창에서 한 번 더. 운영자 보기 모드도 실제로는 코치라 나가기 가능 */}
+      {(!owner || viewOnly) && (
         <section className="flex flex-col gap-2 rounded-2xl p-4 ring-1 ring-destructive/30">
           <h3 className="text-[15px] font-semibold text-destructive">체육관 나가기</h3>
           <p className="text-[13px] leading-relaxed text-muted-foreground">나가면 이 체육관 관장 화면을 더 볼 수 없어요. 내 기록은 그대로 남아요.</p>
@@ -161,7 +167,7 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
           </Button>
         </section>
       )}
-      {!owner && leaveOpen && (
+      {(!owner || viewOnly) && leaveOpen && (
         <Dialog open onOpenChange={(o) => !o && !busy && setLeaveOpen(false)}>
           <ModalContent>
             <DialogTitle className="text-[17px] font-semibold">이 체육관에서 나갈까요?</DialogTitle>
@@ -189,7 +195,7 @@ export function GymSettingsView({ data }: { data: SettingsPage }) {
       )}
 
       {/* 체육관 지우기(D-137) — 맨 아래 따로. 팝업에서 이름을 똑같이 적어야 삭제 → 경고 · 아니요 / 삭제 */}
-      {owner && (
+      {owner && !viewOnly && (
         <section className="flex flex-col gap-2 rounded-2xl p-4 ring-1 ring-destructive/30">
           <h3 className="text-[15px] font-semibold text-destructive">체육관 지우기</h3>
           <p className="text-[13px] leading-relaxed text-muted-foreground">시간표 · 수업 내용 · 코멘트가 모두 사라지고 되돌릴 수 없어요.</p>
