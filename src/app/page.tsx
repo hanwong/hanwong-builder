@@ -169,9 +169,9 @@ export default function Home() {
       <section className="mx-auto grid max-w-5xl items-center gap-8 px-6 pt-8 pb-16 md:grid-cols-[1.25fr_1fr] md:gap-12 md:py-24">
         {/* 로고 배지(D-170) — 장식 */}
         <div aria-hidden className="relative mx-auto w-56 md:order-last md:w-full md:max-w-sm">
-          <Image src="/landing/circle.png" alt="" width={750} height={735} sizes="(min-width: 768px) 384px, 224px" className="h-auto w-full" priority />
+          <Image src="/landing/badge-seal.png" alt="" width={750} height={735} sizes="(min-width: 768px) 384px, 224px" className="h-auto w-full" priority />
           <Image
-            src="/landing/star.png"
+            src="/landing/badge-tap.png"
             alt=""
             width={750}
             height={735}
@@ -287,7 +287,7 @@ export default function Home() {
           </ul>
         </div>
         <Image
-          src="/landing/repeat.png"
+          src="/landing/badge-repeat.png"
           alt=""
           aria-hidden
           width={750}
@@ -301,13 +301,13 @@ export default function Home() {
       <section className="bg-vt-navy text-vt-cream">
         <div className="reveal mx-auto max-w-3xl space-y-6 px-6 py-16 text-center md:py-24">
           <Image
-            src="/landing/pill.png"
+            src="/landing/badge-pill.png"
             alt=""
             aria-hidden
             width={750}
             height={735}
-            sizes="220px"
-            className="mx-auto -my-6 h-auto w-52"
+            sizes="288px"
+            className="mx-auto -my-12 h-auto w-64 md:w-72"
           />
           <h2 className="text-2xl font-extrabold tracking-tight md:text-4xl">다음 수업부터, 배운 게 남게</h2>
           <p className="text-base text-vt-cream/80 md:text-lg">
