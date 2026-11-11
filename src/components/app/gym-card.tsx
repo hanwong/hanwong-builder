@@ -264,6 +264,7 @@ function ClassContentDialog({ slot, today, gymId, gymName, gymNetwork, onClose }
         return;
       }
       toast.success(kind === "save" ? "내 기록에 저장했어요 — 출석은 하지 않았어요." : "출석했어요. 내 기록이 생겼어요 — 메모는 내 것으로 고쳐도 돼요.");
+      onClose(); // 화면을 떠나면 팝업은 닫는다(D-169) — 안 닫으면 돌아왔을 때 그대로 떠 있다
       router.push(`/app/log/${res.id}`);
     });
   }
@@ -348,7 +349,7 @@ function ClassContentDialog({ slot, today, gymId, gymName, gymNetwork, onClose }
             // 지난 수업 — 출석은 못 하고 기록 저장만(D-153)
             slot.myLogId ? (
               <Button asChild className="h-12 flex-1 rounded-full text-base shadow-none">
-                <Link href={`/app/log/${slot.myLogId}`}>
+                <Link href={`/app/log/${slot.myLogId}`} onClick={onClose}>
                   <Check data-icon="inline-start" aria-hidden />
                   {slot.attended ? "출석했어요 · 내 기록 보기" : "내 기록 보기"}
                 </Link>
@@ -382,7 +383,7 @@ function ClassContentDialog({ slot, today, gymId, gymName, gymNetwork, onClose }
             </Button>
           ) : slot.attended && slot.myLogId ? (
             <Button asChild className="h-12 flex-1 rounded-full text-base shadow-none">
-              <Link href={`/app/log/${slot.myLogId}`}>
+              <Link href={`/app/log/${slot.myLogId}`} onClick={onClose}>
                 <Check data-icon="inline-start" aria-hidden />
                 출석했어요 · 내 기록 보기
               </Link>
@@ -391,7 +392,7 @@ function ClassContentDialog({ slot, today, gymId, gymName, gymNetwork, onClose }
             <>
               {slot.myLogId ? (
                 <Button asChild variant="outline" className="h-12 flex-1 rounded-full text-base shadow-none">
-                  <Link href={`/app/log/${slot.myLogId}`}>내 기록 보기</Link>
+                  <Link href={`/app/log/${slot.myLogId}`} onClick={onClose}>내 기록 보기</Link>
                 </Button>
               ) : (
                 <Button variant="outline" className="h-12 flex-1 rounded-full text-base shadow-none" disabled={!!busy} onClick={() => run("save")}>
