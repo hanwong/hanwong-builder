@@ -213,7 +213,8 @@ export function TrainingBelt({
           <span
             aria-hidden
             className="absolute inset-y-0 right-0 flex w-[5%] flex-col items-center justify-center"
-            style={{ gap: stripes > 4 ? "max(1px, 0.25vw)" : "max(2px, 0.6vw)" }}
+            // 간격은 고정 px — 화면 너비(vw) 기준이면 PC 에서 줄이 위아래로 벌어짐(D-187)
+            style={{ gap: stripes > 4 ? 1 : 2 }}
           >
             {Array.from({ length: stripes }, (_, i) => (
               <span
