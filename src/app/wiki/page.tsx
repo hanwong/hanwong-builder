@@ -4,7 +4,7 @@ import { Rows, WikiNotice, wikiHref } from "@/components/wiki/wiki-parts";
 import { WIKI_REPO } from "@/lib/wiki/model";
 
 export const metadata: Metadata = {
-  title: "기술 위키 — Re:Re:롤",
+  title: "기술 위키 — Re:Re:Roll",
   description: "주짓수 포지션 · 기술 · 원리 · 기본 드릴을 서로 이어 둔 한국어 위키. 세팅 과정 · 흔한 실수 · 막히면 다음 수까지.",
 };
 

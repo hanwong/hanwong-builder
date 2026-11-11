@@ -6,7 +6,7 @@ import { BeltsView } from "@/components/app/belts-view";
 import { getBeltTechniques } from "@/lib/belt-techniques-data";
 
 export const metadata: Metadata = {
-  title: "벨트별 기술 — Re:Re:롤",
+  title: "벨트별 기술 — Re:Re:Roll",
 };
 
 // 벨트별 흔히 배우는 기술 (D-126). 내 기록 · 숙련도가 섞이므로 요청 때 읽는다 — 그동안 스켈레톤.

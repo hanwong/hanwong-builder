@@ -12,7 +12,7 @@ export default function AppHome() {
       <header className="flex items-center justify-between">
         <h1 className="flex items-center gap-2 text-[22px] font-bold tracking-tight">
           <Image src="/logo.png" alt="" width={28} height={28} className="rounded-lg" />
-          Re:Re:롤
+          Re:Re:Roll
         </h1>
         <SignOutButton />
       </header>

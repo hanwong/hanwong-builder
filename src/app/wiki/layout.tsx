@@ -12,7 +12,7 @@ export default function WikiLayout({ children }: { children: React.ReactNode }) 
             리리롤 기술 위키
           </Link>
           <Link href="/" className="text-[13px] font-medium text-muted-foreground hover:text-foreground">
-            Re:Re:롤 홈
+            Re:Re:Roll 홈
           </Link>
         </div>
       </header>

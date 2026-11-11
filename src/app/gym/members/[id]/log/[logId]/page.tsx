@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MemberLogView } from "@/components/gym/member-log-view";
 import { getMemberLog } from "@/lib/gym-data";
 
-export const metadata: Metadata = { title: "관원 기록 — Re:Re:롤" };
+export const metadata: Metadata = { title: "관원 기록 — Re:Re:Roll" };
 
 // 관원 기록 · 코멘트 (D-127, FLOW 8-3)
 export default function MemberLogPage({ params }: { params: Promise<{ id: string; logId: string }> }) {

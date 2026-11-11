@@ -6,7 +6,7 @@ import { GymHomeView } from "@/components/gym/gym-home-view";
 import { GymEmpty } from "@/components/gym/gym-empty";
 import { getGymHome } from "@/lib/gym-data";
 
-export const metadata: Metadata = { title: "체육관 — Re:Re:롤" };
+export const metadata: Metadata = { title: "체육관 — Re:Re:Roll" };
 
 // 체육관 홈 (D-127, FLOW 8-3) — 주 줄(?w= 로 앞뒤 주, D-134) · 고른 날 수업 · 숫자 · 가입 코드. 관장 · 코치가 아니면 등록 안내.
 export default function GymPage({ searchParams }: { searchParams: Promise<{ w?: string }> }) {

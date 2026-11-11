@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ClassView } from "@/components/gym/class-view";
 import { getClassDetail } from "@/lib/gym-data";
 
-export const metadata: Metadata = { title: "수업 — Re:Re:롤" };
+export const metadata: Metadata = { title: "수업 — Re:Re:Roll" };
 
 // 등록된 수업 보기 · 고치기 · 출석 명단 (D-127, FLOW 8-3)
 export default function ClassPage({ params }: { params: Promise<{ id: string }> }) {

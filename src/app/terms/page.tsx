@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "서비스 약관 — Re:Re:롤",
-  description: "Re:Re:롤을 쓸 때의 약속.",
+  title: "서비스 약관 — Re:Re:Roll",
+  description: "Re:Re:Roll을 쓸 때의 약속.",
 };
 
 const EFFECTIVE = "2026년 10월 27일"; // 10/27: 문의 연락처 추가(T-30)
@@ -13,7 +13,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
     title: "1. 이 서비스는",
     body: (
       <p>
-        Re:Re:롤(리리롤)은 주짓수 수업에서 배운 기술을 고르면 이름 · 세팅 과정과 함께 내 기술 목록에
+        Re:Re:Roll(리리롤)은 주짓수 수업에서 배운 기술을 고르면 이름 · 세팅 과정과 함께 내 기술 목록에
         쌓아 주는 개인 수련 기록 서비스예요. 김한웅이 개인으로 운영해요.
       </p>
     ),
@@ -96,7 +96,7 @@ export default function TermsPage() {
     <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16 md:py-24">
       <div className="space-y-3">
         <Link href="/" className="text-[13px] font-medium text-muted-foreground underline-offset-4 hover:underline">
-          ← Re:Re:롤
+          ← Re:Re:Roll
         </Link>
         <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">서비스 약관</h1>
         <p className="text-[13px] font-medium text-muted-foreground">시행일 {EFFECTIVE}</p>

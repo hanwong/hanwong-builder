@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { LoginButtons } from "@/components/app/login-buttons";
 
-export const metadata: Metadata = { title: "로그인 — Re:Re:롤" };
+export const metadata: Metadata = { title: "로그인 — Re:Re:Roll" };
 
 // 로그인 화면 (FLOW 화면 2): 가운데 카드 하나 · 서비스명 · 한 줄 · 카카오 · 네이버 · Google 버튼(D-66).
 export default function LoginPage() {
@@ -15,7 +15,7 @@ export default function LoginPage() {
         <CardContent className="flex flex-col gap-5 py-4">
           <div className="flex flex-col gap-1.5">
             <Image src="/logo.png" alt="" width={48} height={48} className="rounded-xl" priority />
-            <span className="text-[22px] font-bold tracking-tight">Re:Re:롤</span>
+            <span className="text-[22px] font-bold tracking-tight">Re:Re:Roll</span>
             <p className="text-[15px] leading-relaxed text-muted-foreground">
               오늘 배운 주짓수, 잊지 않게. 기록과 내 기술 목록은 본인만 볼 수 있어요.
             </p>

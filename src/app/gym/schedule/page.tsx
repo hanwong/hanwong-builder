@@ -6,7 +6,7 @@ import { GymScheduleView } from "@/components/gym/gym-schedule-view";
 import { GymEmpty } from "@/components/gym/gym-empty";
 import { getGymSchedule } from "@/lib/gym-data";
 
-export const metadata: Metadata = { title: "수업 스케줄 — Re:Re:롤" };
+export const metadata: Metadata = { title: "수업 스케줄 — Re:Re:Roll" };
 
 // 수업 스케줄 (D-127, FLOW 8-3) — 요일 7묶음 · 수업 추가 · 수정 · 없애기
 export default function GymSchedulePage() {

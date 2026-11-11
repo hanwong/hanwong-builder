@@ -10,7 +10,7 @@ import { createSupabaseServer } from "@/lib/supabase/server";
 import { seoulToday } from "@/lib/seoul-date";
 
 export const metadata: Metadata = {
-  title: "목록 추가 대기 — Re:Re:롤",
+  title: "목록 추가 대기 — Re:Re:Roll",
 };
 
 // 초안 만들기(Claude)가 이 화면의 Server Action 에서 돈다 — 이름 20개면 1분 가까이 걸릴 수 있다

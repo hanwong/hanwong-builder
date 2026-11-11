@@ -6,7 +6,7 @@ import { MembersView } from "@/components/gym/members-view";
 import { GymEmpty } from "@/components/gym/gym-empty";
 import { getMembers } from "@/lib/gym-data";
 
-export const metadata: Metadata = { title: "관원 — Re:Re:롤" };
+export const metadata: Metadata = { title: "관원 — Re:Re:Roll" };
 
 // 관원 목록 (D-127, FLOW 8-3)
 export default function MembersPage() {

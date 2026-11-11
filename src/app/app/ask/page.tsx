@@ -12,7 +12,7 @@ import { GrowingMap } from "@/components/app/growing-map";
 import { formatKoreanDate } from "@/lib/seoul-date";
 
 export const metadata: Metadata = {
-  title: "질문하기 — Re:Re:롤",
+  title: "질문하기 — Re:Re:Roll",
 };
 export const maxDuration = 60; // AI 가 기술 지도를 몇 번 찾아보고 답한다(보통 10~30초)
 
@@ -23,7 +23,7 @@ export default function AskHome() {
       <header className="flex items-center justify-between">
         <span className="flex items-center gap-2 text-[17px] font-bold tracking-tight">
           <Image src="/logo.png" alt="" width={24} height={24} className="rounded-md" />
-          Re:Re:롤
+          Re:Re:Roll
         </span>
         <Badge variant="secondary">시험 중</Badge>
       </header>

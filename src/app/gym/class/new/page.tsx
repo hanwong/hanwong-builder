@@ -8,7 +8,7 @@ import { GymEmpty } from "@/components/gym/gym-empty";
 import { getNewClassInfo } from "@/lib/gym-data";
 import { isIsoDate } from "@/lib/seoul-date";
 
-export const metadata: Metadata = { title: "수업 내용 등록 — Re:Re:롤" };
+export const metadata: Metadata = { title: "수업 내용 등록 — Re:Re:Roll" };
 
 // 수업 내용 등록 (D-127, FLOW 8-3) — 주소 ?d=날짜&s=규칙. 이 화면은 주소 값을 읽으므로 미리 받기에 안 들어간다(괜찮음 — 관장이 누른 뒤 연다).
 export default function NewClassPage({ searchParams }: { searchParams: Promise<{ d?: string; s?: string }> }) {

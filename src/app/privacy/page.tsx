@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "개인정보처리방침 — Re:Re:롤",
-  description: "Re:Re:롤이 어떤 정보를 받고, 어디에 두고, 언제 지우는지.",
+  title: "개인정보처리방침 — Re:Re:Roll",
+  description: "Re:Re:Roll이 어떤 정보를 받고, 어디에 두고, 언제 지우는지.",
 };
 
 // 시행일은 고정 글자 (cacheComponents: 렌더 중 new Date() 금지)
@@ -14,7 +14,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
     title: "1. 누가 운영하나",
     body: (
       <p>
-        Re:Re:롤(리리롤)은 김한웅이 개인으로 만들고 운영하는 주짓수 수련 기록 서비스예요.
+        Re:Re:Roll(리리롤)은 김한웅이 개인으로 만들고 운영하는 주짓수 수련 기록 서비스예요.
       </p>
     ),
   },
@@ -142,7 +142,7 @@ export default function PrivacyPage() {
     <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16 md:py-24">
       <div className="space-y-3">
         <Link href="/" className="text-[13px] font-medium text-muted-foreground underline-offset-4 hover:underline">
-          ← Re:Re:롤
+          ← Re:Re:Roll
         </Link>
         <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">개인정보처리방침</h1>
         <p className="text-[13px] font-medium text-muted-foreground">시행일 {EFFECTIVE}</p>

@@ -6,7 +6,7 @@ import { GymSettingsView } from "@/components/gym/gym-settings-view";
 import { GymEmpty } from "@/components/gym/gym-empty";
 import { getGymSettings } from "@/lib/gym-data";
 
-export const metadata: Metadata = { title: "체육관 설정 — Re:Re:롤" };
+export const metadata: Metadata = { title: "체육관 설정 — Re:Re:Roll" };
 
 // 체육관 설정 (D-127, FLOW 8-3) — 이름 · 지역 · 코드 다시 만들기 · 코치 · 관장 넘기기 · 삭제. 코치는 보기 · 나가기만
 export default function GymSettingsPage() {

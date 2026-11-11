@@ -42,7 +42,7 @@ export function JiujitsuMap({ map }: { map: { slug: string; nameKo: string; lear
                     width={96}
                     height={96}
                     className={cn(
-                      "aspect-square h-auto w-full rounded-xl bg-[#FAF9F4] ring-1 transition-opacity",
+                      "aspect-square h-auto w-full rounded-xl bg-card ring-1 transition-opacity",
                       on ? "ring-foreground/70" : "opacity-30 ring-border grayscale",
                     )}
                   />

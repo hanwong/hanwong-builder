@@ -17,7 +17,7 @@ import { ListChecks, Map, Shapes } from "lucide-react";
 // 영어 장식 글자용 굵고 좁은 글꼴 — 로고의 Futura Condensed 자리
 const display = Anton({ weight: "400", subsets: ["latin"], variable: "--font-display", display: "swap" });
 
-// 랜딩 문구 — PLAN.md 와 같게(D-56 기술 먼저 고르기, D-58 복습 뺌). 서비스명 표기: 로고 Re:Re:롤, 본문 리리롤 (D-16)
+// 랜딩 문구 — PLAN.md 와 같게(D-56 기술 먼저 고르기, D-58 복습 뺌). 서비스명 표기: 로고 Re:Re:Roll, 본문 리리롤 (D-16)
 
 const pains = [
   "배운 기술의 이름과 세팅 순서를 다음 주면 잊어요",
@@ -159,7 +159,7 @@ export default function Home() {
     <main className={`vintage flex-1 ${display.variable}`}>
       {/* 맨 위 줄 — 서비스명 */}
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-6 pt-6">
-        <span className="text-lg font-extrabold tracking-tight">Re:Re:롤</span>
+        <span className="text-lg font-extrabold tracking-tight">Re:Re:Roll</span>
         <span aria-hidden className="vt-display text-xs text-vt-navy md:text-sm">
           Jiu-Jitsu · Mat Club
         </span>
@@ -184,7 +184,7 @@ export default function Home() {
             오늘 배운 주짓수, 잊지 않게 해줄게요
           </h1>
           <p className="max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
-            기술 이름을 몰라도 돼요. 포지션 그림을 눌러 오늘 배운 기술을 고르면 Re:Re:롤(리리롤)이
+            기술 이름을 몰라도 돼요. 포지션 그림을 눌러 오늘 배운 기술을 고르면 Re:Re:Roll(리리롤)이
             이름과 세팅 과정을 붙여 주고, 내 기술 목록에 숙련도와 함께 쌓아 둬요. 화이트 벨트부터
             블루 초반까지, 수업 끝나고 1분이면 돼요.
           </p>
@@ -297,25 +297,7 @@ export default function Home() {
         />
       </section>
 
-      <Divider />
-
-      {/* 6. 가격 */}
-      <section className="mx-auto max-w-3xl px-6 py-16 md:py-28">
-        <div className="reveal space-y-6">
-          <SectionTitle eyebrow="Price">가격</SectionTitle>
-          <Card className="rounded-2xl ring-border">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">기록은 무제한 무료</CardTitle>
-              <CardDescription>
-                오늘 배운 것 기록은 몇 번을 쌓아도 돈을 받지 않아요. 기록이 쌓인 뒤의
-                정리 · 리포트 가격은 준비 중이에요.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-      </section>
-
-      {/* 7. 시작하기 — 남색 띠 */}
+      {/* 6. 시작하기 — 남색 띠 */}
       <section className="bg-vt-navy text-vt-cream">
         <div className="reveal mx-auto max-w-3xl space-y-6 px-6 py-16 text-center md:py-24">
           <Image
@@ -337,20 +319,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 9. 푸터 */}
+      {/* 7. 푸터 */}
       <footer className="border-t">
         <div className="mx-auto max-w-5xl space-y-1 px-6 py-10 text-sm text-muted-foreground">
-          <Image
-            src="/landing/script.png"
-            alt=""
-            aria-hidden
-            width={900}
-            height={510}
-            sizes="150px"
-            className="-ml-1 mb-3 h-auto w-36"
-          />
           <p>
-            <span className="font-semibold text-foreground">Re:Re:롤</span> © 2026
+            <span className="font-semibold text-foreground">Re:Re:Roll</span> © 2026
           </p>
           <p>
             <Link href="/privacy" className="underline-offset-4 hover:underline">

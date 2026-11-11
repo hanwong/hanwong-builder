@@ -7,7 +7,7 @@ import { DrillDetail } from "@/components/app/drill-detail";
 import { getDrill } from "@/lib/drills-data";
 
 export const metadata: Metadata = {
-  title: "기본 드릴 — Re:Re:롤",
+  title: "기본 드릴 — Re:Re:Roll",
 };
 
 // 드릴 (D-112). 주소는 드릴 고유 키(slug) — 예: /app/drills/shrimp

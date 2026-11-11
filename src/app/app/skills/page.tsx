@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { getSkills } from "@/lib/skills-data";
 
 export const metadata: Metadata = {
-  title: "내 기술 — Re:Re:롤",
+  title: "내 기술 — Re:Re:Roll",
 };
 
 // 내 기술 (T-10). 내 숙련도가 섞이므로 요청 때 읽는다 — 그동안 목록 자리 스켈레톤.

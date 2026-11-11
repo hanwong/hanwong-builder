@@ -6,7 +6,7 @@ import { CalendarSkeleton } from "@/components/app/logs-skeletons";
 import { getThisMonthLogs } from "@/lib/logs-data";
 
 export const metadata: Metadata = {
-  title: "기록 달력 — Re:Re:롤",
+  title: "기록 달력 — Re:Re:Roll",
 };
 
 // 기록 달력 (D-98) — 이번 달을 미리 받아 두고, 달 넘기기는 서버 액션으로(D-106). 홈 벨트를 누르면 여기(D-99).

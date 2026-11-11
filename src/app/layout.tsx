@@ -10,7 +10,7 @@ const pretendard = localFont({
   display: "swap",
 });
 
-const title = "Re:Re:롤 — 오늘 배운 주짓수, 잊지 않게 해줄게요";
+const title = "Re:Re:Roll — 오늘 배운 주짓수, 잊지 않게 해줄게요";
 const description =
   "기술 이름을 몰라도 돼요. 포지션 그림을 눌러 오늘 배운 기술을 고르면 리리롤이 이름과 세팅 과정을 붙여 주고, 내 기술 목록에 숙련도와 함께 쌓아 둬요. 기록은 무제한 무료.";
 
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://rereroll.xyz"),
   title,
   description,
-  openGraph: { title, description, siteName: "Re:Re:롤", locale: "ko_KR", type: "website", url: "/" },
+  openGraph: { title, description, siteName: "Re:Re:Roll", locale: "ko_KR", type: "website", url: "/" },
   twitter: { card: "summary_large_image", title, description },
 };
 

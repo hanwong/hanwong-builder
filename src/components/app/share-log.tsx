@@ -82,7 +82,7 @@ export function ShareLog({ id, loggedOn, shared: initialShared, nick: initialNic
     const text = `${nick} 님의 ${loggedOn} 수업 — 리리롤에서 내 기록으로 가져가기`;
     try {
       if (navigator.share && navigator.canShare?.({ url: link })) {
-        await navigator.share({ title: "Re:Re:롤 수업 링크", text, url: link });
+        await navigator.share({ title: "Re:Re:Roll 수업 링크", text, url: link });
         return;
       }
       await navigator.clipboard.writeText(link);

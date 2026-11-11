@@ -140,7 +140,7 @@ export function TechniquePicker({
                 alt=""
                 width={56}
                 height={56}
-                className="rounded-xl bg-[#FAF9F4] ring-2 ring-card"
+                className="rounded-xl bg-card ring-2 ring-card"
               />
             ))}
           </span>
@@ -315,7 +315,7 @@ export function TechniquePicker({
                                 alt=""
                                 width={PICKER_PICTURE}
                                 height={PICKER_PICTURE}
-                                className="size-14 shrink-0 rounded-xl bg-[#FAF9F4] ring-1 ring-border"
+                                className="size-14 shrink-0 rounded-xl bg-card ring-1 ring-border"
                               />
                               <span className="min-w-0 flex-1">
                                 <span className="block truncate text-[15px] font-semibold">{p.nameKo}</span>

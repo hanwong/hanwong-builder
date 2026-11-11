@@ -10,7 +10,7 @@ export function PositionPicture({ slug, size, className }: { slug?: string | nul
       alt=""
       width={size}
       height={size}
-      className={cn("shrink-0 rounded-xl bg-[#FAF9F4] ring-1 ring-border", className)}
+      className={cn("shrink-0 rounded-xl bg-card ring-1 ring-border", className)}
     />
   );
 }

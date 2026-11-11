@@ -9,7 +9,7 @@ import type { PositionGroup } from "@/lib/skills-data";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import type { Level } from "@/lib/mock/log-seed";
 
-export const metadata: Metadata = { title: "관원 — Re:Re:롤" };
+export const metadata: Metadata = { title: "관원 — Re:Re:Roll" };
 
 // 관원 한 명 (D-127, FLOW 8-3) — 숫자 · 기술 분포 육각형 + 배운 기술(D-164, 내 기술 탭 "배운 것만"과 같은 모양) · 기록 목록
 export default function MemberPage({ params }: { params: Promise<{ id: string }> }) {

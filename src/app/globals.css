@@ -62,25 +62,26 @@
 }
 
 :root {
+  /* 색은 빈티지 로고 톤(D-173): 종이 바탕 · 크림 카드 · 먹색 글자 · 남색 주 버튼 · 겨자 강조 */
   --tabbar-h: 4rem; /* 하단 탭 높이(아이폰 홈 막대 자리는 따로 더함) — tab-bar · bottom-action 이 함께 쓴다 */
-  --background: #FAF9F4;
-  --foreground: #16160F;
-  --card: #FFFFFF;
-  --card-foreground: #16160F;
-  --popover: #FFFFFF;
-  --popover-foreground: #16160F;
-  --primary: #16160F;
-  --primary-foreground: #FAF9F4;
-  --secondary: #F0EFE6;
-  --secondary-foreground: #16160F;
-  --muted: #F0EFE6;
-  --muted-foreground: #6B6A5E;
-  --accent: #DDF542;
-  --accent-foreground: #16160F;
-  --destructive: #C8441C;
-  --border: #E4E2D6;
-  --input: #E4E2D6;
-  --ring: #B9D21E;
+  --background: #EADFC4;
+  --foreground: #221D1A;
+  --card: #F6EEDA;
+  --card-foreground: #221D1A;
+  --popover: #F6EEDA;
+  --popover-foreground: #221D1A;
+  --primary: #1F3A5F;
+  --primary-foreground: #F6EEDA;
+  --secondary: #DDD0AF;
+  --secondary-foreground: #221D1A;
+  --muted: #DDD0AF;
+  --muted-foreground: #5B5142;
+  --accent: #E2AC3B;
+  --accent-foreground: #221D1A;
+  --destructive: #A8381F;
+  --border: #CDBF9C;
+  --input: #B9AA86;
+  --ring: #1F3A5F;
   /* 시간표 칸 색(D-135 · D-137) — 수업 이름마다 고르는 색 */
   --class-yellow: #FBEFC2;
   --class-mint: #DCEFE3;
@@ -89,12 +90,12 @@
   --class-lavender: #E8E2F4;
   --class-peach: #FBE4D3;
   --class-gray: #ECEBE4;
-  --chart-1: #DDF542;
-  --chart-2: #B9D21E;
-  --chart-3: #8A9C1A;
-  --chart-4: #4F5A14;
-  --chart-5: #16160F;
-  /* 빈티지 로고 톤(D-170) — 랜딩에서만 쓴다(D-171) */
+  --chart-1: #E2AC3B;
+  --chart-2: #C2452D;
+  --chart-3: #1F3A5F;
+  --chart-4: #5B5142;
+  --chart-5: #221D1A;
+  /* 빈티지 로고 톤(D-170) — 랜딩(D-171)에 이어 앱 전체 색도 이 톤(D-173) */
   --vt-paper: #EADFC4;
   --vt-cream: #F6EEDA;
   --vt-ink: #221D1A;
@@ -102,14 +103,14 @@
   --vt-red: #C2452D;
   --vt-mustard: #E2AC3B;
   --radius: 1rem;
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #16160F;
-  --sidebar-primary: #16160F;
-  --sidebar-primary-foreground: #FAF9F4;
-  --sidebar-accent: #F0EFE6;
-  --sidebar-accent-foreground: #16160F;
-  --sidebar-border: #E4E2D6;
-  --sidebar-ring: #B9D21E;
+  --sidebar: #F6EEDA;
+  --sidebar-foreground: #221D1A;
+  --sidebar-primary: #1F3A5F;
+  --sidebar-primary-foreground: #F6EEDA;
+  --sidebar-accent: #DDD0AF;
+  --sidebar-accent-foreground: #221D1A;
+  --sidebar-border: #CDBF9C;
+  --sidebar-ring: #1F3A5F;
 }
 
 .dark {
@@ -207,7 +208,7 @@
   .belt-wave { animation: none; }
 }
 
-/* 기술 이름 강조 — 라임 형광 밑줄 (DESIGN.md 3) */
+/* 기술 이름 강조 — 형광 밑줄(겨자, D-173). 이름은 예전 그대로 mark-lime (DESIGN.md 3) */
 .mark-lime {
   background-image: linear-gradient(transparent 58%, var(--accent) 58%, var(--accent) 92%, transparent 92%);
   box-decoration-break: clone;
@@ -221,43 +222,15 @@
   overscroll-behavior: contain;
 }
 
-/* 랜딩 빈티지 톤(D-171) — 로고 톤(D-170)을 랜딩(/)에만 입힌다. 제품 화면(/app)은 그대로.
-   같은 토큰 이름에 색만 바꿔 끼워서 shadcn 컴포넌트를 그대로 쓴다 */
+/* 종이 결 — 로고 시트와 같은 잡티를 바탕에 옅게 깐다(D-171 · D-173, 모든 화면) */
+body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .32 0 0 0 0 .2 0 0 0 .25 -.06'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+/* 랜딩(D-171)만 더 진하게 — 먹색 테두리 · 각진 모서리. 색은 :root 와 같다 */
 .vintage {
-  --background: var(--vt-paper);
-  --foreground: var(--vt-ink);
-  --card: var(--vt-cream);
-  --card-foreground: var(--vt-ink);
-  --primary: var(--vt-navy);
-  --primary-foreground: var(--vt-cream);
-  --secondary: #DDD0AF;
-  --secondary-foreground: var(--vt-ink);
-  --muted: #DDD0AF;
-  --muted-foreground: #5B5142;
-  --accent: var(--vt-mustard);
-  --accent-foreground: var(--vt-ink);
   --border: var(--vt-ink);
   --input: var(--vt-ink);
-  --ring: var(--vt-navy);
   --radius: 0.5rem;
-  position: relative;
-  isolation: isolate;
-  background-color: var(--background);
-  color: var(--foreground);
-}
-/* 화면을 끝까지 당겼을 때 보이는 바깥 바탕도 종이색으로 */
-body:has(.vintage) {
-  --background: var(--vt-paper);
-}
-/* 종이 결 — 로고 시트와 같은 잡티를 옅게 깐다 */
-.vintage::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.5;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .32 0 0 0 0 .2 0 0 0 .5 -.12'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 /* 영어 장식 글자(로고의 굵고 좁은 글씨) */
 .vt-display {
@@ -266,8 +239,10 @@ body:has(.vintage) {
   text-transform: uppercase;
   letter-spacing: 0.14em;
 }
-/* 포지션 그림의 라임을 머스터드 쪽으로, 흰 바탕은 카드 색에 스며들게 */
-.vintage .pos-pic {
+/* 포지션 그림의 라임을 겨자 쪽으로, 흰 바탕은 카드 색에 스며들게(D-171 · D-173, 모든 화면) */
+.pos-pic,
+img[src*="/positions/"],
+img[src*="%2Fpositions%2F"] {
   filter: hue-rotate(-26deg) saturate(0.9);
   mix-blend-mode: multiply;
 }

@@ -7,7 +7,7 @@ import { cookies } from "next/headers";
 import { getSkill } from "@/lib/skill-detail-data";
 
 export const metadata: Metadata = {
-  title: "기술 상세 — Re:Re:롤",
+  title: "기술 상세 — Re:Re:Roll",
 };
 
 // 기술 상세 (T-10b). 주소는 기술 고유 키(slug) — 예: /app/skills/half-guard-underhook

@@ -40,7 +40,7 @@ async function find(params: Params["params"]) {
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const hit = await find(params);
-  if (!hit) return { title: "기술 위키 — Re:Re:롤" };
+  if (!hit) return { title: "기술 위키 — Re:Re:Roll" };
   const { item } = hit;
   const summary = "summary" in item && item.summary ? item.summary : "keyPoints" in item ? item.keyPoints[0] : "";
   return { title: `${item.nameKo} (${item.nameEn}) — 리리롤 기술 위키`, description: summary };

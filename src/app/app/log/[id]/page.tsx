@@ -10,7 +10,7 @@ import { SharedLogView } from "@/components/app/shared-log-view";
 import { LogComments } from "@/components/app/log-comments";
 
 export const metadata: Metadata = {
-  title: "기록 보기 — Re:Re:롤",
+  title: "기록 보기 — Re:Re:Roll",
 };
 
 // 저장한 기록 보기 · 고치기 (D-25, T-22). 본인 기록만(RLS) — 남의 기록 주소면 공유를 켠 기록만 보기 화면(D-123), 아니면 "없음".

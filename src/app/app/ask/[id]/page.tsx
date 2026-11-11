@@ -13,7 +13,7 @@ import { getQuestion, type QuestionView } from "@/lib/ask/ask-data";
 import { formatKoreanDate } from "@/lib/seoul-date";
 
 export const metadata: Metadata = {
-  title: "질문 — Re:Re:롤",
+  title: "질문 — Re:Re:Roll",
 };
 
 // 질문 다시 보기 (D-100) — 본인 것만(RLS). 질문 · 답 · 답에 나온 기술 카드 · 지우기.
