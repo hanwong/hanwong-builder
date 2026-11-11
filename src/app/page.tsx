@@ -43,12 +43,6 @@ const steps = [
   },
 ];
 
-const differences = [
-  "일지 앱은 빈 칸을 주지만, 리리롤은 기술 이름과 세팅 과정을 채워 줘요",
-  "이름을 몰라도 포지션 그림으로 골라요. 목록에 없는 기술은 이름만 적어도 기록돼요",
-  "기록은 무제한 무료예요. 돈은 기록이 쌓인 뒤의 정리 · 리포트에서만 받아요",
-];
-
 // 제목 위 영어 한 줄(장식) + 제목
 function SectionTitle({ eyebrow, children }: { eyebrow?: string; children: React.ReactNode }) {
   return (
@@ -246,10 +240,19 @@ export default function Home() {
 
       {/* 4. 이래서 쓰게 돼요 */}
       <section className="mx-auto max-w-5xl px-6 py-16 md:py-28">
-        <div className="reveal mx-auto max-w-3xl">
+        <div className="reveal flex items-end justify-between gap-6">
           <SectionTitle eyebrow="Keep rolling">이래서 쓰게 돼요</SectionTitle>
+          <Image
+            src="/landing/badge-repeat.png"
+            alt=""
+            aria-hidden
+            width={750}
+            height={735}
+            sizes="(min-width: 768px) 176px, 112px"
+            className="h-auto w-28 shrink-0 -rotate-3 md:w-44"
+          />
         </div>
-        <div className="mt-10 grid gap-4 md:grid-cols-2">
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
           <Card className="reveal rounded-2xl ring-border">
             <CardHeader>
               <CardDescription className="font-semibold text-vt-navy">처음 써 보면</CardDescription>
@@ -271,33 +274,7 @@ export default function Home() {
         </div>
       </section>
 
-      <Divider />
-
-      {/* 5. 다른 점 */}
-      <section className="mx-auto grid max-w-5xl items-center gap-10 px-6 py-16 md:grid-cols-[1fr_auto] md:py-28">
-        <div className="reveal max-w-3xl space-y-8">
-          <SectionTitle eyebrow="What's different">뭐가 다르냐면</SectionTitle>
-          <ul className="space-y-4">
-            {differences.map((d) => (
-              <li key={d} className="flex gap-3 text-base leading-relaxed md:text-lg">
-                <ListChecks className="mt-1 size-5 shrink-0 text-vt-red" strokeWidth={2} aria-hidden />
-                <span>{d}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <Image
-          src="/landing/badge-repeat.png"
-          alt=""
-          aria-hidden
-          width={750}
-          height={735}
-          sizes="240px"
-          className="mx-auto h-auto w-44 -rotate-3 md:w-60"
-        />
-      </section>
-
-      {/* 6. 시작하기 — 남색 띠 */}
+      {/* 5. 시작하기 — 남색 띠 */}
       <section className="bg-vt-navy text-vt-cream">
         <div className="reveal mx-auto max-w-3xl space-y-6 px-6 py-16 text-center md:py-24">
           <Image
@@ -319,7 +296,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 7. 푸터 */}
+      {/* 6. 푸터 */}
       <footer className="border-t">
         <div className="mx-auto max-w-5xl space-y-1 px-6 py-10 text-sm text-muted-foreground">
           <p>
