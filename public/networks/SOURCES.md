@@ -40,4 +40,10 @@
 | ribeiro.png | 히베이로 | https://smoothcomp.com/pictures/t/26944-hcx3/ribeiro-jiujitsu.jpg (제3자 Smoothcomp) | https://smoothcomp.com/en/affiliation/59 |
 | marc.png | MARC | 네이버 블로그 프로필(…gerac111/profileImage.jpg) | https://m.blog.naver.com/gerac111 (대한무술문화복지협회 MARC 주짓수) |
 
+## 2026-11-11 추가 (D-176)
+
+| 파일 | 네트워크 | 이미지 주소 | 가져온 페이지 |
+|---|---|---|---|
+| just.png | 저스트주짓수 | Facebook 페이지 프로필(lookaside.fbsbx.com …media_id=100047851612117, "JUST BRAZILIAN JIU-JITSU" 원형 문양). 운영자가 준 Google 이미지 공유 링크 | https://www.facebook.com/JUSTJITSU/ |
+
 로고를 못 구한 곳(글자 배지): 에볼루션(국내 팀 자료를 찾지 못함).

@@ -342,3 +342,7 @@
 
 ## D-175 (2026-11-11) 로고 방향: 투톤 빈티지 배지, 글자가 도형을 꽉 채움 → **로고 방향을 "남색(#1F3A5F) · 빨강(#C2452D) 두 색 + 크림 바탕, 질감 없음, 빈티지 글씨(굵은 세로 긴 대문자 · 야구 스크립트)가 배지 도형을 가득 채우는 방식"으로 일단 정한다.** 기준 시트: `docs/artifacts/logo-set/rereroll-twotone-3.png`(12개: R:R 원형 씰 · Re:Re:Roll 스크립트 + JIU-JITSU 띠 · MAT CLUB 방패 · GI/NO-GI 타원 · ROLLING NO-GI 육각형 · ROLLING CO. 라벨 · Earn your BELT · Re: Re: Roll 원 세 개 · 100% SWEAT 땀방울 · ROLL SWEAT REPEAT · Re:Re:Roll 알약 · TAP. RESET. ROLL AGAIN. 도장). Higgsfield GPT Image 2.5 낮은 화질(1크레딧)로 만든 시안이라 가장자리가 조금 번짐 — 실제로 쓸 때는 다시 깨끗하게 뽑는다. 사이트 대표 로고 · 파비콘 · 카톡 미리보기 이미지는 아직 라임 로고 그대로이고, 어느 배지를 쓸지는 나중에 다시 보고 정한다(T-102). 본인 요청("일단 이걸로 하고 나중에 다시 확인") / 영향: 없음(문서만)
 
+
+## D-176 (2026-11-11) 로고 깨끗하게 뽑기: Sume 연결 후 진행 → **T-102 의 깨끗한 로고는 Sume(mcp.sume.com)으로 만든다. 이 작업 창에는 Sume 이 아직 연결돼 있지 않아(커넥터 목록 · 검색 모두 없음, 연결된 건 Higgsfield 1.19크레딧뿐) 한웅 님이 claude.ai 설정 → 커넥터에서 직접 추가한 뒤 이어서 한다.** 연결되면 도구 목록 · 유료 도구 가격을 먼저 보여 주고 승인받은 뒤에만 유료 호출. 다른 안: 무료로 기존 시트를 잘라 세 색으로 정리(비용 0, 글자 모양은 시안 그대로) · Higgsfield 충전. 본인 선택("Sume 먼저 연결") / 영향: T-102 Sume 연결 대기
+
+## D-176 (2026-11-11) 네트워크에 저스트주짓수 추가 → **소속 네트워크 목록에 "저스트주짓수"를 가나다순(와이어주짓수 다음)으로 넣고, 로고는 운영자가 준 링크의 Facebook 페이지(JUSTJITSU) 프로필 그림 "JUST BRAZILIAN JIU-JITSU" 원형 문양을 128px 로 줄여 쓴다.** DB 는 이름을 글자로 저장해서 바꿀 것 없음. 본인 요청 / 영향: src/lib/gym-shared.ts, public/networks/just.png · SOURCES.md

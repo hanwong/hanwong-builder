@@ -21,6 +21,7 @@ export const GYM_NETWORKS = [
   "얼라이언스주짓수",
   "에볼루션주짓수",
   "와이어주짓수",
+  "저스트주짓수",
   "존프랭클주짓수",
   "주짓수랩",
   "체크매트",
@@ -66,6 +67,8 @@ export const GYM_NETWORK_ICONS: Partial<Record<(typeof GYM_NETWORKS)[number], st
   "퍼스트짐주짓수": "first-gym.png",
   "히베이로": "ribeiro.png",
   "MARC 주짓수": "marc.png",
+  // D-176 — 2026-11-11 추가
+  "저스트주짓수": "just.png",
 };
 export const isGymNetwork = (v: unknown): v is (typeof GYM_NETWORKS)[number] => typeof v === "string" && (GYM_NETWORKS as readonly string[]).includes(v);
 
