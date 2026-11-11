@@ -340,3 +340,5 @@
 
 ## D-174 (2026-11-11) 바탕 · 카드 색을 밝게 → **전체 바탕 #EADFC4 → #F5F0E3, 카드 · 팝업 #F6EEDA → #FCF9F2, 보조 칸 #DDD0AF → #ECE4D0, 선 #CDBF9C → #E0D6BE — 예전 크림(#FAF9F4) · 흰 카드에 가깝게. 남색 · 겨자 · 빨강 · 먹색은 그대로.** 랜딩 · 앱 · 공유 카드 그림 모두. 본인 요청("조금 밝게, 이전 배경색에 가깝게") / 영향: globals.css, share-card, DESIGN.md
 
+## D-175 (2026-11-11) 로고 방향: 투톤 빈티지 배지, 글자가 도형을 꽉 채움 → **로고 방향을 "남색(#1F3A5F) · 빨강(#C2452D) 두 색 + 크림 바탕, 질감 없음, 빈티지 글씨(굵은 세로 긴 대문자 · 야구 스크립트)가 배지 도형을 가득 채우는 방식"으로 일단 정한다.** 기준 시트: `docs/artifacts/logo-set/rereroll-twotone-3.png`(12개: R:R 원형 씰 · Re:Re:Roll 스크립트 + JIU-JITSU 띠 · MAT CLUB 방패 · GI/NO-GI 타원 · ROLLING NO-GI 육각형 · ROLLING CO. 라벨 · Earn your BELT · Re: Re: Roll 원 세 개 · 100% SWEAT 땀방울 · ROLL SWEAT REPEAT · Re:Re:Roll 알약 · TAP. RESET. ROLL AGAIN. 도장). Higgsfield GPT Image 2.5 낮은 화질(1크레딧)로 만든 시안이라 가장자리가 조금 번짐 — 실제로 쓸 때는 다시 깨끗하게 뽑는다. 사이트 대표 로고 · 파비콘 · 카톡 미리보기 이미지는 아직 라임 로고 그대로이고, 어느 배지를 쓸지는 나중에 다시 보고 정한다(T-102). 본인 요청("일단 이걸로 하고 나중에 다시 확인") / 영향: 없음(문서만)
+
