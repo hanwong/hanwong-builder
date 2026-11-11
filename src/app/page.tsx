@@ -182,24 +182,24 @@ export default function Home() {
 
       {/* 2. 문제 */}
       <section className="mx-auto max-w-5xl px-6 py-16 md:py-28">
-        <div className="reveal mx-auto max-w-3xl space-y-6">
-          <div className="flex items-end justify-between gap-6">
+        <div className="reveal grid items-center gap-8 md:grid-cols-[1fr_auto] md:gap-12">
+          <div className="space-y-6">
             <SectionTitle eyebrow="After class">수업 끝나고 집에 오면</SectionTitle>
-            <Image
-              src="/landing/badge-tap.png"
-              alt=""
-              aria-hidden
-              width={750}
-              height={735}
-              sizes="(min-width: 768px) 176px, 112px"
-              className="h-auto w-28 shrink-0 rotate-6 md:w-44"
-            />
+            <p className="max-w-3xl text-base leading-relaxed text-muted-foreground md:text-lg">
+              수업에서 데라히바 가드를 배웠다. 집에 오니 이름은 기억나는데 발을 어디에 거는지부터
+              가물가물하다. 일지에 적으려니 기술 이름을 모르고, 스토리에 적어 둔 건 하루 지나면
+              사라진다. 다음 주 같은 수업에서 또 처음부터.
+            </p>
           </div>
-          <p className="text-base leading-relaxed text-muted-foreground md:text-lg">
-            수업에서 데라히바 가드를 배웠다. 집에 오니 이름은 기억나는데 발을 어디에 거는지부터
-            가물가물하다. 일지에 적으려니 기술 이름을 모르고, 스토리에 적어 둔 건 하루 지나면
-            사라진다. 다음 주 같은 수업에서 또 처음부터.
-          </p>
+          <Image
+            src="/landing/badge-tap.png"
+            alt=""
+            aria-hidden
+            width={750}
+            height={735}
+            sizes="(min-width: 768px) 208px, 160px"
+            className="mx-auto h-auto w-40 rotate-6 md:w-52"
+          />
         </div>
         <div className="mt-10 grid gap-4 md:grid-cols-3">
           {pains.map((pain, i) => (
@@ -241,40 +241,42 @@ export default function Home() {
 
       <Divider />
 
-      {/* 4. 이래서 쓰게 돼요 */}
-      <section className="mx-auto max-w-5xl px-6 py-16 md:py-28">
-        <div className="reveal flex items-end justify-between gap-6">
-          <SectionTitle eyebrow="Keep rolling">이래서 쓰게 돼요</SectionTitle>
-          <Image
-            src="/landing/badge-repeat.png"
-            alt=""
-            aria-hidden
-            width={750}
-            height={735}
-            sizes="(min-width: 768px) 176px, 112px"
-            className="h-auto w-28 shrink-0 -rotate-3 md:w-44"
-          />
+      {/* 4. 이래서 쓰게 돼요 — 왼쪽 글 · 오른쪽 배지, 휴대폰은 배지가 맨 아래 */}
+      <section className="mx-auto grid max-w-5xl items-center gap-10 px-6 py-16 md:grid-cols-[1fr_auto] md:gap-12 md:py-28">
+        <div className="space-y-8">
+          <div className="reveal">
+            <SectionTitle eyebrow="Keep rolling">이래서 쓰게 돼요</SectionTitle>
+          </div>
+          <div className="grid gap-4">
+            <Card className="reveal rounded-2xl ring-border">
+              <CardHeader>
+                <CardDescription className="font-semibold text-vt-navy">처음 써 보면</CardDescription>
+                <CardTitle className="text-lg font-semibold md:text-xl">
+                  오픈 가드 그림을 눌러 &quot;케이 가드&quot;를 골랐더니 발을 어디에 거는지부터 세팅
+                  과정 4줄이 따라와요
+                </CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="reveal rounded-2xl ring-border">
+              <CardHeader>
+                <CardDescription className="font-semibold text-vt-navy">계속 쓰게 되는 이유</CardDescription>
+                <CardTitle className="text-lg font-semibold md:text-xl">
+                  수업마다 배운 기술을 고르면 내 기술 목록에 숙련도가 쌓이고, 수련 벨트에 한 주가
+                  채워져요
+                </CardTitle>
+              </CardHeader>
+            </Card>
+          </div>
         </div>
-        <div className="mt-8 grid gap-4 md:grid-cols-2">
-          <Card className="reveal rounded-2xl ring-border">
-            <CardHeader>
-              <CardDescription className="font-semibold text-vt-navy">처음 써 보면</CardDescription>
-              <CardTitle className="text-lg font-semibold md:text-xl">
-                오픈 가드 그림을 눌러 &quot;케이 가드&quot;를 골랐더니 발을 어디에 거는지부터 세팅
-                과정 4줄이 따라와요
-              </CardTitle>
-            </CardHeader>
-          </Card>
-          <Card className="reveal rounded-2xl ring-border">
-            <CardHeader>
-              <CardDescription className="font-semibold text-vt-navy">계속 쓰게 되는 이유</CardDescription>
-              <CardTitle className="text-lg font-semibold md:text-xl">
-                수업마다 배운 기술을 고르면 내 기술 목록에 숙련도가 쌓이고, 수련 벨트에 한 주가
-                채워져요
-              </CardTitle>
-            </CardHeader>
-          </Card>
-        </div>
+        <Image
+          src="/landing/badge-repeat.png"
+          alt=""
+          aria-hidden
+          width={750}
+          height={735}
+          sizes="(min-width: 768px) 240px, 176px"
+          className="mx-auto h-auto w-44 -rotate-3 md:w-60"
+        />
       </section>
 
       {/* 5. 시작하기 — 남색 띠 */}
